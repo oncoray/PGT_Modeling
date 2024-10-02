@@ -1,6 +1,6 @@
 # range_reconstruction_PMMA_phantom
 
-We want to reconstruct the air cavity size in a PMMA phantom based on timing and energy information of prompt gammas.
+We want to reconstruct the air cavity thickness in a PMMA phantom based on temporal and spectral information of the prompt gamma-rays.
 
 
 Usage
