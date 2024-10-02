@@ -1,0 +1,34 @@
+citHeader("To cite praznik in publications use:")
+
+citEntry(entry = "Article",
+  title        = "Praznik: High performance information-based feature selection",
+  author       = personList(as.person("Miron B. Kursa")),
+  journal      = "SoftwareX",
+  year         = "2021",
+  volume       = "16",
+  pages        = "100819",
+  url          = "https://doi.org/10.1016/j.softx.2021.100819",
+
+  textVersion  =
+  paste("Miron B. Kursa (2021).",
+        "Praznik: High performance information-based feature selection.",
+        "SoftwareX, 16, 100819.",
+        "URL https://doi.org/10.1016/j.softx.2021.100819")
+)
+
+citEntry(entry = "Article",
+  title        = "Kendall transformation brings a robust categorical representation of ordinal data",
+  author       = personList(as.person("Miron B. Kursa")),
+  journal      = "Scientific Reports",
+  year         = "2022",
+  volume       = "12",
+  pages        = "8341",
+  url          = "https://doi.org/10.1038/s41598-022-12224-2",
+
+  textVersion  =
+  paste("Miron B. Kursa (2022).",
+        "Kendall transformation brings a robust categorical representation of ordinal data.",
+        "Scientific Reports, 12, 8341.",
+        "URL https://doi.org/10.1038/s41598-022-12224-2")
+)
+

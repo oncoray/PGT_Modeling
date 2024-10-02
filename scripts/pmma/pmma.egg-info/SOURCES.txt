@@ -1,0 +1,5 @@
+setup.py
+pmma.egg-info/PKG-INFO
+pmma.egg-info/SOURCES.txt
+pmma.egg-info/dependency_links.txt
+pmma.egg-info/top_level.txt

@@ -1,0 +1,25 @@
+useDynLib(rstream,  .registration=TRUE, .fixes="C_")
+
+importFrom("methods", "is", "new")
+importFrom("methods", "initialize", "show")  ## required for exportMethods() below
+importFrom("stats", "runif")
+
+exportMethods(rstream.antithetic, "rstream.antithetic<-")
+exportMethods(rstream.incprecision, "rstream.incprecision<-")
+exportMethods(rstream.name, "rstream.name<-")
+exportMethods(rstream.sample)
+exportMethods(r)
+exportMethods(rstream.reset)
+exportMethods(rstream.resetsubstream)
+exportMethods(rstream.nextsubstream)
+exportMethods(rstream.clone)
+exportMethods(rstream.packed, "rstream.packed<-")
+
+exportMethods(print)
+exportMethods(show)
+exportMethods(initialize)
+
+export(rstream.RNG)
+export(rstream.version)
+
+exportClass(rstream, rstream.mrg32k3a, rstream.lecuyer, rstream.runif)

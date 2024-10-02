@@ -1,0 +1,121 @@
+
+Version 1.3.7: 2022-10-18
+
+	- Internal: fixed function prototype
+
+
+Version 1.3.6: 2020-02-03
+
+	- Internal: RngStream_CreateStream() 
+	   * added check for NULL after malloc()
+           * fixed compiler warning: replaced strncpy() by strcpy()
+	   * commented our obsolete code
+
+
+Version 1.3.5: 2017-06-21
+
+	- Internal: register native routines
+	
+
+Version 1.3.4: 2015-08-19
+
+	- NAMESPACE: fixed problem with methods "initialize" and "plot".
+	
+
+Version 1.3.3: 2015-07-17
+
+	- NAMESPACE: explicitly import functions from standard packages.
+	
+
+Version 1.3.2: 2012-01-30
+
+	- commented out unused code in 'RngStreams' library
+          (in particular all printf() and exit() statements)
+
+
+Version 1.3.1: 2011-05-10
+
+	- fixed warning in Rd file
+
+	- there is a small change that chi2 goodness-of-fit tests in
+          directory 'tests' fail. As the seed is set at random this
+          may occasionaly cause an ERROR when checking the package.
+	  This event has been made even more unlikely (while real
+          programming errors on new platforms should be detected).
+
+
+Version 1.3.0: 2011-02-10
+
+	- fixed bug: when rstream.RNG(s) was called with an 'rstream'
+          object of class "rstream.mrg32k3a" two of more times
+          consecutively, then the first element of the second the
+          generated stream was discarded.
+	  This has been fixed.
+
+	  WARNING:
+	  This fix may influence the sequence of generated random
+	  numbers when a generator of class "rstream.mrg32k3a"
+	  is set as global generator by means of rstream.RNG().
+	  If reproducibility of prior results is important then add
+	  the following statement to your code to revert to the old
+	  behavior:
+
+	     library(rstream)
+	     rstream.version("1.2")
+
+	- added paper in doc directory:
+            P. L'Ecuyer and J. Leydold: 'rstream': Streams of Random
+            Numbers for Stochastic Simulation.
+	    R News 5/2, 16-20, 2005.
+
+	- updated authors email address
+
+
+Version 1.2.5: 2010-05-05
+
+	- fixed bug: loading a packaged rstream object from 
+          an .RData file did not work unless another new 
+          rstream object was created.
+
+
+Version 1.2.4: 2009-11-17
+
+	- fixed syntax of some Rd files
+
+
+Version 1.2.3: 2009-01-08
+
+	- changed copyright notice in file 'RngStreams.c'
+          to avoid ambiguity about license (GPL)
+
+
+Version 1.2.2: 2007-09-10
+
+	- added method 'show' (just calls 'print')
+
+	- Bug fixes:
+	    . added protector for external pointer
+            . avoid nonessential compiler warning with R version 2.6.0
+
+
+Version 1.2.1: 2006-09-21
+
+	- Fixed DESCRIPTION file for upcoming R-2.4.0 release
+
+
+Version 1.2: 2006-02-15
+
+	- Fixed signature of method rstream.sample
+	  (the old one does not work with R Version >=2.3.0)
+
+
+Version 1.1: 2005-10-01
+
+	- Added class "rstream.mrg32k3a" to replace "rstream.lecuyer"
+          (suggested by Pierre L'Ecuyer)
+
+
+Version 1.0: 2005-04-02
+
+        - First public release.
+ 

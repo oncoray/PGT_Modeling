@@ -1,0 +1,179 @@
+# parameters to define the dataset
+dataset:
+    measurement_dict: # id: [range shift, proton energy, cohort name]
+        1607161004: [0, 225, "static"]
+        1607161215: [0, 162, "static"]
+        1607161128: [5, 162, "static"]
+        1607161043: [5, 225, "static"]
+        1607161038: [10, 225, "static"]
+        1607161142: [10, 162, "static"]
+        1607161149: [20, 162, "static"]
+        1607161032: [20, 225, "static"]
+        1607161011: [0, 225, "scanned"]
+        1607161118: [0, 162, "scanned"]
+        1607161126: [5, 162, "scanned"]
+        1607161041: [5, 225, "scanned"]
+        1607161036: [10, 225, "scanned"]
+        1607161137: [10, 162, "scanned"]
+        1607161147: [20, 162, "scanned"]
+        1607161028: [20, 225, "scanned"]
+        1303241357: [0, 225, "scanned_accum8"]
+        1303241301: [20, 225, "scanned_accum8"]
+        1303241305: [10, 225, "scanned_accum8"]
+        1303241308: [5, 225, "scanned_accum8"]
+        1303241312: [0, 162, "scanned_accum8"]
+        1303241316: [5, 162, "scanned_accum8"]
+        1303241320: [10, 162, "scanned_accum8"]
+        1303241323: [20, 162, "scanned_accum8"]
+        1303241348: [0, 225, "static_accum10"]
+        1303241349: [20, 225, "static_accum10"]
+        1303241350: [10, 225, "static_accum10"]
+        1303241351: [5, 225, "static_accum10"]
+        1303241355: [0, 162, "static_accum10"]
+        1303241352: [5, 162, "static_accum10"]
+        1303241353: [10, 162, "static_accum10"]
+        1303241354: [20, 162, "static_accum10"]
+        
+    energy_range: 10 #MeV
+    energy_bin: 0.03333333
+    time_range: 9.42935584 # ns 
+    time_bin: 0.00460418
+    spots_to_exclude_static: 30
+    spots_to_include_scanned:
+        - 133
+        - 118
+        - 117
+        - 119
+        - 103
+    
+# parameters to define paths. In general no need for adjustments   
+paths:
+    base_dir: "/bigdata/invivo/machine_learning/pgt-range-reconstruction/PMMA_study"
+    experiment_dir: "{base_dir}/experiments/{experiment_name}"
+    logs_dir: "{base_dir}/experiments/{experiment_name}/logs"
+    metadata_dir: "{base_dir}/experiments/{experiment_name}/data/metadata"
+    data:
+        converted_dir: "/bigdata/invivo/machine_learning/pgt-range-reconstruction/PMMA_study/data/02_Converted_Data"
+        preprocessed_dir: "/bigdata/invivo/machine_learning/pgt-range-reconstruction/PMMA_study/data/03_Preprocessed_Data_05_2024_new_gamma_lines"
+    scripts:
+        create_data_path_table: "{base_dir}/range_reconstruction_pmma_phantom/scripts/data_preparation/create_data_path_table.py"
+        calculate_features: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/calculate_parameters.py"
+        feature_clustering: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/feature_clustering.py"
+        feature_ranking: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/feature_ranking.py"
+        feature_selection: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/feature_selection.py"
+        feature_selection_summary: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/feature_selection_summary.py"
+        feature_combination: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/feature_combination.py"
+        feature_normalization: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/feature_normalization.py"
+        feature_filtering: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/feature_filtering.py"
+        external_validation: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/external_validation.py"
+        cML_summary: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/cML_summary.py"
+        cML_final_result: "{base_dir}/range_reconstruction_pmma_phantom/scripts/conv_machine_learning/cML_final_result.py"
+    output_files:
+        completion_files_dir: "{base_dir}/experiments/{experiment_name}/data/completion_files"
+        data_path_table: "{base_dir}/experiments/{experiment_name}/data/data_path_table.csv"
+        features: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/features/"
+        figures: "{base_dir}/experiments/{experiment_name}/figures/"
+    mirp_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/mirp_feature_extraction"
+    conventional_machine_learning:
+        model_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/models"
+        feature_clustering_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_clustering"
+        feature_filtering_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_filtering"
+        feature_ranking_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_ranking"
+        feature_selection_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_selection"
+        external_validation_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/external_validation"
+        summary_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/summary"
+    
+    
+# parameters to setup the experiment
+experiment:
+    global_time_window_width: 1152
+    experiment_name: "bg_regression/filtered/imp_filtered/new_gamma_lines/seperated_combined_filtered/fbs1/Final_processed_162_225"
+    plot_figures: "False"          
+    cohort_mapping: # set the cohorts
+        - type: "scanned"
+          energy: 162
+          values:
+            training: 0
+            validation: 1   
+        - type: "static"
+          energy: 162
+          values:
+            training: 0.71
+            validation: 0.29
+        - type: "scanned_accum8"
+          energy: 162
+          values:
+            training: 0
+            validation: 1
+        - type: "static_accum10"
+          energy: 162
+          values:
+            training: 0
+            validation: 1
+        - type: "scanned"
+          energy: 225
+          values:
+            training: 0
+            validation: 1
+        - type: "static"
+          energy: 225
+          values:
+            training: 0.71
+            validation: 0.29
+        - type: "scanned_accum8"
+          energy: 225
+          values:
+            training: 0
+            validation: 1
+        - type: "static_accum10"
+          energy: 225
+          values:
+            training: 0
+            validation: 1
+    conventional_machine_learning:
+        rois:
+            - "full"
+            - "10B"
+            - "16O"
+            - "11C"
+            - "511keV"
+            - "12C11B"
+        features:
+            - "energy"
+            - "time"
+            - "energy-time"
+            - "radiomics" 
+        feature_selection_methods:
+            - "lasso_gaussian"
+            - "mrmr"
+            - "spearman"
+            - "multivariate_regression"
+        model_learners:
+            - "glm_gaussian"
+            - "random_forest_rfsrc"
+            - "xgboost_tree_gaussian"
+            - "svm_eps"
+        perform_feature_filtering: "True"
+        analyze_feature_combination: "True"
+        analyze_individual_features: "True"
+        args:
+            feature_clustering:
+                cluster_distance_threshold: 0.2
+            feature_selection:
+                max_features: 10
+                multicollinearity_method: "pearson"
+                multicollinearity_threshold: 1
+                max_no_improve_iterations: 10
+                multicollinearity_threshold_vif: 5
+            feature_filtering:
+                cohort1: "static"
+                cohort2: "static_accum10"
+                statistic_p_value_threshold: 0.05
+                n_diff_groups: 1
+                reference: 0
+                importance_p_value_threshold: 0.2
+            
+    
+
+
+    

@@ -1,0 +1,116 @@
+# parameters to define the dataset
+dataset:
+    measurement_dict: # id: [range shift, proton energy, cohort name]
+        1607161004: [0, 225, "static"]
+        1607161215: [0, 162, "static"]
+        1607161128: [5, 162, "static"]
+        1607161043: [5, 225, "static"]
+        1607161038: [10, 225, "static"]
+        1607161142: [10, 162, "static"]
+        1607161149: [20, 162, "static"]
+        1607161032: [20, 225, "static"]
+        1607161011: [0, 225, "scanned"]
+        1607161118: [0, 162, "scanned"]
+        1607161126: [5, 162, "scanned"]
+        1607161041: [5, 225, "scanned"]
+        1607161036: [10, 225, "scanned"]
+        1607161137: [10, 162, "scanned"]
+        1607161147: [20, 162, "scanned"]
+        1607161028: [20, 225, "scanned"]
+        1303241357: [0, 225, "scanned_accum8"]
+        1303241301: [20, 225, "scanned_accum8"]
+        1303241305: [10, 225, "scanned_accum8"]
+        1303241308: [5, 225, "scanned_accum8"]
+        1303241312: [0, 162, "scanned_accum8"]
+        1303241316: [5, 162, "scanned_accum8"]
+        1303241320: [10, 162, "scanned_accum8"]
+        1303241323: [20, 162, "scanned_accum8"]
+        1303241348: [0, 225, "static_accum10"]
+        1303241349: [20, 225, "static_accum10"]
+        1303241350: [10, 225, "static_accum10"]
+        1303241351: [5, 225, "static_accum10"]
+        1303241355: [0, 162, "static_accum10"]
+        1303241352: [5, 162, "static_accum10"]
+        1303241353: [10, 162, "static_accum10"]
+        1303241354: [20, 162, "static_accum10"]
+        
+    spots_to_include_scanned:
+        - 133
+        - 118
+        - 117
+        - 119
+        - 103
+    time_bin: 0.00460418
+    spots_to_exclude_static: 30
+    
+# parameters to define paths. In general no need for adjustments   
+paths:
+    base_dir: "/bigdata/invivo/machine_learning/pgt-range-reconstruction/PMMA_study"
+    experiment_dir: "{base_dir}/experiments/Preprocessing/{experiment_name}"
+    logs_dir: "{base_dir}/experiments/Preprocessing/{experiment_name}/logs"
+    metadata_dir: "{base_dir}/experiments/Preprocessing/{experiment_name}/data/metadata"
+    data:
+        converted_dir: "/bigdata/invivo/machine_learning/pgt-range-reconstruction/PMMA_study/data/02_Converted_Data"
+        preprocessed_dir: "/bigdata/invivo/machine_learning/pgt-range-reconstruction/PMMA_study/data/{experiment_name}"
+    scripts:
+        create_data_path_table: "{base_dir}/range_reconstruction_pmma_phantom/scripts/data_preparation/create_data_path_table.py"
+        preprocess_data: "{base_dir}/range_reconstruction_pmma_phantom/scripts/data_processing/preprocess_data.py"
+    output_files:
+        completion_files_dir: "{base_dir}/experiments/Preprocessing/{experiment_name}/data/completion_files"
+        data_path_table: "{base_dir}/experiments/Preprocessing/{experiment_name}/data/data_path_table.csv"
+        figures: "{base_dir}/experiments/Preprocessing/{experiment_name}/figures"
+    
+# parameters to setup the experiment
+experiment:
+    experiment_name: "03_Preprocessed_Data_05_2024_new_gamma_lines"
+    plot_figures: "False"           
+    rois:
+        - "full"
+        - "10B"
+        - "16O"
+        - "11C"
+        - "511keV"
+        - "12C11B"
+    spectrum_types:
+        - "1D"
+        - "2D"
+    args:
+        data_preprocessing:
+            get_roi_array:
+              energy_bin_size: 0.03333333
+            remove_outlier:
+              outlier_indices:
+              - 0
+              - 1
+              - 2047
+              - 1022
+              - 1023
+              - 1024
+              - 1025
+            get_phase_shift:
+              reference: 0
+              index_desired_leading_edge: 512
+              filter_size_derivative: 200
+              fractions_leading_edge:
+              - 0.3
+              - 0.7
+              g_median: 7
+              g_gauss: 11
+            find_bg_region:
+              g_median: 10
+              g_gauss: 100
+              threshold_factor: 1.05
+            perform_data_processing:
+              global_time_window_set:
+              - 248
+              - 1400
+              reference: 0
+              time_bin: 0.00460418
+            find_mean_shift:
+              max_iterations: 100
+              tolerance: 0.5
+            
+    
+
+
+    

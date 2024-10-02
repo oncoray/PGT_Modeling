@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb 15 09:41:07 2024
+
+@author: kiesli21
+"""
+import json
+import shutil
+import os
+from itertools import product
+
+from pmma.config_file_manipulator import substitute_labels, save_config, yaml_to_json_string
+
+configfile: "config.yaml"
+
+# Substitute labels and save configuration file
+config = substitute_labels('config.yaml')
+
+save_config(config, os.path.join(config['paths']['experiment_dir'], "config.yaml"))
+
+# get cohort mapping dict in json format, so it can be transferred via shell command
+data_preprocessing_args = yaml_to_json_string(str(config["experiment"]["args"]["data_preprocessing"]))
+
+SPECTRUM_TYPES=config["experiment"]["spectrum_types"]
+
+
+# This rule defines the final target of the pipeline        
+rule all:
+    input:
+        "config.yaml",
+        expand(config['paths']['output_files']['completion_files_dir'] + "/preprocess_data_complete_{spectrum_type}.txt", spectrum_type = SPECTRUM_TYPES)
+
+rule create_config_report:
+    output:
+        report("config.yaml",
+               category="Configuration",
+               labels={"File": "Config-file",
+                       "Type": "yaml"})
+    shell:
+        """
+        # Your command to process the config.yaml if necessary
+        """
+
+# Rule for creating a data path table
+rule create_data_path_table:
+    output:
+        output_file = report(config['paths']['output_files']['data_path_table'], category = "Data table")
+    params:
+        script = config['paths']['scripts']['create_data_path_table'],
+        root_dir = config['paths']['data']['converted_dir'],
+        measurement_dict = json.dumps(config['dataset']['measurement_dict']),
+        spots_exclude_static = config['dataset']['spots_to_exclude_static'],
+        spots_include_scanned = config['dataset']['spots_to_include_scanned']
+    log:
+        config['paths']['logs_dir'] + '/data_table_creation/create_data_path_table.log'  # Log file for this rule  
+    shell:
+        """
+        python {params.script} \
+        --root_dir {params.root_dir} \
+        --output_file {output} \
+        --spots_to_include_scanned {params.spots_include_scanned} \
+        --spots_to_exclude_static {params.spots_exclude_static} \
+        --measurement_dict '{params.measurement_dict}' > {log} 2>&1 
+        """
+
+# Rule for preprocessing data
+rule preprocess_data:
+    input:
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        completion_file_path = config['paths']['output_files']['completion_files_dir'] + "/preprocess_data_complete_{spectrum_type}.txt",
+        metadata_file = report(config['paths']['metadata_dir'] + "/preprocess_data_metadata_{spectrum_type}.csv", 
+                        category = "Metadata",
+                        subcategory = "Data processing",
+                        labels={"Spectrum type": "{spectrum_type}",
+                        "Type": "csv"}),
+        
+        metadata_bg_file = report(config['paths']['metadata_dir'] + "/bg_metadata_{spectrum_type}.csv", 
+                        category = "Metadata",
+                        subcategory = "Background",
+                        labels={"Spectrum type": "{spectrum_type}",
+                        "Type": "csv"}),
+        
+        report_preprocessing = report(
+            directory(config['paths']['output_files']['figures'] + "/{spectrum_type}/processing_plots"), 
+            patterns=["{roi}/{spot_type}_{energy2}MeV/{step2}/summed_time_{roi3}_{type}_{energy}MeV_{step}.png"],
+            category="{type}_{energy}MeV",
+            subcategory="{spectrum_type}_{roi}",
+            labels={"Step": "{step}"}
+        ),
+
+        activation_plot = report(
+            directory(config['paths']['output_files']['figures'] + "/{spectrum_type}/activation_plots"), 
+            patterns=["{roi}/{spot_type}_{energy}MeV/bg_estimation_energy_row_{energy_row}.png"],
+            category="{spot_type}_{energy}MeV",
+            subcategory="{spectrum_type}_{roi}",
+            labels={"Energy row": "{energy_row}"}
+        )
+        
+    params:
+        script = config['paths']['scripts']['preprocess_data'],
+        spectrum_type = "{spectrum_type}",
+        preprocessed_dir = config['paths']['data']['preprocessed_dir'],
+        figures_path = config['paths']['output_files']['figures'] + "/{spectrum_type}",
+        data_preprocessing_args = json.dumps(data_preprocessing_args),
+        time_bin = config['dataset']['time_bin'],
+        rois = config['experiment'].get('rois'),
+    log:
+        config['paths']['logs_dir'] + '/data_processing/process_data_{spectrum_type}.log'  # Log file for this rule
+    shell:
+        """
+        python {params.script} \
+        --data_table_path {input.data_table_path} \
+        --preprocessed_dir {params.preprocessed_dir} \
+        --completion_file_path {output.completion_file_path} \
+        --figures_path {params.figures_path} \
+        --spectrum_type {params.spectrum_type} \
+        --rois {params.rois} \
+        --time_bin {params.time_bin} \
+        --data_preprocessing_args {params.data_preprocessing_args} \
+        --metadata_file_path {output.metadata_file} \
+        --metadata_bg_file_path {output.metadata_bg_file} > {log} 2>&1
+        """

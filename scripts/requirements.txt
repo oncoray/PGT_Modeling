@@ -1,0 +1,15 @@
+snakemake
+numpy
+pandas
+tqdm
+SimpleITK
+pydicom
+scipy
+pandas==1.5.3
+scikit-image
+uproot
+matplotlib
+seaborn
+yq
+scikit-learn
+statsmodels

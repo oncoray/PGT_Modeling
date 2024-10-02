@@ -1,0 +1,13 @@
+BSOptionValue           Computations Regarding Value of Options for Log
+                        Normal Distributions
+Estable                 Extremal or Maximally Skew Stable Distributions
+FMstable                Finite Moment Log Stable Distributions
+Gstable                 General Stable Distributions
+moments                 Convolutions of Finite Moment Log Stable
+                        Distributions and the Moments of such
+                        Distributions
+putFMstable             Values of Options over Finite Moment Log Stable
+                        Distributions
+stableParameters        Setting up Parameters to Describe both Extremal
+                        Stable Distributions and Finite Moment Log
+                        Stable Distributions

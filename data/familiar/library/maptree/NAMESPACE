@@ -1,0 +1,19 @@
+# Default NAMESPACE created by R
+# Remove the previous line if you edit this file
+
+# Export all names
+exportPattern(".")
+
+# Import all packages listed as Imports or Depends
+import(
+  cluster,
+  rpart
+)
+
+## suggested by check
+importFrom("grDevices", "rainbow")
+importFrom("graphics", "lines", "par", "plot.new", "plot.window",
+     "points", "polygon", "text", "text.default")
+importFrom("stats", "as.hclust")
+importFrom("utils", "combn")
+importFrom("graphics", "plot")

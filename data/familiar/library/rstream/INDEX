@@ -1,0 +1,38 @@
+rstream-class           Class "rstream" - Multiple streams of uniform
+                        random numbers
+rstream-package         "rstream" - A package for multiple streams of
+                        uniform random numbers
+rstream.RNG             Get and set "rstream" object from/to R global
+                        generator
+rstream.antithetic-methods
+                        Methods for Function rstream.antithetic in
+                        Package 'rstream'
+rstream.clone-methods   Methods for Function rstream.clone in Package
+                        'rstream'
+rstream.incprecision-methods
+                        Methods for Function rstream.incprecision in
+                        Package 'rstream'
+rstream.lecuyer-class   Class "rstream.lecuyer" - Multiple streams with
+                        MRG32k3a backbone generator from Pierre
+                        L'Ecuyers RngStreams package
+rstream.mrg32k3a-class
+                        Class "rstream.mrg32k3a" - Multiple streams
+                        with MRG32k3a backbone generator from Pierre
+                        L'Ecuyers RngStreams package
+rstream.name-methods    Methods for Function rstream.name in Package
+                        'rstream'
+rstream.packed-methods
+                        Methods for Function rstream.packed in Package
+                        'rstream'
+rstream.reset-methods   Methods for Function rstream.reset in Package
+                        'rstream'
+rstream.resetsubstream-methods
+                        Methods for Function rstream.resetsubstream and
+                        rstream.nextsubstream in Package 'rstream'
+rstream.runif-class     Class "rstream.runif" - Interface to R internal
+                        uniform random number generators
+rstream.sample-methods
+                        Methods for Function rstream.sample in Package
+                        'rstream'
+rstream.version         Switch to behavior of earlier version of
+                        package

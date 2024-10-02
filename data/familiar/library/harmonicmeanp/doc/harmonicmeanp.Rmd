@@ -1,0 +1,763 @@
+---
+title: "harmonicmeanp tutorial"
+author: "Daniel J. Wilson"
+date: "17 August 2019"
+output:
+  html_document:
+    df_print: default
+    highlight: default
+    theme: journal
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+vignette: >
+  %\VignetteIndexEntry{harmonicmeanp tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+<!-- run with 
+library(rmarkdown); rmarkdown::render("hmpTutorial.Rmd") 
+-->
+<!-- all options for Rmarkdown: https://bookdown.org/yihui/rmarkdown/html-document.html -->
+<!-- The following block is to enable select-and-copy -->
+<style>
+	.Routput {
+		background-color: white;
+		border-width: medium;
+	}
+	.Rsource {
+		border-width: medium;
+	}
+</style>
+<script>
+	$(function () {
+	  $(document).on('click', 'pre.Rsource', function () {
+					 $('pre.Rsource').removeClass("copiedCode");
+					 $(this).addClass("copiedCode")
+      textarea =  $("<textarea>").val($(this).text()).height(0).appendTo(document.body).select();
+					 document.execCommand('copy');
+					 textarea.remove();
+					 });
+	  });
+</script>
+<style>
+	.copiedCode {
+		border-style: solid;
+		border-color: black;
+		border-width: medium;
+	}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(strip.white=FALSE,class.output="Routput",class.source="Rsource")
+```
+
+# Overview
+***
+
+Note this version of the R package and tutorial addresses two errors in the original paper:
+1) The harmonic mean *p*-value for set $\mathcal{R}$ should be compared against a threshold $\alpha_L$, not $\alpha_{|\mathcal{R}|}$.
+2) The mechanism for calculating asymptotically exact harmonic mean *p*-values was wrongly stated.
+The harmonicmeanp package version 2.0 only corrected error 1. Here both errors are addressed, and many of the results have changed quantitatively. In particular, correcting the errors makes the test less powerful than previously claimed for narrowing down regions of significance. See the updated correction for further information: http://blog.danielwilson.me.uk/2019/07/correction-harmonic-mean-p-value-for.html
+
+***
+
+The harmonic mean *p*-value (HMP) is a method for performing a combined test of the null hypothesis that no *p*-value is significant (Wilson, 2019). It is more robust to dependence between *p*-values than Fisher's (1934) method, making it more broadly applicable. Like Bonferroni correction, the HMP procedure controls the strong-sense family-wise error rate (ssFWER). It is more powerful than common alternatives including Bonferroni and Simes procedures when combining large proportions of all the *p*-values, at the cost of slightly lower power when combining small proportions of all the *p*-values. It rivals the power of the BH procedure (Benjamini and Hochberg, 1995) which controls both the weak-sense family-wise error rate (wsFWER) and the false discovery rate (FDR), in the sense that the HMP is expected to find one or more *p*-values or groups of *p*-values significant more often than the BH procedure finds one or more *p*-values significant.
+
+| Method     | Robust to dependence |                            | Indicative power[^1]                 |                                               |              | Controls     |              |
+|:----------:|:--------------------:|:--------------------------:|:------------------------------------:|:---------------------------------------------:|:------------:|:------------:|:------------:|
+|            |                      | Significance very rare     | Significance uncommon                | Significance common                           | FDR          | wsFWER       | ssFWER       |
+| Fisher     | $\times$             | $\bullet$                  | $\bullet\,\bullet\,\bullet\,\bullet$ | $\bullet\,\bullet\,\bullet\,\bullet\,\bullet$ | $\checkmark$ | $\checkmark$ | $\checkmark$ |
+| HMP        | $\checkmark$         | $\bullet\,\bullet\,\circ$  | $\bullet\,\bullet\,\bullet$          | $\bullet\,\bullet\,\bullet\,\bullet$          | $\checkmark$ | $\checkmark$ | $\checkmark$ |
+| BH         | $\checkmark\checkmark$         | $\bullet\,\bullet\,\circ$  | $\bullet\,\bullet\,\circ$            | $\bullet\,\bullet\,\circ$                     | $\checkmark$ | $\checkmark$ | $\times$     |
+| Bonferroni | $\checkmark\checkmark\checkmark$         | $\bullet\,\bullet\,\circ$  | $\bullet\,\bullet$                   | $\bullet\,\bullet$                            | $\checkmark$ | $\checkmark$ | $\checkmark$ |
+
+[^1]: Wilson (2019) SI Appendix, Fig. S8. BH power has been equated with Simes' (1986), on which BH is based. Power is defined as the power of the combined test, or, for BH, the power to detect any significant hypotheses.
+
+There are two approaches to applying the HMP:
+
+1) One compares $\overset{\circ}{p}_{\mathcal{R}}$, the HMP of a set of *p*-values $\mathcal{R}$, to significance threshold $\alpha_L\,w_\mathcal{R}$.
+
+2) Equivalently, one compares $p_{\overset{\circ}{p}_{\mathcal{R}}}$, an asymptotically exact HMP, to the significance threshold $\alpha\,w_\mathcal{R}$.
+
+In the above,
+
+* $\overset{\circ}{p}_{\mathcal{R}}=\left(\sum_{i\in\mathcal{R}}w_{i}\right)/\left(\sum_{i\in\mathcal{R}}w_{i}/p_{i}\right)$ defines the HMP for the set of *p*-values $\mathcal{R}$. It is computed in R by $\texttt{hmp.stat}$.
+
+* $\alpha_L$ is a significance threshold that depends on the desired family-wise error rate $\alpha$ and the total number of individual *p*-values $L$. It is computed in R by $\texttt{qharmonicmeanp}$.
+
+* $w_1 \dots w_L$ are weights for the individual *p*-values that must sum to one, i.e. $\sum_{i=1}^{L}w_{i}=1$, and $w_\mathcal{R} = \sum_{i\in\mathcal{R}} w_i$ equals the sum of weights of the individual *p*-values in set $\mathcal{R}$. The HMP is robust to the choice of weights, so it is reasonable to start with equal weights ($w_{i}=1/L$).
+
+* The asymptotically exact *p*-value is computed by R using the $\texttt{p.hmp}$ command, which takes into account the total number of individual *p*-values, $L$.
+
+In this tutorial, I will focus on the second approach because one usually wishes to quote in reports a *p*-value that can be directly compared to the usual significance threshold, e.g. $\alpha=0.05$. When the subscript $\mathcal{R}$ is dropped from $\overset{\circ}{p}_{\mathcal{R}}$ and $p_{\overset{\circ}{p}_{\mathcal{R}}}$ it means $\mathcal{R}$ includes all the *p*-values. This is the "headline" HMP.
+
+The method may be used as follows:
+
+* The headline HMP is deemed significant when $\overset{\circ}{p}\leq\alpha_L$ or, equivalently, $p_{\overset{\circ}{p}}\leq\alpha$. Here significant means that we reject the null hypothesis that none of the *p*-values are significant.
+
+* If the headline HMP is not significant, neither is the HMP for any subset. If the headline HMP is significant, subsets may also be significant. The significance thresholds are all pre-determined so the number of subsets that are tested does not affect them.
+
+* The HMP for a subset of *p*-values is deemed significant when $\overset{\circ}{p}_{\mathcal{R}}\leq\alpha_L\,w_{\mathcal{R}}$ or, equivalently, $p_{\overset{\circ}{p}_{\mathcal{R}}}\leq\alpha\,w_{\mathcal{R}}$. Here significant means that we reject the null hypothesis that none of the *p*-values in subset $\mathcal{R}$ are significant.
+
+# Preliminaries
+
+To use this tutorial, copy and paste the R code from your web browser to the R console. In the HTML version, you can select and copy R code simply by clicking within the code snippet (as long as JQuery is enabled in your web browser and the page was compiled with Rmarkdown v2). To ensure the tutorial runs correctly, execute each code snippet once, in order. This tutorial was compiled using Rmarkdown (Allaire et al., 2018), with equations rendered by [Mathjax](https://www.mathjax.org).
+
+If you haven't already installed the package, type at the R console:
+```{r installation, exercise=TRUE, eval=FALSE}
+install.packages("harmonicmeanp")
+```
+
+Once you have installed the package, load it in the usual way:
+```{r require, exercise=TRUE}
+library(harmonicmeanp)
+```
+
+To check you have version 3.0 installed, type
+```{r checkversion, exercise=TRUE, eval=FALSE}
+stopifnot(packageVersion("harmonicmeanp")>=3.0)
+```
+
+# Example 1. Sliding Window Analysis
+
+Download the 312457 *p*-values from chromosome 12 of the genome-wide association study (GWAS) for neuroticism (Okbay et al., 2016). This file is an excerpt of http://ssgac.org/documents/Neuroticism_Full.txt.gz. For usage conditions see http://ssgac.org/documents/ReadMe_genetic_variants_associated_with_swb.txt. It took me a few seconds to download the data excerpt. The 8 megabyte file contains rs identifiers and SNP positions as per human genome build GRCh37/hg19 as well as the *p*-values.
+
+```{r download, exercise=TRUE}
+system.time((gwas = read.delim("http://www.danielwilson.me.uk/files/Neuroticism_ch12.txt",
+  header=TRUE,as.is=TRUE)))
+head(gwas)
+```
+
+The harmonic mean *p*-value (HMP) is a statistic with which one can perform a combined test of the null hypothesis that none of the *p*-values is significant even when the *p*-values are dependent. In GWAS, *p*-values will often be dependent because of genetic linkage. The HMP can be used to test the null hypothesis that no SNPs on chromosome 12 are significant. Let's do it manually by first calculating the HMP, assuming equal weights. Note that a total of *L*=6524432 tests were performed genome-wide, so this number must be used to determine the weights if we are to control the genome-wide ssFWER, even though we are only analysing the 312457 SNPs on chromosome 12 in this example.
+
+```{r HMP, exercise=TRUE}
+L = 6524432
+gwas$w = 1/L
+R = 1:nrow(gwas)
+(HMP.R = sum(gwas$w[R])/sum(gwas$w[R]/gwas$p[R]))
+```
+
+One of the remarkable properties of the HMP is that for small values (e.g. below 0.05), the HMP can be directly interpreted as a *p*-value *after adjusting for multiple comparisons*. That the HMP equals $\overset{\circ}{p}_{\mathcal{R}}=0.0008734522$ suggests it is strongly significant *before multiple testing correction*. To test this formally, first the HMP significance threshold is computed. For that I will assume a false positive rate of $\alpha=0.05$, i.e. 5%.
+
+```{r hmpthreshold, exercise=TRUE}
+# Specify the false positive rate
+alpha = 0.05
+# Compute the HMP significance threshold
+(alpha.L = qharmonicmeanp(alpha, L))
+```
+
+The multiple testing-adjusted threshold against which to evaluate the significance of the combined test is determined by the sum of the weights for the *p*-values being combined. The HMP for subset $\mathcal{R}$ is significant when $\overset{\circ}{p}_\mathcal{R}\leq \alpha_L w_\mathcal{R}$.
+
+```{r hmpthresholdadjust, exercise=TRUE}
+# Test whether the HMP for subset R is significance
+w.R = sum(gwas$w[R])
+alpha.L * w.R
+```
+
+Therefore *after adjusting for multiple comparison* we can reject the null hypothesis of no association on chromosome 12 at level $\alpha=0.05$ because 0.0008734522 is below 0.001241835.
+
+An equivalent approach is to calculate an asymptotically exact *p*-value based on the HMP.
+
+```{r phmp, exercise=TRUE}
+# Use p.hmp instead to compute the HMP test statistic and
+# calculate its asymptotically exact p-value in one step
+# Note this line has changed because of a previous error.
+w.R*pharmonicmeanp(HMP.R/w.R, L=L, lower.tail=TRUE)
+# Compare it to the multiple testing threshold
+w.R*alpha
+```
+
+The asymptotically exact *p*-value of $p_{\overset{\circ}{p}_{\mathcal{R}}}=0.001343897$ is close to the HMP of $\overset{\circ}{p}_{\mathcal{R}}=0.0008734522$ and also significant because it is below $0.002394515$. Note however that direct interpretation of the HMP is anti-conservative compared to the asymptotically exact test, which is why the HMP had to be compared directly to the more stringent threshold $\alpha_L=0.02593083$. The asymptotically exact *p*-value can be computed in one step:
+
+```{r p.hmp, exercise=TRUE}
+# Note that the p.hmp function has been redefined to take argument L. Omitting L will issue a warning.
+R = 1:nrow(gwas)
+p.hmp(gwas$p[R],gwas$w[R],L)
+```
+
+The combined *p*-value for chromosome 12 is useful because if the combined *p*-value is not significant, neither is any constituent *p*-value, after multiple testing correction, as always. Conversely, if the combined *p*-value is significant, there may be one or more subsets of constituent *p*-values that are also significant. These subsets can be hunted down because another useful property of the HMP is that the significance thresholds of these further tests are the same no matter how many combinations of subsets of the constituent *p*-values are tested. Specifically, for any subset $\mathcal{R}$ of the *L* *p*-values, the HMP is compared against a threshold $\alpha_L\,w_{\mathcal{R}}$ (equivalently, the asymptotically exact HMP is compared against a threshold $\alpha\,w_{\mathcal{R}}$), where $w_{\mathcal{\mathcal{R}}}=\sum_{i\in\mathcal{R}}w_{i}$ and the $w_{i}$s are the weights of the individual *p*-values, constrained to sum to one. Assuming equal weights, $w_{i}=1/L$, meaning that $w_{\mathcal{R}}=\left|\mathcal{R}\right|/L$ equals the fraction of all tests being combined. In what follows I will mainly use the asymptotically exact *p*-values, rather than directly interpreting the HMP.
+
+For example, separately test the *p*-values occurring at even and odd positions on chromosome 12:
+
+```{r oddsevens, exercise=TRUE}
+R = which(gwas$pos%%2==0)
+p.hmp(gwas$p[R],gwas$w[R],L)
+w.R = sum(gwas$w[R])
+alpha*w.R
+R = which(gwas$pos%%2==1)
+p.hmp(gwas$p[R],gwas$w[R],L)
+w.R = sum(gwas$w[R])
+alpha*w.R
+```
+
+Neither of the two tests is significant individually: for even positions, the combined *p*-value was $p_{\overset{\circ}{p}_{\mathcal{R}}}=0.002658581$ which was above the significance threshold of $\alpha\,w_{\mathcal{R}}=0.001200587$ and for odd positions, the combined *p*-value was $p_{\overset{\circ}{p}_{\mathcal{R}}}=0.00230653$ which was above the significance threshold of $\alpha\,w_{\mathcal{R}}=0.001193928$.
+
+Comparing *p*-values with different significance thresholds can be confusing. Instead, it is useful to calculate adjusted *p*-values, which are compared directly to $\alpha$, the intended strong-sense familywise error rate. An adjusted *p*-value is simply divided by its weight *w*. For example:
+
+```{r oddsevens.adjust, exercise=TRUE}
+R = which(gwas$pos%%2==0)
+p.R = p.hmp(gwas$p[R],gwas$w[R],L)
+w.R = sum(gwas$w[R])
+(p.R.adjust = p.R/w.R)
+R = which(gwas$pos%%2==1)
+p.R = p.hmp(gwas$p[R],gwas$w[R],L)
+w.R = sum(gwas$w[R])
+(p.R.adjust = p.R/w.R)
+```
+
+Now it is easy to see that both tests are non-significant, assuming $\alpha=0.05$.
+
+Of course it makes little sense to combine *p*-values according to whether their position is an even or odd number. Instead we might wish to test the first 156229 SNPs on chromosome 12 separately from the second 156228 SNPs to begin to narrow down regions of significance.
+
+```{r twohalves, exercise=TRUE}
+R = 1:156229
+p.R = p.hmp(gwas$p[R],gwas$w[R],L)
+w.R = sum(gwas$w[R])
+(p.R.adjust = p.R/w.R)
+R = 156230:312457
+p.R = p.hmp(gwas$p[R],gwas$w[R],L)
+w.R = sum(gwas$w[R])
+(p.R.adjust = p.R/w.R)
+```
+
+This is much clearer: only in the second half of the chromosome can we reject the null hypothesis of no significant *p*-values at the $\alpha=0.05$ level. For the first half of the chromosome, the adjusted *p*-value was $p_{\overset{\circ}{p}_{\mathcal{R}}}/w_{\mathcal{R}}=1$. By the corrected definition of asymptotically exact HMPs, the adjusted *p*-value will not exceed 1, although in general while *p*-values must be 1 or below, adjusted *p*-values need not be. For the second half of the chromosome, the adjusted *p*-value was $p_{\overset{\circ}{p}_{\mathcal{R}}}/w_{\mathcal{R}}=0.02842931$ which is below the standard significance threshold of $\alpha=0.05$.
+
+Note that it was completely irrelevant that we had already performed tests of even- and odd-positioned SNPs: as mentioned above, the significance thresholds are pre-determined by the $w_{\mathcal{R}}$'s no matter how many subsets of *p*-values are tested and no matter in what combinations. We can test any subset of the *p*-values without incurring further multiple testing penalties. For example, let's test 50 megabase windows overlaping at 10 megabase intervals. Testing overlapping versus non-overlapping windows has no effect on the significance thresholds, but of course it has an effect on the resolution of our conclusions and on the computational time.
+
+```{r win, exercise=TRUE}
+# Define overlapping sliding windows of 50 megabase at 10 megabase intervals
+win.50M.beg = outer(0:floor(max(gwas$pos/50e6-1)),(0:4)/5,"+")*50e6
+win.50M.beg = win.50M.beg[win.50M.beg+50e6<=max(gwas$pos)]
+# Calculate the combined p-values for each window
+system.time({
+  p.50M = sapply(win.50M.beg,function(beg) {
+    R = which(gwas$pos>=beg & gwas$pos<(beg+50e6))
+    p.hmp(gwas$p[R],gwas$w[R],L)
+  })
+})
+# Calculate sums of weights for each combined test
+system.time({
+  w.50M = sapply(win.50M.beg,function(beg) {
+    R = which(gwas$pos>=beg & gwas$pos<(beg+50e6))
+    sum(gwas$w[R])
+  })
+})
+# Calculate adjusted p-value for each window
+p.50M.adj = p.50M/w.50M 
+```
+
+Now plot them
+
+```{r winplot, exercise=TRUE, fig.width=7, fig.height=5}
+# Took a few seconds, plotting over 312k points
+gwas$p.adj = gwas$p/gwas$w
+plot(gwas$pos/1e6,-log10(gwas$p.adj),pch=".",xlab="Position on chromosome 12 (megabases)",
+  ylab="Adjusted significance (-log10 adjusted p-value)",
+  ylim=sort(-log10(range(gwas$p.adj,p.50M.adj,na.rm=TRUE)))) 
+arrows(win.50M.beg/1e6,-log10(p.50M.adj),(win.50M.beg+50e6)/1e6,len=0,col="#D3C991",lwd=2)
+# Superimpose the significance threshold, alpha, e.g. alpha=0.05
+abline(h=-log10(0.05),col="black",lty=2)
+# When using the HMP to evaluate individual p-values, the HMP threshold must be used,
+# which is slightly more stringent than Bonferroni for individual tests
+abline(h=-log10(qharmonicmeanp(0.05,L)),col="grey",lty=2)
+# For comparison, plot the conventional GWAS threshold of 5e-8. Need to convert
+# this into the adjusted p-value scale. Instead of comparing each raw p-value
+# against a Bonferonni threshold of alpha/L=0.05/6524432, we would be comparing each
+# against 5e-8. So the adjusted p-values p/w=p*L would be compared against
+# 5e-8*L = 5e-8 * 6524432 = 0.3262216
+abline(h=-log10(0.3262216),col="grey",lty=3) 
+```
+
+The black dashed line shows the $\alpha=0.05$ significance threshold. The grey dashed line shows the HMP threshold against which individual (i.e. single) *p*-values must be evaluated - this is the cost of using the HMP. (Equivalently, we could have plotted asymptotically exact *p*-values calculated from the individual tests, instead of the original individual *p*-values, and compared them directly to the black dashed line.) The grey dotted line shows $\alpha=0.326$. Evaluating the adjusted *p*-values against this third threshold produces a procedure equivalent to applying a threshold of $5\times10^{-8}$ to the raw *p*-values, which has been adopted as a convention in human GWAS.
+
+No SNPs are individually significant by either threshold. However, the HMP detects several 50 megabase regions of significance. List their positions
+
+```{r listpos, exercise=TRUE}
+win.50M.beg[which(p.50M.adj<=0.05)]
+# Also list the position of the most significant individual (adjusted) p-value
+(peakpos = gwas$pos[gwas$p.adj==min(gwas$p.adj)])
+```
+
+As you can see, the genome-wide significant regions are consecutive windows spanning from megabases 70-80 to 120-130 on chromosome 12. Not too surprisingly, the region encompasses the most significant individual SNP at position 118876918.
+
+A natural question is **can we identify the smallest groups of significant *p*-values?** As explained above, there is no penalty for conducting the extra combined tests required to answer this question because the significance thresholds are all predetermined. This is because conceptually the HMP is a multilevel test, meaning that when a combined test is conducted, all subsets of combined tests are implicitly performed at the same time - although to perform them explicitly requires additional computation.
+
+Let's test windows of varying lengths centred on the most significant individual SNP (which recall is not, by itself, genome-wide significant).
+
+```{r winlengths, exercise=TRUE}
+# Window of 100 base pairs
+wlen = 100
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 1 kilobase
+wlen = 1e3
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 10 kilobases
+wlen = 1e4
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 100 kilobases
+wlen = 1e5
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 1 megabase
+wlen = 1e6
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 10 megabases
+wlen = 1e7
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 20 megabases
+wlen = 2e7
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 30 megabases
+wlen = 3e7
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 40 megabases
+wlen = 4e7
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# Window of 50 megabases
+wlen = 5e7
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+```
+
+The 40 megabase window centred on position 118876918 is genome-wide significant at $\alpha=0.05$, but the 30 megabase window is not. So this manual approach did not get us much closer. With the HMP, it is valid to use optimization to find the smallest significant group of SNPs centred on position 118876918.
+
+```{r optwin, exercise=TRUE}
+# Find the smallest window centred on position 118876918 significant at alpha=0.05
+f = function(wlen) {
+  R = which(abs(gwas$pos-peakpos)<wlen)
+  p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R])
+  return(p.R.adjust - 0.05)
+}
+(wlen.opt = uniroot(f,c(3e7,4e7))$root)
+# Show that the group of SNPs in this window is indeed significant
+wlen = wlen.opt
+R = which(abs(gwas$pos-peakpos)<wlen)
+(p.R.adjust = p.hmp(gwas$p[R],gwas$w[R],L)/sum(gwas$w[R]))
+# The number of individual SNPs included in this group
+length(R)
+```
+
+This shows that the smallest significant window occurs with window length 37421465 base pairs and encompasses 125164 SNPs. In this example, we have optimized in a highly constrained way, only testing combinations of *p*-values that correspond to consecutive SNPs centred on position 118876918. However, it would be conceptually valid, if computationally challenging, to test all combinations of *p*-values and report the smallest groups that are significant, after correcting for multiple testing, as always, by using the threshold $p_{\overset{\circ}{p}_{\mathcal{R}}}\leq\alpha\,w_{\mathcal{R}}$.
+
+There are many genes in this 37.4 megabase window, spanning chromosome 12 positions 100166186-137587650, and although it includes genes TAOK3 and SUDS3 near the peak SNP, on which more information below, the large window size means other genes in the window could be responsible for the signal. Searching the GWAS database reveals that SNPs in TAOK3 are associated with the following traits (https://www.ebi.ac.uk/gwas/genes/TAOK3):
+
+- Blood protein levels
+
+- Glucose homeostasis traits
+
+- Morphine dose requirement in tonsillectomy and adenoidectomy surgery
+
+- Neuroticism
+
+- Post bronchodilator FEV1 in COPD
+
+- Red cell distribution width
+
+- Systemic lupus erythematosus
+
+Likewise, SNPs in SUDS3 are associated with the following traits (https://www.ebi.ac.uk/gwas/genes/SUDS3):
+
+- Depression (broad)
+
+- Hippocampal sclerosis
+
+The association between TAOK3 and neuroticism was reported in a meta-analysis involving 449,484 individuals (Nagel et al., 2018), 2.6 times as many as Okbay et al. (2016), on whose data the HMP reveals a genome-wide significant association overlapping this gene, although the region identified is 37.4 megabases.
+
+# Example 2. Model-averaging in Regression
+
+The aim of this example is to use linear regression to test whether a response variable is associated with a regressor of interest, controlling for potential confounding regressors. The problems are that one does not know which of the potential confounders to include (none, some, or all), the confounders are correlated, and power is limited. These complexities are common in the application of linear models, they exemplify a wider class of model selection problems, and they can be addressed by model averaging using the HMP to combine tests.
+
+The specific example comes from the field of comparative phylogenetics, in which a common question is whether two traits are non-randomly associated across different species (Symonds and Blomberg, 2014). Fiddler crabs (genus *Uca*) have enlarged claws which are used in male-to-male competition. Species differ in claw size and the question is whether bigger claws are associated with bigger crabs. However, phylogeny can confound the analysis because species that share common ancestors are likely to have more similar traits including body size and claw size, regardless of other forces driving any association such as developmental constraints or natural selection. (The use of linear regression in this example is for demonstrating the use of the HMP, and is not meant to imply this is the recommended method. Phylogenetic regression (Grafen, 1989) or linear mixed models would normally be preferred).
+
+The phylogeny below shows the relationship between the five species of Fiddler crabs under consideration. The tips of the tree are labelled by the species names and the internal nodes of the tree (the common ancestors) of interest[^2] are labelled A and B. A scatterplot of claw size (quantified as log propodus length) versus body size (log carapace breadth) is shown. The example data come from Symonds and Blomberg (2014):
+
+[^2]: Here, ancestral changes in a trait are estimable only for common ancestors of between 2 and $n-2$ species, which is why they are deemed of interest.
+
+```{r fiddler, exercise=TRUE, fig.width=4, fig.height=4}
+# Load the ape package for reading and plotting the tree
+library(ape)
+tree = read.tree((PIPE=pipe(
+'echo "(((chlorophthalmus:1,crassipes:1)A:1,(inversa:1,sindensis:1)B:1):1,argillicola:3);"'
+))); close(PIPE)
+plot(tree, show.node.label=TRUE)
+
+log.carapace.breadth = c("chlorophthalmus"=1.02,"crassipes"=1.06,"inversa"=0.96,
+"sindensis"=0.92,"argillicola"=0.89)
+log.propodus.length = c("chlorophthalmus"=1.38,"crassipes"=1.41,"inversa"=1.36,
+"sindensis"=1.22,"argillicola"=1.13)
+
+plot(log.propodus.length ~ log.carapace.breadth)
+```
+
+The following code defines the data frame for further analysis
+
+```{r dataframe, exercise=TRUE}
+# Convert branches in the tree into informative 'partitions'
+informative.partitions = function(tree) {
+  n = length(tree$tip.label)
+  m = sapply(n+1:tree$Nnode,function(node) {
+    1*is.na(match(tree$tip.label,extract.clade(tree,node)$tip.label))
+  })
+  rownames(m) = tree$tip.label
+  colnames(m) = paste0("node.",tree$node.label)
+  cs = colSums(m)
+  is.informative = pmin(cs,n-cs)>1
+  m[,is.informative]
+}
+# Extract phylogenetically informative partitions from the tree
+partition = informative.partitions(tree)
+
+# Create a data frame combining all the information
+Uca = data.frame(log.propodus.length,log.carapace.breadth,partition)
+```
+
+The essence of the model selection problem is that we wish to test for a direct association between claw size and body size but we do not know which confounders to include in the analysis. I.e. there is uncertainty in the model. The principal concerns with the model uncertainty are:
+
+- Which confounders do I need to include?
+
+- How do I avoid unnecessary loss of power?
+
+- How do I control the false positive rate for multiple tests?
+
+Power is lost in a number of ways:
+
+- Fitting too many regressors, which uses up degrees of freedom.
+
+- Fitting mutually correlated regressors, whose effects are difficult to disentangle.
+
+- Applying punitive multiple testing correction.
+
+The counterpoint to the last difficulty is that failing to apply proper multiple testing correction risks inflating the false positive rate. The HMP helps address these problems.
+
+The models can be fully enumerated (in this simple example) as follows:
+
+```{r models, exercise=TRUE}
+# Claw size does not vary by species
+m0 = formula(log.propodus.length ~ 1) # grand null
+# Claw size is associated with body size and there is no phylogenetic correlation
+m1 = formula(log.propodus.length ~ log.carapace.breadth)
+# Claw size isn't associated with body size but it is different in the descendents of ancestor A
+m2 = formula(log.propodus.length ~ node.A)
+# Claw size isn't associated with body size but it is different in the descendents of ancestor B
+m3 = formula(log.propodus.length ~ node.B)
+# Claw size is associated with body size and it is different in the descendants of ancestor A
+m4 = formula(log.propodus.length ~ log.carapace.breadth + node.A)
+# Claw size is associated with body size and it is different in the descendants of ancestor B
+m5 = formula(log.propodus.length ~ log.carapace.breadth + node.B)
+# Claw size isn't associated with body size but is different in descendents of ancestors A & B
+m6 = formula(log.propodus.length ~ node.A + node.B)
+# Claw size is associated with body size and is different in descendants of ancestors A & B
+m7 = formula(log.propodus.length ~ log.carapace.breadth + node.A + node.B) # grand alternative
+# List the alternatives together
+mA = list(m1,m2,m3,m4,m5,m6,m7)
+```
+
+(More generally, the models can be exhaustively enumerated with the function in Appendix I) The key point is that for each model that includes body size as a regressor, there is a complementary model that excludes it. Each of these pairs of nested models constitutes a candidate test for the association between claw size and body size:
+
+- Model $\mathcal{M}_{1}$ versus $\mathcal{M}_{0}$. 
+
+- Model $\mathcal{M}_{4}$ versus $\mathcal{M}_{2}$.
+
+- Model $\mathcal{M}_{5}$ versus $\mathcal{M}_{3}$.
+
+- Model $\mathcal{M}_{7}$ versus $\mathcal{M}_{6}$.
+
+The problems are that the *p*-values from these four tests may produce different answers, the tests may differ in power, the scenarios may differ in plausibility, and the *p*-values will not be independent. So how will the results be interpreted? The HMP helps because it allows non-independent tests to be combined. The HMP is not overly sensitive to the weights, so initially I will assume equal weights, but later I will optimize the power of the HMP by accounting for the power of the constituent tests, and their prior plausibility, in the weights.
+
+Before proceeding, it is worth taking a step back, because after using the HMP to perform a model-averaged test for a significant effect of body size on claw size, one might wish to perform analogous tests for the other regressors. I.e. one might wish to test whether the descendants of ancestor A (or B, or both) differ systematically in claw size from the other species. In total we have *s*=3 regressors for selection in the model (log.carapace.breadth, node.A, node.B), excluding regressors that will be included in every model (in this case, an intercept term). Therefore there are $2^{s}$ possible models to fit. For each of the *s* regressors, there are $2^{s-1}$ possible tests of significance, because there are $2^{s-1}$ combinations of the other *s*-1 regressors. In total, that makes $2^{s-1}s$ possible tests. Clarifying the total number of possible tests is important for setting the weights and, through the weights, the significance thresholds.
+
+- It is the responsibility of the user to correctly specify the total number of tests if the false positive rate is to be controlled using the HMP.
+
+- Do not count combined tests performed using the HMP in this total, only the number of tests that produced the input *p*-values. Count tests you have not even done yet if you intend to do them.
+
+Assuming equal weights, $w_{i}=\frac{1}{2^{s-1}s}=\frac{1}{12}$ for every test. Each individual test has significance threshold $\alpha w_{i}$, as usual - this is equivalent to the Bonferroni threshold. The power of the HMP stems from the ability to (i) combine test outcomes and (ii) evaluate them against less stringent thresholds.
+
+To test for a direct association between claw size and body size, we are going to calculate a HMP test statistic
+
+$$\overset{\circ}{p}_{\textrm{body size}}=\frac{w_{1:0}+w_{4:2}+w_{5:3}+w_{7:6}}{w_{1:0}/p_{1:0}+w_{4:2}/p_{4:2}+w_{5:3}/p_{5:3}+w_{7:6}/p_{7:6}}$$
+
+where the notation $p_{A:0}$ and $w_{A:0}$ indicates the *p*-value and weight from the test of model $\mathcal{M}_{A}$ versus $\mathcal{M}_{0}$. From the HMP test statistic we calculate an asymptotically exact combined *p*-value $p_{\overset{\circ}{p}_{\textrm{body size}}}$ which we then evaluate against significance threshold $\alpha\:w_{\textrm{body size}}$ where
+
+$$w_{\textrm{body size}}=w_{1:0}+w_{4:2}+w_{5:3}+w_{7:6}.$$
+
+[Recall that $p_{\overset{\circ}{p}_{\textrm{body size}}}\approx\overset{\circ}{p}_{\textrm{body size}}$ when $\overset{\circ}{p}_{\textrm{body size}}\ll 1$. Note also that the calculation of $p_{\overset{\circ}{p}_{\textrm{body size}}}$ via $\overset{\circ}{p}_{\textrm{body size}}$ will be performed in a single R command (p.hmp).]
+
+The first step is to calculate the *p*-values that are to be combined. Since the total number of tests is large, we will calculate them in batches immediately before combining them. There is one *p*-value for each possible pair of models that include and do not include body size (log carapace breadth).
+
+```{r pairwisetests, exercise=TRUE}
+# Output p-values from all tests for the inclusion of the primary regressor
+pairwise.p = function(response,primary,data) {
+  # Define a model space including the grand null
+  rid = which(colnames(data)==response)
+  if(length(rid)!=1) stop("Could not find response variable")
+  # Define the 'primary' regressor
+  pid = which(colnames(data)==primary)
+  if(length(pid)!=1) stop("Could not find primary regressor")
+  # Define the 'secondary' regressors, excluding the response and 'primary' regressor
+  xid = (1:ncol(data))[-c(rid,pid)]
+  if(length(xid)<1) stop("Could find only the primary regressor")
+  # Create a table of every unique combination of models involving the secondary regressors
+  delta = expand.grid(lapply(xid,function(j) 0:1))
+  colnames(delta) = colnames(data)[xid]
+  # Sort them by the number of regressors included, from fewest to most
+  delta = delta[order(rowSums(delta)),]
+  # Enumerate the models, adding the primary regressor to every one
+  mpairs = apply(delta,1,function(x) {
+    if(all(x==0)) {
+      formula(paste0(colnames(data)[rid],"~",colnames(data)[pid]))
+    } else {
+      formula(paste0(colnames(data)[rid],"~",colnames(data)[pid],"+",
+        paste(colnames(data)[xid][x==1],collapse="+")))
+    }
+  })
+  names(mpairs) = gsub(colnames(data)[pid],paste0("[",colnames(data)[pid],"]"),
+    as.character(mpairs),perl=TRUE)
+  # Calculate a p-value for the inclusion of the primary regressor in each model
+  lapply(mpairs,function(m) {
+    fit = lm(m, data=data)
+    drop1(fit,colnames(data)[pid],test="Chisq")[colnames(data)[pid],"Pr(>Chi)"]
+  })
+}
+# Calculate the p-values from all tests for the inclusion of log.carapace.breadth
+(p = pairwise.p(response="log.propodus.length",primary="log.carapace.breadth",data=Uca))
+```
+
+Next one performs the combined test for an association between claw size (the response) and body size (the regressor of interest). It is essential to get the weights right. Although we are only combining four *p*-values right now, there are $L=2^{s-1}s=12$ tests in total:
+
+```{r hmpbodysize, exercise=TRUE}
+# Specify the weight of each test, assuming equal weights
+L = 12
+(w = rep(1/L,length(p)))
+# Calculate the model-averaged (asymptotically exact) HMP
+(p.comb = p.hmp(p,w,L))
+# Sum the weights of the constituent tests
+(w.comb = sum(w))
+# Calculate an adjusted model-averaged p-value for comparison to the ssFWER alpha
+(p.comb.adj = p.comb/w.comb)
+```
+
+So we find that, after multiple testing correction, there is a significant association between claw size and body size (p=0.001560334) at the $\alpha=0.05$ level. How does this compare to the individual tests (after multiple testing correction) and Bonferroni correction? [Note that Bonferroni correction is frequently used in both senses - to adjust individual *p*-values for multiple testing and to perform a combined test by taking the minimum of the adjusted *p*-values. HMP penalizes the individual tests more than Bonferroni.]
+
+```{r bonferronibodysize, exercise=TRUE}
+(p.HMP.adj = Vectorize(p.hmp)(p,w,L)/w)
+(p.Bonf.adj = unlist(p)/w)
+(p.Bonf = min(p.Bonf.adj))
+```
+
+We find that the Bonferroni method produces a combined *p*-value that is also significant (*p*=0.00178426), but less significant than the HMP. The difference is small in this example because one adjusted *p*-value dominated, in the sense of being much smaller than the others.
+
+Repeat the above for the other two regressors:
+
+```{r hmpnodeAB, exercise=TRUE}
+# Is there a significant difference in claw size between the descendants of ancestor A
+# and other species?
+p = pairwise.p(response="log.propodus.length",primary="node.A",data=Uca)
+w = rep(1/L,length(p))
+p.hmp(p,w,L)/sum(w)
+# Individual tests: HMP and Bonferroni
+(p.hmp.adj = Vectorize(p.hmp)(p,w,L)/w)
+(p.adj = unlist(p)/w)
+(p.Bonf = min(p.adj))
+# Is there a significant difference in claw size between the descendants of ancestor B
+# and other species?
+p = pairwise.p(response="log.propodus.length",primary="node.B",data=Uca)
+w = rep(1/L,length(p))
+p.hmp(p,w,L)/sum(w)
+# Individual tests: HMP and Bonferroni
+(p.hmp.adj = Vectorize(p.hmp)(p,w,L)/w)
+(p.adj = unlist(p)/w)
+(p.Bonf = min(p.adj))
+```
+
+We find that the descendants of ancestor A do have significantly different claw sizes from other species, taking into account uncertainty in the model, but the descendants of ancestor B do not. In this case, the Bonferroni-adjusted *p*-value was slightly smaller than the HMP-adjusted asymptotically exact *p*-value.
+
+# Optimizing the Weights in the Comparative Phylogenetics Example
+
+So far equal weights have been used in the calculation of the HMP. Equal weights are defensible because theory and simulations show that the HMP is robust to the choice of weights (e.g. Wilson (2019) SI Figure S3). Nevertheless, the power of the HMP can be optimized by specifying weights that are informative about (i) the prior probability that the alternative hypothesis associated with each *p*-value is true and (ii) the power of the test associated with each *p*-value. The optimal significance threshold for *p*-value *i* is approximately
+
+$$\alpha\,w_{i}=\left(\frac{\mu_{i}\xi_{i}}{\lambda}\right)^{\frac{1}{1-\xi_{i}}}$$
+
+(Wilson (2019) SI Equation 62, after rescaling $\lambda$ by $1/\alpha$). In this equation:
+
+- $\mu_{i}$ is the prior probability that the alternative hypothesis associated with $p_{i}$ is true, normalized so that $\sum_{i=1}^{L}\mu_{i}=1$.
+
+- $\xi_{i}$ is a parameter describing the distribution of $p_{i}$ under the alternative hypothesis, assuming it can be approximated by a $\textrm{Beta}\left(\xi_{i},1\right)$ distribution. This is an L-shaped distribution representing the enrichment of *p*-values near zero under the alternative hypothesis. The parameter ranges from $\xi_{i}=0$ (optimally informative test) to $\xi_{i}=1$ (completely uninformative test).
+
+- $\lambda$ is a normalizing constant that is chosen to impose the constraint that $\sum_{i=1}^{L}w_{i}=1$.
+
+The optimal weights (or, equivalently, the optimal thresholds) are therefore a non-linear function of the $\mu_{i}$s and $\xi_{i}$s except when all the $\xi_{i}$s are much less than one, in which case $1/(1-\xi_{i})\approx 1$. To illustrate how the weights are optimized by specifying these variables, I will use the Fiddler crabs example.
+
+### Prior specification
+
+Specifying the relative probability that alternative hypothesis $\mathcal{M}_{i}$ is true requires some thought. In some cases it might be reasonable to assume all alternatives are equally likely, for example if every model contains the same number of regressors. However, in model selection problems, the number of possible models increases as the number of regressors included in the model increases, so a uniform prior on the alternative hypotheses has a built-in preference for more complex models, which may not be desired.
+
+A simple prior for model selection might be based around a single probability, *m*, that any regressor is included in the model, which is the same for every regressor. Then the prior probability of alternative hypothesis $\mathcal{M}_{i}$ is
+
+$$\mu_{i}\propto\Pr\left(\mathcal{M}_{i}\right)=m^{\tau_{i}}\left(1-m\right)^{s-\tau_{i}}$$
+
+where $\tau_{i}$ is the number of regressors, out of s, included in alternative hypothesis $\mathcal{M}_{i}$, excluding terms included in every model (such as an intercept) and $L=2^{s}-1$ is the total number of alternative hypotheses. Smaller values of *m* will favour less complex models.
+
+In the Fiddler crab example there are $2^{s-1}s$ tests, around a factor $s/2$ more than the number of models, because some models, such as the grand alternative, are compared to several different nested null hypotheses. Each test is assigned the prior probability of its alternative hypothesis; in general these probabilities may not sum to one, but this is unimportant because the normalizing constant will be absorbed by $\lambda$.
+
+In what follows, I will assume *a priori* that *m*=1/*s* so the expected number of regressors averaged over all models (the alternatives and the grand null) is one. I will begin by performing all tests so I have them in one place:
+
+```{r ppairwise, exercise=TRUE}
+p = c(
+  unlist(pairwise.p(response="log.propodus.length",primary="log.carapace.breadth",data=Uca)),
+  unlist(pairwise.p(response="log.propodus.length",primary="node.A",data=Uca)),
+  unlist(pairwise.p(response="log.propodus.length",primary="node.B",data=Uca)))
+```
+
+I will count the number of terms in each alternative hypothesis and calculate an (unnormalized) prior probability
+
+```{r terms, exercise=TRUE}
+terms = lapply(names(p),function(s) labels(terms(as.formula(gsub("\\[|\\]","",s,perl=TRUE)))))
+(nterms = unlist(lapply(terms,length)))
+(s = ncol(Uca)-1)
+(m = 1/s)
+(mu = m^nterms * (1-m)^(s-nterms))
+```
+
+### Power specification
+
+The power of the test associated with an individual *p*-value, defined as the probability of significance given the alternative hypothesis is true, might appear more objective than specifying a prior probability, and it would be but for the problem that power can only be calculated with respect to specific values (or distributions of values) of the parameters under the alternative hypothesis. Wilson (2019) Equation 58 shows that the power of the Wald test for the inclusion of a single regressor in a linear model is
+
+$$\Pr\left(p_{i}<\alpha\right)\approx\Pr\left(\chi_{1}^{2}>\frac{Q_{\chi_{1}^{2}}\left(1-\alpha\right)}{1+\frac{\sigma_{\beta}^{2}}{\sigma_{\epsilon}^{2}}\left\{ \left(X^{\prime}X\right)^{-1}\right\} _{cc}^{-1}}\right)$$
+
+where $\chi_{1}^{2}$ is a chi-squared random variable with 1 degree of freedom, $Q_{\chi_{1}^{2}}\left(1-\alpha\right)$ is the critical value of $\chi_{1}^{2}$ for significance at level $\alpha$, *X* is the matrix of regressors, including intercepts, of which column c corresponds to the regressor whose inclusion is being tested, and $\sigma_{\beta}^{2}/\sigma_{\epsilon}^{2}$ is the relative magnitude of the variance of a Normal prior on the effect size of the regressor-of-interest, compared to the error variance. This last term must be chosen carefully for every regressor.
+
+In what follows, I will assume $\sigma_{\beta}^{2}/\sigma_{\epsilon}^{2}=2/V\left(X_{c}\right)$, i.e. the expected magnitude of the effect size of regressor *c* is twice the expected magnitude of the error term, after standardizing the variances of all the regressors to equal one.
+
+```{r test.term, exercise=TRUE}
+test.term = sapply(names(p),function(s) 
+  gsub("\\[|\\]","",regmatches(s,regexpr("\\[.*?\\]",s,perl=TRUE)),perl=TRUE)
+)
+Uca.var = apply(Uca,2,var)
+ssqb.over.ssqe = 2/Uca.var[test.term]
+names(ssqb.over.ssqe) = names(p)
+Var.beta.over.ssqe = sapply(names(p),function(s) {
+  test.term = gsub("\\[|\\]","",
+    regmatches(s,regexpr("\\[.*?\\]",s,perl=TRUE)),perl=TRUE)
+  X = model.matrix(as.formula(gsub("\\[|\\]","",s,perl=TRUE)), data=Uca)
+  solve(crossprod(X))[test.term,test.term]
+})
+
+# When the beta approximation performs poorly, best to evaluate
+# near the likely value of the final threshold
+smallp = 0.05/length(p)
+# These are the test powers assuming threshold smallp
+(smallp.pow = pchisq(qchisq(smallp,1,lower.tail=FALSE)/
+  (1+ssqb.over.ssqe/Var.beta.over.ssqe),1,lower.tail=FALSE))
+# Sanity checks
+if(any(smallp.pow==1))
+  warning("Perfect power test detected, check this is plausible")
+if(any(smallp.pow<smallp))
+  stop("Tests with worse power than smallp violate assumptions")
+if(any(!is.finite(smallp.pow)) | any(smallp.pow<0) | any(smallp.pow>1))
+  stop("Power cannot be outside range 0-1")
+# Convert them into the parameter of the Beta(xi,1) distribution
+xi = log(smallp.pow)/log(smallp)
+if(any(!is.finite(xi)) | any(xi<0) | any(xi>1))
+  stop("Beta(xi,1): xi cannot be outside range 0-1")
+
+# Optimize the weights
+wfunc = function(mu,xi,lambda,alpha) (mu*xi/lambda)^(1/(1-xi))/alpha
+lambdafunc = function(lambda,alpha) sum(wfunc(mu,xi,lambda,alpha))-1
+lambda = uniroot(lambdafunc,c(1e-6,1e6),0.05)$root
+lambda = uniroot(lambdafunc,lambda*c(0.1,1.1),0.05)$root
+(w = wfunc(mu,xi,lambda,0.05))
+# Check the weights sum to one
+sum(w)
+if(abs(1-sum(w))>1e-4) stop("weights do not sum to one, check")
+```
+
+Now repeat the previous analyses using the new weights
+
+```{r wvsunw, exercise=TRUE}
+# Compare the weighted and unweighted results
+wequal = rep(1/length(w),length(w))
+# For log.carapace.breadth
+incl = which(test.term == "log.carapace.breadth")
+c("weighted"=p.hmp(p[incl],w[incl],L)/sum(w[incl]),
+  "unweighted"=p.hmp(p[incl],wequal[incl],L)/sum(wequal[incl]))
+# For node.A
+incl = which(test.term == "node.A")
+c("weighted"=p.hmp(p[incl],w[incl],L)/sum(w[incl]),
+  "unweighted"=p.hmp(p[incl],wequal[incl],L)/sum(wequal[incl]))
+# For node.B
+incl = which(test.term == "node.B")
+c("weighted"=p.hmp(p[incl],w[incl],L)/sum(w[incl]),
+  "unweighted"=p.hmp(p[incl],wequal[incl],L)/sum(wequal[incl]))
+# Headline
+incl = 1:length(p)
+c("weighted"=p.hmp(p[incl],w[incl],L)/sum(w[incl]),
+  "unweighted"=p.hmp(p[incl],wequal[incl],L)/sum(wequal[incl]))
+```
+
+The weighted HMP produces a (slightly) more significant association between claw size and body size, and a (slightly) more significant headline *p*-value (rejecting the null that none of the alternatives are true). The weighted HMP produces (slightly) less significant associations between claw size and descent from ancestors A and B. The small magnitude of the differences support the claim that the HMP is relatively insensitive to weights. While the power of the weighted HMP is expected to be better on average (if the prior probabilities and powers are calculated correctly), it does not follow that the result of any particular test will necessarily be more significant.
+
+# Appendix I. Function to enumerate all possible models
+
+```{r enumerateallmodels, exercise=TRUE}
+enumerate.models = function(response,data) {
+  # Define the response variable
+  rid = which(colnames(data)==response)
+  if(length(rid)!=1) stop("Could not find the response variable")
+  # Define the regressors
+  xid = (1:ncol(data))[-rid]
+  # Create a table defining every unique combination of alternative hypotheses
+  delta = expand.grid(lapply(xid,function(j) 0:1))
+  colnames(delta) = colnames(data)[xid]
+  # Sort them from fewest to most terms
+  delta = delta[order(rowSums(delta)),]
+  # Remove the grand null model
+  delta = delta[rowSums(delta)>0,]
+  # Define the grand null model separately
+  m0 = formula(paste0(colnames(data)[rid],"~1"))
+  # Define the alternative models
+  mA = apply(delta,1,function(x) formula(paste0(colnames(data)[rid],"~",
+    paste(colnames(data)[xid][x==1],collapse="+"))))
+  names(mA) = as.character(mA)
+  return(list("m0"=m0,"mA"=mA))
+}
+# E.g. on the Uca data
+enumerate.models("log.propodus.length",Uca)
+```
+
+# References
+
+- Allaire, J. J., et al. (2018). *rmarkdown: Dynamic Documents for  R*. R package version 1.11. URL https://rmarkdown.rstudio.com.
+  
+- Benjamini, Y., Hochberg, Y. (1995) Controlling the false discovery rate: a practical and powerful approach to multiple testing. *Journal of the Royal Statistical Society. Series B* 57(1):289–300.
+
+- Fisher, R. A. (1934) *Statistical Methods for Research Workers.* (Oliver and Boyd, Edinburgh), Fifth edition.
+
+- Grafen, A. (1989) The phylogenetic regression. *Philosophical Transactions of the Royal Society Series B, Biological Sciences* 326(1233):119–157.
+
+- Imhof, J. P. (1961) Computing the distribution of quadratic forms in normal variables. *Biometrika* 48(3/4):419–426.
+
+- Nagel, M., et al. (2018) Meta-analysis of genome-wide association studies for neuroticism in 449,484 individuals identifies novel genetic loci and pathways. *Nature Genetics* 50(7):920–927.
+
+- Okbay, A., et al. (2016) Genetic variants associated with subjective well-being, depressive symptoms, and neuroticism identified through genome-wide analyses. *Nature Genetics* 48(6):624–633.
+
+- Scheffé, H. (1959) *The Analysis of Variance.* Wiley, New York.
+
+- Sellke, T., Bayarri, M. J., Berger, J. O. (2001) Calibration of *p* values for testing precise null hypotheses. *The American Statistician* 55(1):62–71.
+
+- Simes, R. J. (1986) An improved Bonferroni procedure for multiple tests of significance. Biometrika 73(3):751–754.
+
+- Symonds, M. R. E., Blomberg, S. P. (2014) A primer on phylogenetic generalised least squares. In Zsolt Garamszegi, L. (ed) *Modern Phylogenetic Comparative Methods and Their Applications in Evolutionary Biology*, pp. 105-130. Springer, Berlin.
+
+- Wilson, D. J. (2019) The harmonic mean *p*-value for combining dependent tests. *Proceedings of the National Academy of Sciences USA* 116(4):1195-1200.

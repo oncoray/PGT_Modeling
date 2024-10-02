@@ -1,0 +1,13 @@
+%*%,big.matrix,vector-method
+                        big.matrix prod
+deviance.fastglm        deviance method for fastglm fitted objects
+family.fastglm          family method for fastglm fitted objects
+fastglm                 fast generalized linear model fitting
+fastglmPure             fast generalized linear model fitting
+logLik.fastglm          logLik method for fastglm fitted objects
+predict.fastglm         Obtains predictions and optionally estimates
+                        standard errors of those predictions from a
+                        fitted generalized linear model object.
+print.fastglm           print method for fastglm objects
+residuals.fastglm       residuals method for fastglm fitted objects
+summary.fastglm         summary method for fastglm fitted objects

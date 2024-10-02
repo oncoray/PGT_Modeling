@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Alex Zwanenburg" />
+
+<meta name="date" content="2022-12-16" />
+
+<title>Feature selection methods</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iDQogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIg0KICAgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIg0KICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCINCiAgIHhtbG5zOmlua3NjYXBlPSJodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy9uYW1lc3BhY2VzL2lua3NjYXBlIg0KICAgdmVyc2lvbj0iMS4xIg0KICAgaWQ9IkxheWVyXzEiDQogICB4PSIwcHgiDQogICB5PSIwcHgiDQogICB2aWV3Qm94PSIwIDAgNzM1IDg1MiINCiAgIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDczNSA4NTI7Ig0KICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSINCiAgIHNvZGlwb2RpOmRvY25hbWU9ImZhbWlsaWFyLnN2ZyINCiAgIGlua3NjYXBlOnZlcnNpb249IjEuMC4xICgzYmMyZTgxM2Y1LCAyMDIwLTA5LTA3KSI+PG1ldGFkYXRhDQogICBpZD0ibWV0YWRhdGE3OSI+PHJkZjpSREY+PGNjOldvcmsNCiAgICAgICByZGY6YWJvdXQ9IiI+PGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+PGRjOnR5cGUNCiAgICAgICAgIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiIC8+PC9jYzpXb3JrPjwvcmRmOlJERj48L21ldGFkYXRhPjxkZWZzDQogICBpZD0iZGVmczc3Ij48Y2xpcFBhdGgNCiAgICAgY2xpcFBhdGhVbml0cz0idXNlclNwYWNlT25Vc2UiDQogICAgIGlkPSJjbGlwUGF0aDEyNjEiPjxwYXRoDQogICAgICAgY2xhc3M9InN0MCINCiAgICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICAgIGlkPSJwYXRoMTI2MyINCiAgICAgICBzdHlsZT0iZGlzcGxheTppbmxpbmU7ZmlsbDojZmZkNWU1IiAvPjwvY2xpcFBhdGg+PC9kZWZzPjxzb2RpcG9kaTpuYW1lZHZpZXcNCiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiINCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2Ig0KICAgYm9yZGVyb3BhY2l0eT0iMSINCiAgIG9iamVjdHRvbGVyYW5jZT0iMTAiDQogICBncmlkdG9sZXJhbmNlPSIxMCINCiAgIGd1aWRldG9sZXJhbmNlPSIxMCINCiAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIg0KICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiINCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMjQ4OSINCiAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEyODkiDQogICBpZD0ibmFtZWR2aWV3NzUiDQogICBzaG93Z3JpZD0iZmFsc2UiDQogICBpbmtzY2FwZTp6b29tPSIwLjcwNTM5OTA2Ig0KICAgaW5rc2NhcGU6Y3g9IjQ1NS4yNDI1MyINCiAgIGlua3NjYXBlOmN5PSI2MC42ODAwNzkiDQogICBpbmtzY2FwZTp3aW5kb3cteD0iMCINCiAgIGlua3NjYXBlOndpbmRvdy15PSIwIg0KICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMCINCiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9ImxheWVyMiIgLz4NCjxzdHlsZQ0KICAgdHlwZT0idGV4dC9jc3MiDQogICBpZD0ic3R5bGUyIj4NCgkuc3Qwe2ZpbGw6IzE0NEY4NTt9DQoJLnN0MXtmaWxsOiMxNzNFNkM7fQ0KCS5zdDJ7ZmlsbDojRTZCMzVBO30NCgkuc3Qze2ZpbGw6I0ZGRkZGRjt9DQoJLnN0NHtmaWxsOiMyMzFGMjA7fQ0KPC9zdHlsZT4NCjxnDQogICBpbmtzY2FwZTpncm91cG1vZGU9ImxheWVyIg0KICAgaWQ9ImxheWVyMyINCiAgIGlua3NjYXBlOmxhYmVsPSJIZXhhZ29uIg0KICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lIj48cGF0aA0KICAgICBjbGFzcz0ic3QwIg0KICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICBpZD0icGF0aDQiDQogICAgIHN0eWxlPSJmaWxsOiNmZmQ1ZTUiIC8+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4Ig0KICAgICBzdHlsZT0iZmlsbDojZmZhYWNjIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjIiDQogICBpbmtzY2FwZTpsYWJlbD0iTmV0d29ya0JHIj48Zw0KICAgICBpZD0iZzEyMDMiDQogICAgIGNsaXAtcGF0aD0idXJsKCNjbGlwUGF0aDEyNjEpIj48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmVlYWE7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNjA0LjgyNzI3LDEyMy44MDc0NCAzNjguODE2MDQsMjYwLjA2ODU5IDI5OC44MTk0NSwyNjEuMTI2MjggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOS4zNTEyLDQ4Mi4yMTY0OCAzMjcuMTI0NTMsMzEwLjI5Njk3IDM5Ny4xMjExMiwzMDkuMjM5MjggNjMzLjEzMjM2LDE3Mi45NzgxMyBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04Ig0KICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NjY2NjY2NjIiAvPjxwYXRoDQogICAgICAgc3R5bGU9ImZpbGw6I2ZmZWVhYTtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MXB4O3N0cm9rZS1saW5lY2FwOmJ1dHQ7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1vcGFjaXR5OjEiDQogICAgICAgZD0iTSA1MjQuNjYwMTYsLTE1LjMzNTY0NyAyODguNjQ4OTMsMTIwLjkyNTUgMjE4LjY1MjM0LDEyMS45ODMxOSAtNzkuMTIwOTg3LDI5My45MDI3IC01MC44MTU4ODMsMzQzLjA3MzM4IDI0Ni45NTc0NCwxNzEuMTUzODcgMzE2Ljk1NDAzLDE3MC4wOTYxOCA1NTIuOTY1MjcsMzMuODM1MDMyIFoiDQogICAgICAgaWQ9InBhdGgxMDMyLTgtOCINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmRkNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNTUyLjk2NTI3LDMzLjgzNTAzMiAzMTYuOTU0MDMsMTcwLjA5NjE4IDI0Ni45NTc0NCwxNzEuMTUzODcgLTUwLjgxNTg4MywzNDMuMDczMzggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOTguODE5NDQsMjYxLjEyNjI4IDM2OC44MTYwMywyNjAuMDY4NTkgNjA0LjgyNzI2LDEyMy44MDc0NCBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04LTgtNyINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48L2c+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4LTQiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmFhY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6I2ZmZWVhYTtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lIg0KICAgICBpZD0icGF0aDEwMTMtMCINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI1OTMuNDM1OTIiDQogICAgIHNvZGlwb2RpOmN5PSIyNzMuNTg1MjMiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2MjguNTUzNDEsMjk5LjEyNTIzIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NywtMjguNTM3OCAtMjUuODUxNzQsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTUsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9IjQuMTQwMzkwOCINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4wMDYzOTg5NTg2IiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNSINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI2NTkuMDg4ODEiDQogICAgIHNvZGlwb2RpOmN5PSIzNTcuMjUxMDEiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2OTQuMjA2MywzODIuNzkxIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NiwtMjguNTM3OCAtMjUuODUxNzUsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTQsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0yLjM3NjIyNDEiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iLTAuMTk2MzkzMzMiDQogICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuNTA4ODM2OTgsMC4zNTEyMzQzNiwtMC4zNTEyMzQzNiwwLjUwODgzNjk4LDQzNy45MDcxLC01MS4yMzg1MDUpIiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNS00Ig0KICAgICBzb2RpcG9kaTpzaWRlcz0iNSINCiAgICAgc29kaXBvZGk6Y3g9IjY1OS4wODg4MSINCiAgICAgc29kaXBvZGk6Y3k9IjM1Ny4yNTEwMSINCiAgICAgc29kaXBvZGk6cjE9IjQzLjQyMjY4OCINCiAgICAgc29kaXBvZGk6cjI9IjIxLjcxMTM0NCINCiAgICAgc29kaXBvZGk6YXJnMT0iMC42Mjg3OTYyOSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS4yNTcxMTQ4Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDY5NC4yMDYzLDM4Mi43OTEgLTI4LjQxODE5LC00Ljg4ODA4IC0yMC4xMzczOCwyMC42MzkxIC00LjEzMjg2LC0yOC41Mzc4IC0yNS44NTE3NSwtMTIuNzczOTYgMjUuODYzOTQsLTEyLjc0OTI1IDQuMTYwMTMsLTI4LjUzMzg0IDIwLjExNzY1LDIwLjY1ODMzIDI4LjQyMjg1LC00Ljg2MDkyIC0xMy40MzA1NCwyNS41MTY4IHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iLTIuMzc2MjI0MSINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4xOTYzOTMzMyINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC41MDg4MzY5OCwwLjM1MTIzNDM2LC0wLjM1MTIzNDM2LDAuNTA4ODM2OTgsNDU4LjI3NjM0LC0xMjguMTM1NjcpIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjEiDQogICBpbmtzY2FwZTpsYWJlbD0iRmFtaWxpYXIiDQogICBzdHlsZT0iZGlzcGxheTppbmxpbmUiDQogICBzb2RpcG9kaTppbnNlbnNpdGl2ZT0idHJ1ZSI+PHBhdGgNCiAgICAgaWQ9InJlY3QxMjY1Ig0KICAgICBzdHlsZT0iZmlsbDojZmZkNWU1O3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjg4ODY2OTtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGQ9Im0gMjQ1LjQ2MDU1LDI1Ny4xNzU2MyAyMjkuOTU3MzcsLTE1LjU5NDAxIDI1LjU0OTExLDY3Ljc1NzI1IC0wLjAzMTYsMTAwLjE2NjU3IC0xMTMuMjE2MDEsNDIuMjI0NTcgLTE0OC42MzgxOSwtNDIuOTMzMzkgeiINCiAgICAgc29kaXBvZGk6bm9kZXR5cGVzPSJjY2NjY2NjIiAvPjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNkNDAwNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjMuMTYyOTUiDQogICAgIGQ9Im0gMTk2LjE4Njc2LDMxNS42MjMxIGMgLTEwLjYzMjUzLDE3LjM4NTc3IC0zMy42NDIyMywxMS42NDE4NiAtNDMuMDA3MzcsMjguNzkxMDMgLTM2LjYxNTA4LDY3LjA0OTM5IDE3LjQzNTM5LDE0NS4wMDMzNCA2Mi4xMzg3NywxODYuOTc4NzkgMTcuNTAwNiwxNi40MzE1IDQyLjc1MDgsNTQuNjY1NzMgNTAuNzM0LDQ2Ljg5MzgzIDcuOTgzMiwtNy43NzE5IC0xNS44MTQ3LC00NC4yODEyMyAtMTUuODE0NywtNDQuMjgxMjMgMjguMjk2NiwtMjAuMjg1NyA4Mi4yOTksNDMuODIxMzkgODYuNjgzNCwxOS4zMDUzNCA0LjM4NDUsLTI0LjUxNjA2IC00Ni44NjM1LC0xOC45NTc0MiAtNjcuNzA1OCwtNDQuNjA4OTEgMTguMzU5NCwwLjAwMyA1OS42OTU3LDEuMjQ2MiA2My4yNTg5LC05LjQ4ODg0IDMuNTYzMywtMTAuNzM1MDQgLTcyLjc0NzcsLTEyLjY1MTc4IC03Mi43NDc3LC0xMi42NTE3OCB2IC05LjQ4ODgzIGMgMzQuMDcwNiwtOS4yOTU5IDU3LjYzOTksMC4wODg2IDkxLjcyNTQsLTAuODE5MjEgNDAuNjM4OCwtMS4wODE3MiA2OC4wNzk1LC0xNS42MzQ0NCAxMDQuMzc3Miw3LjE0NTEgLTI1LjIwNTUsNi4wNjk2OSAtNzIuMzMxMywyNS40ODkxOCAtNjkuNTg0OCwzMS42Mjk0NSAyLjc0NjUsNi4xNDAyNyA3Mi43NDc3LC0zLjE2Mjk0IDcyLjc0NzcsLTMuMTYyOTQgMCwwIC01Ny45ODk2LDU2Ljc3NzggLTM3Ljk1NTMsNjMuMjU4OTEgMjAuMDM0Myw2LjQ4MTExIDQ3LjAwMjUsLTUzLjI2OTU3IDY5LjI0OTUsLTQ2LjM0OTgxIDE4LjM2NDEsNS4yNTA0OSAxMi40Nzk0LDQ4Ljk0NjgzIDI1LjYzODksNDYuMzQ5ODEgMTMuMTU5NSwtMi41OTcwMiAtMS4zNjMzLC0zNS40MTIzNCA0Ljc2NjUsLTUzLjc3MDA4IDE1LjkzMTgsLTQ3LjcxNjE5IDcxLjQ1NzMsLTEyNC40NjYzMyA0NC44MzQ4LC0xNzcuMDY2NDMgLTkuODU4OSwtMTkuNDgxODUgLTM1LjIwMDQsLTE4LjU1NDc5IC00NS45OTU2LC0zOC4wMjg0MSAtMTAuMDkyOSwtMTguMjA3MTggLTguMDE4MSwtMzcuMjU3NiAtMjIuOTI1LC01My43NDMxOSAtMzQuMzU5NzQsLTI0LjY2ODM4IC0zOS4zOTM0NSwtNDAuNTAzNzcgLTEwNy4xOTg2LC00NC4yOTM1OCAwLDAgLTc5LjMyNjg3LDEuOTE0MzYgLTExNS4zOTY5NCwyMC4zNzcwMSAtMzYuMDcwMDYsMTguNDYyNjUgLTYzLjExMDE2LDYyLjk2NTY2IC03Ny44MjMyNiw4Ny4wMjM5NyB6IG0gMjg4LjEwODYsLTQ0LjE0MjA2IGMgLTMxLjExMjYsMy4yMDk0NCAtNTEuMjQzMiw1Ni41MjQzNiAtMTIuNjM5MSw1NS43NDQzOCA5LjIzODksLTAuMTg2NjEgMTcuNjg0LC02Ljk1MjQ3IDI1LjI5MDksLTExLjQ2MzE1IDE0LjkyMjgsNDQuMDg1MTQgLTIwLjI4MDgsNjMuNDUyOCAtNjAuMDk2LDcxLjg0MjIgLTY2Ljk3MTUsMTQuMTExOCAtMTI5LjYxMjEsMjEuNjA3MDMgLTE4OS43NzY3LC0xOC4wNzIxMiA0Ljk1MTYsLTI2LjY1NTczIC02LjM2NzksLTkwLjQ1MDQ0IDE1Ljg3NTgsLTEwMy4wNTY5OSAxMS41MjQ1LC02LjUzMTQ4IDI1LjA4NzgsLTcuOTQ2MjcgMzcuNjA4NywtMy4zOTIyNiAxNi42MDE2LDYuMDM4MzggMjQuOTA1MywyNC44MTY3OSA0MS40MDY0LDMyLjM4MTI5IDM2LjUzOTMsMTYuNzUwMzIgOTEuNzQyOCwtNS4yNjE4OCA4OC41NTk5LC00OS4yODY5MiAyMi45NzE5LDAgNDkuMzI5MywtMy4yMTc2NiA1My43NzAxLDI1LjMwMzU3IG0gLTIwNS4yNDk4LDE4LjE3NDYgYyAtMzEuMDExMSwxMi43ODE0NiAtNy4xNTgxLDY2LjE4NCAyNC4yODYsNTIuNjYyMDkgMjkuMTcsLTEyLjU0MzkyIDYuNTQ5OCwtNjUuMzcxMTIgLTI0LjI4NiwtNTIuNjYyMDkgbSAxMzIuNTAyMSw0MS45MjEzNiAwLjg3NzEsMTEuNzEzOSA4LjM5MTQsLTAuMDY0NSAtMS4wNTE2LC0xMy4wMzM4MSAtOC4yMTY5LDEuMzg0NDUgbSAtNTAuNjA3MSwzLjE2Mjk1IDMuMTYyOSwxMi42NTE3OCBoIDYuMzI1OSBsIDMuMTYyOSwtMTIuNjUxNzggaCAtMTIuNjUxNyBtIDE0Mi4zMzI1LDUwLjYwNzEyIGMgLTUxLjc4MzEsNjIuNDkzNDggLTE1Mi42NzczLDUxLjM0NDEgLTIyMS40MDYyLDM0Ljc5MjQxIDAsMCA3OS4zMjMzLDMuNTYzMjQgMTE2LjY0NzgsLTIuNjY3MzMgMzcuMzI0NSwtNi4yMzA1NiAxMDQuNzU4NCwtMzIuMTI1MDggMTA0Ljc1ODQsLTMyLjEyNTA4IG0gLTUzLjc3MDEsNzUuOTEwNyBjIDcuODY2MiwtNS42MzYzNyA1NC4wMDQxLC0zOS45MDA1NiA1OC4xODU1LC0zNy4zOTg2NyAxMC42NTYsNi4zNzk2NiAtMi45NzYzLDI1LjIyNDQ5IC04LjI1NTIsMzAuMzUxNjMgLTEzLjI0MzMsMTIuODU3MzcgLTMzLjQ2MDgsMTEuOTE0ODEgLTQ5LjkzMDMsNy4wNDcwNCBtIC0xOTIuOTM5NiwtNi4zMjU4OSB2IDYuMzI1ODkgYyAtMjIuMjk2LDEwLjcxMjg5IC0zNS43NTUyLDIuMDkwNzEgLTM3Ljk1NTQsLTIyLjE0MDYyIHoiDQogICAgIGlkPSJwYXRoOTg4Ig0KICAgICBzb2RpcG9kaTpub2RldHlwZXM9InNjY3pjemN6Y2NjY3pjemN6Y2NzY2N6c2NzY2Njc3NzY2Njc2NjY2NjY2NjY2NjY2N6Y2NjY2NjY2NjIiAvPjx0ZXh0DQogICAgIHhtbDpzcGFjZT0icHJlc2VydmUiDQogICAgIHN0eWxlPSJmb250LXNpemU6MTA2LjY2N3B4O2xpbmUtaGVpZ2h0OjEuMjU7Zm9udC1mYW1pbHk6QmFobnNjaHJpZnQ7LWlua3NjYXBlLWZvbnQtc3BlY2lmaWNhdGlvbjpCYWhuc2NocmlmdDtmaWxsOiNmZmZmZmYiDQogICAgIHg9IjEzMy4wMTk3MyINCiAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICBpZD0idGV4dDEwMDciPjx0c3Bhbg0KICAgICAgIHNvZGlwb2RpOnJvbGU9ImxpbmUiDQogICAgICAgaWQ9InRzcGFuMTAwNSINCiAgICAgICB4PSIxMzMuMDE5NzMiDQogICAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICAgIHN0eWxlPSJmb250LXN0eWxlOm5vcm1hbDtmb250LXZhcmlhbnQ6bm9ybWFsO2ZvbnQtd2VpZ2h0Om5vcm1hbDtmb250LXN0cmV0Y2g6bm9ybWFsO2ZvbnQtc2l6ZToxMDYuNjY3cHg7Zm9udC1mYW1pbHk6J0x1Y2lkYSBTYW5zJzstaW5rc2NhcGUtZm9udC1zcGVjaWZpY2F0aW9uOidMdWNpZGEgU2Fucyc7ZmlsbDojZmZmZmZmIj5GQU1JTElBUjwvdHNwYW4+PC90ZXh0PjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNmZmFhY2M7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICBkPSJNIDM2Mi41NzgyMiw4NS41MTIxMDQgMzExLjczMTMsMjQ2Ljg2ODI5IGMgMCwwIDI1LjIyMDMsMzEuNjg0NTcgNTQuODgyNTUsMzAuODI0NDUgMzYuNzg3NDQsLTEuMDY2NzMgNTQuMjY3MDksLTM1LjEyMDM1IDU0LjI2NzA5LC0zNS4xMjAzNSB6Ig0KICAgICBpZD0icGF0aDEwMDkiDQogICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NzY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NjMzNDQ7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEiDQogICAgIHNvZGlwb2RpOnNpZGVzPSI1Ig0KICAgICBzb2RpcG9kaTpjeD0iMzkzLjQzNzI2Ig0KICAgICBzb2RpcG9kaTpjeT0iMjQwLjMzNjc5Ig0KICAgICBzb2RpcG9kaTpyMT0iMjEuNjMwNjA2Ig0KICAgICBzb2RpcG9kaTpyMj0iMTAuODE1MzAzIg0KICAgICBzb2RpcG9kaTphcmcxPSIxLjMwMDQ3MSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS45Mjg3ODk1Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDM5OS4yMTM2LDI2MS4xODE4NiAtOS41NjU5OCwtMTAuNzE1NDMgLTE0LjI1MDIyLDEuODA1NDcgNy4yMzQ5NCwtMTIuNDA5MDMgLTYuMTIwNjcsLTEyLjk5NDg0IDE0LjAzNzQxLDMuMDQ2MjMgMTAuNDY3NDQsLTkuODM2NzMgMS40NDA2NiwxNC4yOTE3MSAxMi41ODk5LDYuOTE1NCAtMTMuMTQ3MDMsNS43ODY1MyB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjc4NDk4NTYiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yOTI5MDUzMSIgLz48cGF0aA0KICAgICBzb2RpcG9kaTp0eXBlPSJzdGFyIg0KICAgICBzdHlsZT0iZmlsbDojZmZlNjgwO3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjU1MjAwNztzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGlkPSJwYXRoMTAxMyINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNjUuOTUzMzEiDQogICAgIHNvZGlwb2RpOmN5PSIxNzEuODA3OTEiDQogICAgIHNvZGlwb2RpOnIxPSIyNC40MTc2MzciDQogICAgIHNvZGlwb2RpOnIyPSIxMi4yMDg4MTgiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzODUuNzAwNzMsMTg2LjE2OTY3IC0xNS45ODAyNCwtMi43NDg2OSAtMTEuMzIzNzQsMTEuNjA1ODcgLTIuMzI0MDEsLTE2LjA0NzUgLTE0LjUzNzA3LC03LjE4MzExIDE0LjU0MzkzLC03LjE2OTIxIDIuMzM5MzQsLTE2LjA0NTI4IDExLjMxMjY1LDExLjYxNjY4IDE1Ljk4Mjg2LC0yLjczMzQxIC03LjU1MjMyLDE0LjM0ODcyIHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iMi4zMjgyNTI2Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXk9Ii0wLjAwMzYwODA2NDYiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NDAxNDU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEtNiINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNDQuNDIxNiINCiAgICAgc29kaXBvZGk6Y3k9IjIyNS40OTQ3NCINCiAgICAgc29kaXBvZGk6cjE9IjIwLjU0NzU1OCINCiAgICAgc29kaXBvZGk6cjI9IjEwLjI3Mzc3OSINCiAgICAgc29kaXBvZGk6YXJnMT0iMS4zMDA0NzEiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuOTI4Nzg5NSINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzNDkuOTA4NzIsMjQ1LjI5NjA5IC05LjA4NywtMTAuMTc4OTEgLTEzLjUzNjcxLDEuNzE1MDcgNi44NzI2OCwtMTEuNzg3NzEgLTUuODE0MjEsLTEyLjM0NDE5IDEzLjMzNDU2LDIuODkzNzEgOS45NDMzMywtOS4zNDQyMSAxLjM2ODUzLDEzLjU3NjEzIDExLjk1OTUyLDYuNTY5MTUgLTEyLjQ4ODc2LDUuNDk2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjY5NTYxMDIiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yNzgyMjQwMyIgLz48L2c+DQo8dGl0bGUNCiAgIGlkPSJ0aXRsZTYiPmZlYXRoZXI8L3RpdGxlPg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KPC9zdmc+DQo=" align="right" width="120" />
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Feature selection methods</h1>
+<h4 class="author">Alex Zwanenburg</h4>
+<h4 class="date">2022-12-16</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#configuration-options" id="toc-configuration-options">Configuration options</a></li>
+<li><a href="#providing-parameters-for-feature-selection" id="toc-providing-parameters-for-feature-selection">Providing parameters
+for feature selection</a></li>
+<li><a href="#overview-of-feature-selection-methods" id="toc-overview-of-feature-selection-methods">Overview of feature
+selection methods</a>
+<ul>
+<li><a href="#correlation-methods" id="toc-correlation-methods">Correlation methods</a></li>
+<li><a href="#concordance-methods" id="toc-concordance-methods">Concordance methods</a></li>
+<li><a href="#corelearn-methods" id="toc-corelearn-methods">CORElearn
+methods</a></li>
+<li><a href="#mutual-information-based-methods" id="toc-mutual-information-based-methods">Mutual information-based
+methods</a>
+<ul>
+<li><a href="#mutual-information-maximisation" id="toc-mutual-information-maximisation">Mutual information
+maximisation</a></li>
+<li><a href="#mutual-information-feature-selection" id="toc-mutual-information-feature-selection">Mutual information feature
+selection</a></li>
+<li><a href="#minimum-redundancy-maximum-relevance" id="toc-minimum-redundancy-maximum-relevance">Minimum redundancy maximum
+relevance</a></li>
+</ul></li>
+<li><a href="#univariate-and-multivariate-regression-methods" id="toc-univariate-and-multivariate-regression-methods">Univariate and
+multivariate regression methods</a>
+<ul>
+<li><a href="#univariate-regression" id="toc-univariate-regression">Univariate regression</a></li>
+<li><a href="#multivariate-regression" id="toc-multivariate-regression">Multivariate regression</a></li>
+</ul></li>
+<li><a href="#lasso-ridge-and-elastic-net-regression" id="toc-lasso-ridge-and-elastic-net-regression">Lasso, ridge and elastic
+net regression</a></li>
+<li><a href="#random-forest-based-methods" id="toc-random-forest-based-methods">Random forest-based methods</a>
+<ul>
+<li><a href="#permutation-importance" id="toc-permutation-importance">Permutation importance</a></li>
+<li><a href="#holdout-permutation-importance" id="toc-holdout-permutation-importance">Holdout permutation
+importance</a></li>
+<li><a href="#minimum-depth-variable-selection" id="toc-minimum-depth-variable-selection">Minimum depth variable
+selection</a></li>
+<li><a href="#variable-hunting" id="toc-variable-hunting">Variable
+hunting</a></li>
+<li><a href="#impurity-importance" id="toc-impurity-importance">Impurity
+importance</a></li>
+</ul></li>
+<li><a href="#special-methods" id="toc-special-methods">Special
+methods</a>
+<ul>
+<li><a href="#no-feature-selection" id="toc-no-feature-selection">No
+feature selection</a></li>
+<li><a href="#random-feature-selection" id="toc-random-feature-selection">Random feature selection</a></li>
+<li><a href="#signature-only" id="toc-signature-only">Signature
+only</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#aggregating-variable-importance" id="toc-aggregating-variable-importance">Aggregating variable
+importance</a>
+<ul>
+<li><a href="#notation" id="toc-notation">Notation</a></li>
+<li><a href="#no-rank-aggregation" id="toc-no-rank-aggregation">No rank
+aggregation</a></li>
+<li><a href="#mean-rank-aggregation" id="toc-mean-rank-aggregation">Mean
+rank aggregation</a></li>
+<li><a href="#median-rank-aggregation" id="toc-median-rank-aggregation">Median rank aggregation</a></li>
+<li><a href="#best-rank-aggregation" id="toc-best-rank-aggregation">Best
+rank aggregation</a></li>
+<li><a href="#worst-rank-aggregation" id="toc-worst-rank-aggregation">Worst rank aggregation</a></li>
+<li><a href="#stability-rank-aggregation" id="toc-stability-rank-aggregation">Stability rank aggregation</a></li>
+<li><a href="#exponential-rank-aggregation" id="toc-exponential-rank-aggregation">Exponential rank
+aggregation</a></li>
+<li><a href="#borda-rank-aggregation" id="toc-borda-rank-aggregation">Borda rank aggregation</a></li>
+<li><a href="#enhanced-borda-rank-aggregation" id="toc-enhanced-borda-rank-aggregation">Enhanced borda rank
+aggregation</a></li>
+<li><a href="#truncated-borda-rank-aggregation" id="toc-truncated-borda-rank-aggregation">Truncated borda rank
+aggregation</a></li>
+<li><a href="#truncated-enhanced-borda-rank-aggregation" id="toc-truncated-enhanced-borda-rank-aggregation">Truncated enhanced
+borda rank aggregation</a></li>
+</ul></li>
+<li><a href="#references" id="toc-references">References</a></li>
+</ul>
+</div>
+
+<p>Feature selection methods in familiar measure variable importance in
+a univariate or multivariate setting.</p>
+<table>
+<caption>Overview of feature selection methods. <sup>a</sup> This is a
+general method where an appropriate specific method will be chosen, or
+multiple distributions or linking families are tested in an attempt to
+find the best option. <sup>b</sup> This method requires hyperparameter
+optimisation.</caption>
+<colgroup>
+<col width="21%" />
+<col width="21%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>method</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>binomial</strong></th>
+<th align="center"><strong>multinomial</strong></th>
+<th align="center"><strong>continuous</strong></th>
+<th align="center"><strong>count</strong></th>
+<th align="center"><strong>survival</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>correlation</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Pearson’s <em>r</em></td>
+<td align="left"><code>pearson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">Spearman’s <em>ρ</em></td>
+<td align="left"><code>spearman</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">Kendall’s <em>τ</em></td>
+<td align="left"><code>kendall</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>concordance</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">concordance<sup>a</sup></td>
+<td align="left"><code>concordance</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>CORElearn</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">information gain ratio</td>
+<td align="left"><code>gain_ratio</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">gini-index</td>
+<td align="left"><code>gini</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">minimum description length</td>
+<td align="left"><code>mdl</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">ReliefF with exponential weighting of distance
+ranks</td>
+<td align="left"><code>relieff_exp_rank</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"><strong>mutual information</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">mutual information maximisation</td>
+<td align="left"><code>mim</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">mutual information features selection</td>
+<td align="left"><code>mifs</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">minimum redundancy maximum relevance</td>
+<td align="left"><code>mrmr</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>univariate regression</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">univariate regression</td>
+<td align="left"><code>univariate_regression</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>multivariate regression</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">multivariate regression</td>
+<td align="left"><code>multivariate_regression</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>lasso regression</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>lasso</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">logistic</td>
+<td align="left"><code>lasso_binomial</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">multi-logistic</td>
+<td align="left"><code>lasso_multinomial</code></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">normal (gaussian)</td>
+<td align="left"><code>lasso_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">poisson</td>
+<td align="left"><code>lasso_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">cox</td>
+<td align="left"><code>lasso_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>ridge regression</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>ridge</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">logistic</td>
+<td align="left"><code>ridge_binomial</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">multi-logistic</td>
+<td align="left"><code>ridge_multinomial</code></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">normal (gaussian)</td>
+<td align="left"><code>ridge_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">poisson</td>
+<td align="left"><code>ridge_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">cox</td>
+<td align="left"><code>ridge_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>elastic net regression</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">general<sup>a,b</sup></td>
+<td align="left"><code>elastic_net</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">logistic<sup>b</sup></td>
+<td align="left"><code>elastic_net_binomial</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">multi-logistic<sup>b</sup></td>
+<td align="left"><code>elastic_net_multinomial</code></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">normal (gaussian)<sup>b</sup></td>
+<td align="left"><code>elastic_net_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">poisson<sup>b</sup></td>
+<td align="left"><code>elastic_net_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">cox<sup>b</sup></td>
+<td align="left"><code>elastic_net_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>random forest (RFSRC) variable
+importance</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">permutation<sup>b</sup></td>
+<td align="left"><code>random_forest_permutation</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">permutation (unoptimised)</td>
+<td align="left"><code>random_forest_permutation_default</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">minimum depth<sup>b</sup></td>
+<td align="left"><code>random_forest_minimum_depth</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">minimum depth (unoptimised)</td>
+<td align="left"><code>random_forest_minimum_depth_default</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">variable hunting<sup>b</sup></td>
+<td align="left"><code>random_forest_variable_hunting</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">variable hunting (unoptimised)</td>
+<td align="left"><code>random_forest_variable_hunting_default</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">hold-out <sup>b</sup></td>
+<td align="left"><code>random_forest_holdout</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">hold-out (unoptimised)</td>
+<td align="left"><code>random_forest_holdout_default</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>random forest (ranger) variable
+importance</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">permutation<sup>b</sup></td>
+<td align="left"><code>random_forest_ranger_permutation</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">permutation (unoptimised)</td>
+<td align="left"><code>random_forest_ranger_permutation_default</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">hold-out permutation<sup>b</sup></td>
+<td align="left"><code>random_forest_ranger_holdout_permutation</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">hold-out perm. (unoptimised)</td>
+<td align="left"><code>random_forest_ranger_holdout_permutation_default</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">impurity<sup>b</sup></td>
+<td align="left"><code>random_forest_ranger_impurity</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">x</td>
+</tr>
+<tr class="even">
+<td align="left">impurity (unoptimised)</td>
+<td align="left"><code>random_forest_ranger_impurity_default</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">x</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>special methods</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">no selection</td>
+<td align="left"><code>none</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">random selection</td>
+<td align="left"><code>random</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">signature only</td>
+<td align="left"><code>signature_only</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+</tbody>
+</table>
+<div id="configuration-options" class="section level2">
+<h2>Configuration options</h2>
+<p>Feature selection methods and related options can be provided within
+the <code>feature_selection</code> tag in the <em>xml</em> file or as
+function argument.</p>
+<table>
+<colgroup>
+<col width="23%" />
+<col width="50%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center"><strong>tag</strong> / <strong>argument</strong></th>
+<th align="left"><strong>description</strong></th>
+<th align="center"><strong>default</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><code>fs_method</code></td>
+<td align="left">The desired feature selection method. Multiple
+selection methods may be provided at the same time. This setting has no
+default and must be provided.</td>
+<td align="center">– (required)</td>
+</tr>
+<tr class="even">
+<td align="center"><code>fs_method_parameter</code></td>
+<td align="left">Several feature selection methods have hyperparameters
+that can be set and/or optimised.</td>
+<td align="center">– (optional)</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>vimp_aggregation_method</code></td>
+<td align="left">The aggregation method used to aggregate feature ranks
+over different bootstraps.</td>
+<td align="center"><code>borda</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>vimp_aggregation_rank_threshold</code></td>
+<td align="left">Several aggregation methods count features if they have
+a rank below the threshold, i.e. are among the most important features.
+If <code>NULL</code>, a dynamic threshold is decided through
+Otsu-thresholding.</td>
+<td align="center"><code>NULL</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>parallel_feature_selection</code></td>
+<td align="left">Enables parallel processing for feature selection.
+Ignored if <code>parallel=FALSE</code>.</td>
+<td align="center"><code>TRUE</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="providing-parameters-for-feature-selection" class="section level2">
+<h2>Providing parameters for feature selection</h2>
+<p>Some of the feature selection methods, notably those based on random
+forests and (penalised) regression, have parameters that can be set.
+These parameters are mentioned under the respective entries in the <a href="#overview-of-feature-selection-methods">Overview of feature
+selection methods</a> section. Moreover, some of these parameters are
+model parameters. In this case, these parameters are optimised using
+hyperparameter optimisation, which is described in the <em>learning
+algorithms and hyperparameter optimisation</em> vignette.</p>
+<p>The syntax for such parameters is the same as for hyperparameter
+optimisation. For the <code>multivariate_regression</code> feature
+selection method the <code>alpha</code> parameter (which determines
+feature drop-out during forward selection) may be provided as follows
+using the configuration file:</p>
+<pre><code>&lt;fs_method_parameter&gt;
+  &lt;multivariate_regression&gt;
+    &lt;alpha&gt;0.05&lt;/alpha&gt;
+  &lt;/multivariate_regression&gt;
+&lt;/fs_method_parameter&gt;</code></pre>
+<p>Or as a nested list passed as the <code>fs_method_parameter</code>
+argument to <code>summon_familiar</code>:</p>
+<pre><code>fs_method_parameter = list(&quot;multivariate_regression&quot;=list(&quot;alpha&quot;=0.05))</code></pre>
+</div>
+<div id="overview-of-feature-selection-methods" class="section level1">
+<h1>Overview of feature selection methods</h1>
+<p>The feature selection methods implemented in familiar are described
+in more detail in this section.</p>
+<div id="correlation-methods" class="section level2">
+<h2>Correlation methods</h2>
+<p>Correlation methods determine variable importance by assessing the
+correlation between a feature and the outcome of interest. High
+(anti-)correlation indicates an important feature, whereas low
+(anti-)correlation indicates that a feature is not directly related to
+the outcome. Correlation-based variable importance is determined using
+the <code>cor</code> function of the <code>stats</code> package that is
+part of the R core distribution <span class="citation">(R Core Team
+2019)</span>.</p>
+<p>Three correlation coefficients can be computed:</p>
+<ul>
+<li><code>pearson</code>: Pearson’s <span class="math inline">\(r\)</span></li>
+<li><code>spearman</code>: Spearman’s <span class="math inline">\(\rho\)</span></li>
+<li><code>kendall</code>: Kendall’s <span class="math inline">\(\tau\)</span></li>
+</ul>
+<p>To compute correlation of features with survival outcomes, only
+samples with an event are considered.</p>
+</div>
+<div id="concordance-methods" class="section level2">
+<h2>Concordance methods</h2>
+<p>Concordance methods assess how well the ordering of feature values
+corresponds to the ordering of the outcome. The method internally refers
+to the <code>gini</code> method for binomial and multinomial outcomes
+and to the <code>kendall</code> method for continuous and count
+outcomes. For survival outcomes, concordance is measured using the
+<code>concordance_index</code>.</p>
+</div>
+<div id="corelearn-methods" class="section level2">
+<h2>CORElearn methods</h2>
+<p>Familiar provides an interface to several feature selection methods
+implemented in the <code>CORElearn</code> package. These methods are the
+Information Gain Ratio (<code>gain_ratio</code>), the Gini-index
+(<code>gini</code>), Minimum Description Length (<code>mdl</code>) and
+ReliefF and rReliefF with exponential distance rank weighting
+(<code>relieff_exp_rank</code>).</p>
+</div>
+<div id="mutual-information-based-methods" class="section level2">
+<h2>Mutual information-based methods</h2>
+<p>Mutual information <span class="math inline">\(I\)</span> is a
+measure of interdependency between two variables <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>. In the context of feature selection,
+<span class="math inline">\(x\)</span> is a feature vector and <span class="math inline">\(y\)</span> is the outcome vector.</p>
+<p>Computing mutual information requires that probability distributions
+of <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> are known. In practice we don’t know
+either one. For categorical <span class="math inline">\(x\)</span> and
+<span class="math inline">\(y\)</span> we can use the sample estimates
+instead. For continuous or mixed data, the situation is more
+complex.</p>
+<p>In familiar we therefore use the following three approaches to
+compute mutual information:</p>
+<ol style="list-style-type: decimal">
+<li><p>For binomial and multinomial outcomes mutual information is
+computed using sample estimates. In case of continuous <span class="math inline">\(x\)</span>, these are discretised into <span class="math inline">\(\lceil 2 n^{1/3} \rceil\)</span> bins, with <span class="math inline">\(n\)</span> the number of samples, after which
+computation is conducted as if <span class="math inline">\(x\)</span>
+was a categorical variable.</p></li>
+<li><p>For continuous and count outcomes, we use the approximation
+proposed by De Jay et al. after Gel’fand and Yaglom <span class="citation">(Gel′fand and Yaglom 1959; De Jay et al. 2013)</span>:
+<span class="math inline">\(I = -0.5 \log(1 - \rho(x,y)^2 +
+\epsilon)\)</span>, with <span class="math inline">\(\rho(x,y)\)</span>
+Spearman’s correlation coefficient and <span class="math inline">\(\epsilon\)</span> a small positive number to
+prevent <span class="math inline">\(\log(0)\)</span>.</p></li>
+<li><p>For survival outcomes the second method is adapted for use with a
+concordance index: <span class="math inline">\(I = -0.5 \log(1 - (2 *
+(ci-0.5))^2 + \epsilon)\)</span>, with <span class="math inline">\(ci\)</span> the concordance index.</p></li>
+</ol>
+<p>We opted to adapt the approach based on the outcome type as this
+ensures that a single consistent approach is used to assess all feature
+data in an analysis, thus making results comparable.</p>
+<div id="mutual-information-maximisation" class="section level3">
+<h3>Mutual information maximisation</h3>
+<p>The <code>mim</code> method is a univariate method that ranks each
+feature by its mutual information with the outcome.</p>
+</div>
+<div id="mutual-information-feature-selection" class="section level3">
+<h3>Mutual information feature selection</h3>
+<p>Mutual information feature selection (MIFS) finds a feature set that
+maximises mutual information <span class="citation">(Battiti
+1994)</span>. This is done using forward selection. As in mutual
+information maximisation, mutual information <span class="math inline">\(I_{y,j}\)</span> between each feature and the
+outcome is computed. Starting from a potential pool of all features, the
+feature with the highest mutual information is selected and removed from
+the pool.</p>
+<p>The rest proceeds iteratively. The mutual information <span class="math inline">\(I_{s,1j}\)</span> between the previously selected
+feature and the remaining features is computed. This mutual information
+is also called <em>redundancy</em>. The feature with the highest mutual
+information with the outcome and least redundancy (i.e. maximum <span class="math inline">\(I_{y,j} - I_{s,1j}\)</span>) is selected next, and
+removed from the pool of remaining features. Then the mutual information
+<span class="math inline">\(I_{s,2j}\)</span> between this feature and
+remaining features is computed, and the feature that maximises <span class="math inline">\(I_{y,j} - I{s,1j} - I_{s,2j}\)</span> is selected,
+and so forth.</p>
+<p>The iterative process stops if there is no feature <span class="math inline">\(j\)</span> for which <span class="math inline">\(I_{y,j} - \sum_{i\in S} I_{s,ij} &gt; 0\)</span>,
+with <span class="math inline">\(S\)</span> being the subset of selected
+features, or all features have been exhausted.</p>
+<p>To reduce the number of required computations, the implementation in
+familiar actively filters out any feature <span class="math inline">\(j\)</span> for which <span class="math inline">\(I_{y,j} - \sum_{i\in S} I_{s,ij} \leq 0\)</span>
+at the earliest instance, as the <span class="math inline">\(\sum_{i\in
+S} I_{s,ij}\)</span> term will monotonously increase.</p>
+</div>
+<div id="minimum-redundancy-maximum-relevance" class="section level3">
+<h3>Minimum redundancy maximum relevance</h3>
+<p>Minimum redundancy maximum relevance (mRMR) feature selection is
+similar to MIFS but differs in the way redundancy is used during
+optimisation <span class="citation">(Peng, Long, and Ding 2005)</span>.
+Whereas for MIFS the optimisation criterion is <span class="math inline">\(I_{y,j} - \sum_{i\in S} I_{s,ij}\)</span>, in mRMR
+the optimisation criterion is <span class="math inline">\(I_{y,j} -
+\frac{1} {\left| S \right|} \sum_{i\in S} I_{s,ij}\)</span>, with <span class="math inline">\(\left| S \right|\)</span> the number of features
+already selected.</p>
+<p>Unlike in MIFS, the <span class="math inline">\(\frac{1}{\left|S\right|}\sum_{i\in
+S}I_{s,ij}\)</span> term is not monotonically increasing. Consequently,
+features cannot be safely filtered. To limit computational complexity,
+we still remove features for which <span class="math inline">\(I_{y,j} -
+\frac{1} {\left| S \right| + 3} \sum_{i\in S} I_{s,ij} \leq 0\)</span>,
+as such features are unlikely to be selected.</p>
+</div>
+</div>
+<div id="univariate-and-multivariate-regression-methods" class="section level2">
+<h2>Univariate and multivariate regression methods</h2>
+<p>Univariate and multivariate regression perform feature selection by
+performing regression using a feature or set of features as predictors.
+The performance of the regression model is then measured using a metric.
+Training and testing of regression models are repeated multiple times
+using bootstraps. For each bootstrap, the in-bag samples are used for
+training and the out-of-bag samples are using for testing.</p>
+<p>This also defines the parameters of both methods, which are shown in
+the table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">regression learner</td>
+<td align="left"><code>learner</code></td>
+<td align="center">dependent on outcome</td>
+<td align="center">no</td>
+<td align="left">Any generalised linear regression model from the
+<em>learning algorithms and hyperparameter optimisation</em> vignette
+can be selected. Default values are <code>glm_logistic</code> for
+binomial, <code>glm_multinomial</code> for multinomial,
+<code>glm_gaussian</code> for continuous, <code>glm_poisson</code> for
+count, and <code>cox</code> for survival outcomes.</td>
+</tr>
+<tr class="even">
+<td align="left">performance metric</td>
+<td align="left"><code>metric</code></td>
+<td align="center">dependent on outcome</td>
+<td align="center">no</td>
+<td align="left">Any metric from the <em>performance metrics</em>
+vignette can be selected. Default values are <code>auc_roc</code> for
+binomial and multinomial, <code>mse</code> for continuous,
+<code>msle</code> for count and <code>concordance_index</code> for
+survival outcomes</td>
+</tr>
+<tr class="odd">
+<td align="left">number of bootstraps</td>
+<td align="left"><code>n_bootstrap</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[1,
+\infty\right)\)</span></td>
+<td align="center">no</td>
+<td align="left">The default value is <span class="math inline">\(10\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">drop-out alpha level</td>
+<td align="left"><code>alpha</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[0,
+1\right]\)</span></td>
+<td align="center">no</td>
+<td align="left">The default value is <span class="math inline">\(0.05\)</span>. Only used in multivariate
+regression.</td>
+</tr>
+</tbody>
+</table>
+<div id="univariate-regression" class="section level3">
+<h3>Univariate regression</h3>
+<p>In the univariate regression method, a regression model is built with
+each feature separately using the in-bag data of the bootstrap. Then
+this model is evaluated using the metric, expressed using an objective
+representation (see <em>computing the objective score</em> in the
+<em>learning algorithms and hyperparameter optimisation</em> vignette).
+The objective representation <span class="math inline">\(s^*\)</span> is
+computed on both in-bag (IB) and out-of-bag (OOB) data. Subsequently the
+<code>balanced</code> objective score <span class="math inline">\(f\)</span> is computed: <span class="math inline">\(f=s^*_{OOB} -
+\left|s^*_{OOB}-s^*_{IB}\right|\)</span>.</p>
+<p>The objective score <span class="math inline">\(f\)</span> is
+subsequently averaged over all bootstraps to obtain the variable
+importance of a feature.</p>
+</div>
+<div id="multivariate-regression" class="section level3">
+<h3>Multivariate regression</h3>
+<p>The procedure described for univariate regression forms the first
+step in multivariate regression. The rest follows forward selection. The
+most important feature is assigned to the subset of selected features
+and removed from the set of available features. Separate regression
+models are then built with each remaining feature and all the feature(s)
+in the selected feature subset as predictors. Thus, the subset of
+selected features iteratively increases in size until no features are
+remaining or the objective score no longer increases.</p>
+<p>To limit mostly redundant computation, features that are unlikely to
+be selected are actively removed. To do so, the standard deviation of
+the objective score over the bootstraps is computed for each feature.
+The (one-sided, upper-tail) quantile <span class="math inline">\(q\)</span> corresponding to the alpha-level
+indicated by parameter <code>alpha</code> is subsequently computed. If
+the obtained mean objective score is <span class="math inline">\(q\)</span> standard deviations or more below the
+best objective score, the feature is removed.</p>
+</div>
+</div>
+<div id="lasso-ridge-and-elastic-net-regression" class="section level2">
+<h2>Lasso, ridge and elastic net regression</h2>
+<p>Penalised regression is also a form of feature selection, as it
+selects an ‘optimal’ set of features to create a regression model. As
+features are usually normalised as part of pre-processing, the magnitude
+of each coefficient can be interpreted as its importance. All three
+shrinkage methods are implemented using the <code>glmnet</code> package
+<span class="citation">(Hastie, Tibshirani, and Friedman 2009; Simon et
+al. 2011)</span>.</p>
+<p>Only elastic net regression has a model hyperparameter that requires
+optimisation, but other parameters may be set as well, as shown in the
+table below:</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">family</td>
+<td align="left"><code>family</code></td>
+<td align="center"><code>gaussian</code>, <code>binomial</code>,
+<code>poisson</code>, <code>multinomial</code>, <code>cox</code></td>
+<td align="center">continuous outcomes</td>
+<td align="left">For continuous outcomes <code>gaussian</code> and
+<code>poisson</code> may be tested. The family is not optimised when it
+is specified, e.g. <code>lasso_gaussian</code>. For other outcomes only
+one applicable family exists.</td>
+</tr>
+<tr class="even">
+<td align="left">elastic net penalty</td>
+<td align="left"><code>alpha</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[0,1\right]\)</span></td>
+<td align="center">elastic net</td>
+<td align="left">This penalty is fixed for ridge regression
+(<code>alpha = 0</code>) and lasso (<code>alpha = 1</code>).</td>
+</tr>
+<tr class="odd">
+<td align="left">optimal lambda</td>
+<td align="left"><code>lambda_min</code></td>
+<td align="center"><code>lambda.1se</code>, <code>lambda.min</code></td>
+<td align="center">no</td>
+<td align="left">Default is <code>lambda.min</code>.</td>
+</tr>
+<tr class="even">
+<td align="left">number of CV folds</td>
+<td align="left"><code>n_folds</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[3,n\right]\)</span></td>
+<td align="center">no</td>
+<td align="left">Default is <span class="math inline">\(3\)</span> if
+<span class="math inline">\(n&lt;30\)</span>, <span class="math inline">\(\lfloor n/10\rfloor\)</span> if <span class="math inline">\(30\leq n \leq 200\)</span> and <span class="math inline">\(20\)</span> if <span class="math inline">\(n&gt;200\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">normalisation</td>
+<td align="left"><code>normalise</code></td>
+<td align="center"><code>FALSE</code>, <code>TRUE</code></td>
+<td align="center">no</td>
+<td align="left">Default is <code>FALSE</code>, as normalisation is part
+of pre-processing in familiar.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="random-forest-based-methods" class="section level2">
+<h2>Random forest-based methods</h2>
+<p>Several feature selection methods are based on random forests. All
+these methods require that a random forest model exists. Hence,
+<code>familiar</code> will train a random forest based on the training
+data. Random forest learners have a set of hyperparameters that are
+optimised prior to training, and these make up most of the
+method-specific parameters. These parameters, which are slightly
+different for <code>ranger</code>-based and
+<code>randomForestSRC</code>-based methods, are shown below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">number of trees</td>
+<td align="left"><code>n_tree</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[0,\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{2}\)</span> scale, i.e. the actual input
+value will be <span class="math inline">\(2^\texttt{n_tree}\)</span>
+<span class="citation">(Oshiro, Perez, and Baranauskas 2012)</span>. The
+default range is <span class="math inline">\(\left[4,
+10\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">subsampling fraction</td>
+<td align="left"><code>sample_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left(0,
+1.0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">Fraction of available data that is used for to create a
+single tree. The default range is <span class="math inline">\(\left[2 /
+m, 1.0\right]\)</span>, with <span class="math inline">\(m\)</span> the
+number of samples.</td>
+</tr>
+<tr class="odd">
+<td align="left">number of features at each node</td>
+<td align="left"><code>m_try</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[0.0,
+1.0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">Familiar ensures that there is always at least one
+candidate feature.</td>
+</tr>
+<tr class="even">
+<td align="left">node size</td>
+<td align="left"><code>node_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[1,
+\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">Minimum number of unique samples in terminal nodes. The
+default range is <span class="math inline">\(\left[5, \lfloor m /
+3\rfloor\right]\)</span>, with <span class="math inline">\(m\)</span>
+the number of samples.</td>
+</tr>
+<tr class="odd">
+<td align="left">maximum tree depth</td>
+<td align="left"><code>tree_depth</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">Maximum depth to which trees are allowed to grow. The
+default range is <span class="math inline">\(\left[1,
+10\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">number of split points</td>
+<td align="left"><code>n_split</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[0,
+\infty\right)\)</span></td>
+<td align="center">no</td>
+<td align="left">By default, splitting is deterministic and has one
+split point (<span class="math inline">\(0\)</span>).</td>
+</tr>
+<tr class="odd">
+<td align="left">splitting rule (<code>randomForestSRC</code> only)</td>
+<td align="left"><code>split_rule</code></td>
+<td align="center"><code>gini</code>, <code>auc</code>,
+<code>entropy</code>, <code>mse</code>, <code>quantile.regr</code>,
+<code>la.quantile.regr</code>, <code>logrank</code>,
+<code>logrankscore</code>, <code>bs.gradient</code></td>
+<td align="center">no</td>
+<td align="left">Default splitting rules are <code>gini</code> for
+<code>binomial</code> and <code>multinonial</code> outcomes,
+<code>mse</code> for <code>continuous</code> and <code>count</code>
+outcomes and <code>logrank</code> for <code>survival</code>
+outcomes.</td>
+</tr>
+<tr class="even">
+<td align="left">splitting rule (<code>ranger</code> only)</td>
+<td align="left"><code>split_rule</code></td>
+<td align="center"><code>gini</code>, <code>hellinger</code>,
+<code>extratrees</code>, <code>beta</code>, <code>variance</code>,
+<code>logrank</code>, <code>C</code>, <code>maxstat</code></td>
+<td align="center">no</td>
+<td align="left">Default splitting rules are <code>gini</code> for
+<code>binomial</code> and <code>multinomial</code> outcomes and
+<code>maxstat</code> for <code>continuous</code>, <code>count</code> and
+<code>survival</code> outcomes.</td>
+</tr>
+<tr class="odd">
+<td align="left">significance split threshold (<code>ranger</code>
+only)</td>
+<td align="left"><code>alpha</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left(0.0,
+1.0\right]\)</span></td>
+<td align="center"><code>maxstat</code></td>
+<td align="left">Minimum significance level for further splitting. The
+default range is <span class="math inline">\(\left[10^{-6},
+1.0\right]\)</span></td>
+</tr>
+<tr class="even">
+<td align="left">variable hunting cross-validation folds</td>
+<td align="left"><code>fs_vh_fold</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[2,
+\infty\right)\)</span></td>
+<td align="center">no</td>
+<td align="left">Number of cross-validation folds for the
+<code>random_forest_variable_hunting</code> method. The default is <span class="math inline">\(5\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">variable hunting step size</td>
+<td align="left"><code>fs_vh_step_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[1,
+\infty\right)\)</span></td>
+<td align="center">no</td>
+<td align="left">Step size for the
+<code>random_forest_variable_hunting</code> method. The default is <span class="math inline">\(1\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">variable hunting iterations</td>
+<td align="left"><code>fs_vh_n_rep</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[1,
+\infty\right)\)</span></td>
+<td align="center">no</td>
+<td align="left">Number of Monte Carlo iterations for the
+<code>random_forest_variable_hunting</code> method. The default is <span class="math inline">\(50\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<p>The unoptimised methods do not require hyperparameter optimisation,
+and use default values from the <code>ranger</code> and
+<code>randomForestSRC</code>. For
+<code>random_forest_variable_hunting_default</code>the
+<code>fs_vh_fold</code>, <code>fs_vh_step_size</code> and
+<code>fs_vh_n_rep</code> parameters can be set.</p>
+<div id="permutation-importance" class="section level3">
+<h3>Permutation importance</h3>
+<p>The permutation importance method is implemented by
+<code>random_forest_permutation</code> and
+<code>random_forest_permutation_default</code>
+(<code>randomForestSRC</code> package) and
+<code>random_forest_ranger_permutation</code> and
+<code>random_forest_ranger_permutation_default</code>
+(<code>ranger</code> package). In short, this method functions as
+follows [Ishwaran2007-va]. As usual, each tree in the random forest is
+constructed using the in-bag samples of a bootstrap of the data. The
+predictive performance of each model is first measured using the
+out-of-bag data. Subsequently, the out-of-bag instances for each feature
+are randomly permuted, and predictive performance is assessed again. The
+difference between the normal performance and the permuted performance
+is used as a measure of the variable importance. For important features,
+this difference is large, whereas for irrelevant features the difference
+is negligible or even negative.</p>
+</div>
+<div id="holdout-permutation-importance" class="section level3">
+<h3>Holdout permutation importance</h3>
+<p>This variant on permutation importance
+(<code>random_forest_ranger_holdout_permutation</code> and
+<code>random_forest_ranger_holdout_permutation_default</code>) is
+implemented using <code>ranger::holdoutRF</code>. Instead of using
+out-of-bag to compute feature importance, two cross-validation folds are
+used. A random forest is trained on either fold, and variable importance
+determined on the other <span class="citation">(Janitza, Celik, and
+Boulesteix 2018)</span>.</p>
+<p>The hold-out variable importance method implemented in the
+<code>randomForestSRC</code> package (<code>random_forest_holdout</code>
+and <code>random_forest_holdout_default</code>) is implemented using
+<code>randomForestSRC::holdout.vimp</code>. It is similar to the
+previous variant, but does not cross-validation folds. Instead,
+out-of-bag prediction errors for models trained with and without each
+feature are compared.</p>
+</div>
+<div id="minimum-depth-variable-selection" class="section level3">
+<h3>Minimum depth variable selection</h3>
+<p>Important features tend to appear closer to the root of trees in
+random forests. Therefore, the position of each feature within a tree is
+assessed in minimum depth variable selection <span class="citation">(Ishwaran et al. 2010)</span>.</p>
+</div>
+<div id="variable-hunting" class="section level3">
+<h3>Variable hunting</h3>
+<p>Variable hunting is implemented using the variable hunting algorithm
+implemented in <code>randomForestSRC</code>. Ishwaran suggest using it
+when minimum depth variable selection leads to high computational load,
+or a larger set of variables should be found <span class="citation">(Ishwaran et al. 2010)</span>.</p>
+<p>The variable hunting selection method has several parameters which
+can be set.</p>
+</div>
+<div id="impurity-importance" class="section level3">
+<h3>Impurity importance</h3>
+<p>At each node, the data is split into (two) subsets, which connects to
+two branches. After splitting, each single subset is purer than the
+parent dataset. As a concrete example, in regression problems the
+variance of each of the subsets is lower than that of the data prior to
+splitting. The decrease in variance specifically, or the decrease of
+impurity generally, is then used to assess feature importance.</p>
+<p><code>familiar</code> uses the <code>impurity_corrected</code>
+importance measure, which is unbiased to the number of split points of a
+feature and its distribution <span class="citation">(Nembrini, König,
+and Wright 2018)</span>.</p>
+</div>
+</div>
+<div id="special-methods" class="section level2">
+<h2>Special methods</h2>
+<p>Familiar offers several methods that are special in that they are not
+feature selection methods in the sense that they determine a variable
+importance that can be used for establishing feature rankings.</p>
+<div id="no-feature-selection" class="section level3">
+<h3>No feature selection</h3>
+<p>As the name suggests, the <code>none</code> method avoids feature
+selection altogether. All features are passed into a model. Feature
+order is randomly shuffled prior to building a model to avoid influence
+of the provided feature order.</p>
+</div>
+<div id="random-feature-selection" class="section level3">
+<h3>Random feature selection</h3>
+<p>The <code>random</code> method randomly draws features prior to model
+building. It does not assign a random variable importance to a feature.
+New features are drawn each time a model is built. All features are
+available for the draw, but only <span class="math inline">\(m\)</span>
+features are drawn. Here <span class="math inline">\(m\)</span> is the
+signature size that is usually optimised by hyperparameter
+optimisation.</p>
+</div>
+<div id="signature-only" class="section level3">
+<h3>Signature only</h3>
+<p>When configuring familiar, any number of features can be set as a
+model signature using the <code>signature</code> configuration
+parameter. However, more features may be added to this signature through
+feature selection. To make sure that only the provided features enter a
+model, the <code>signature_only</code> method may be used.</p>
+</div>
+</div>
+</div>
+<div id="aggregating-variable-importance" class="section level1">
+<h1>Aggregating variable importance</h1>
+<p>In case of feature selection or modelling in the presence of
+resampling (e.g. bootstraps), the ranks of features may need to be
+aggregated across the different instances <span class="citation">(Wald
+et al. 2012)</span>. The rank aggregation methods shown in the table
+below can be used for this purpose. Several methods require a threshold
+to indicate the size of the set of most highly ranked features, which
+can be set by specifying the
+<code>vimp_aggregation_rank_threshold</code> configuration
+parameter.</p>
+<table>
+<colgroup>
+<col width="41%" />
+<col width="25%" />
+<col width="33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>aggregation method</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">none</td>
+<td align="left"><code>none</code></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">mean rank</td>
+<td align="left"><code>mean</code></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">median rank</td>
+<td align="left"><code>median</code></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">best rank</td>
+<td align="left"><code>best</code></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">worst rank</td>
+<td align="left"><code>worst</code></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">stability selection</td>
+<td align="left"><code>stability</code></td>
+<td align="center">uses threshold</td>
+</tr>
+<tr class="odd">
+<td align="left">exponential selection</td>
+<td align="left"><code>exponential</code></td>
+<td align="center">uses threshold</td>
+</tr>
+<tr class="even">
+<td align="left">borda ranking</td>
+<td align="left"><code>borda</code></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">enhanced borda ranking</td>
+<td align="left"><code>enhanced_borda</code></td>
+<td align="center">uses threshold</td>
+</tr>
+<tr class="even">
+<td align="left">truncated borda ranking</td>
+<td align="left"><code>truncated_borda</code></td>
+<td align="center">uses threshold</td>
+</tr>
+<tr class="odd">
+<td align="left">enhanced truncated borda ranking</td>
+<td align="left"><code>enhanced_truncated_borda</code></td>
+<td align="center">uses threshold</td>
+</tr>
+</tbody>
+</table>
+<div id="notation" class="section level2">
+<h2>Notation</h2>
+<p>Let <span class="math inline">\(N\)</span> be the number of ranking
+experiments that should be aggregated. Feature <span class="math inline">\(i\)</span> for experiment <span class="math inline">\(j\)</span> of <span class="math inline">\(N\)</span> then has rank <span class="math inline">\(r_{ij}\)</span>. A lower rank indicates a more
+important feature. Some features may not receive a score during a
+ranking experiment, for example for multivariate variable importance
+methods such as lasso regression, or by use of a threshold <span class="math inline">\(\tau\)</span>. This is designated by <span class="math inline">\(\delta_{ij}\)</span>, which is <span class="math inline">\(0\)</span> if the feature is absent, and <span class="math inline">\(1\)</span> if it is present.</p>
+<p>In case a threshold is used, <span class="math inline">\(\delta_{ij}
+= 1\)</span> if <span class="math inline">\(r_{ij} \leq \tau\)</span>,
+and <span class="math inline">\(0\)</span> otherwise.</p>
+<p>Thus, for each experiment <span class="math inline">\(m_j =
+\sum^M_{i=1} \delta_{ij}\)</span> features are ranked, out of <span class="math inline">\(M\)</span> features. <span class="math inline">\(m_j\)</span> is then also the maximum rank found
+in experiment <span class="math inline">\(j\)</span>.</p>
+<p>Aggregating ranks for each feature results in an aggregate rank score
+<span class="math inline">\(s_i\)</span>. Features are subsequently
+ranked according to this method-specific score to arrive at an aggregate
+feature rank <span class="math inline">\(r_i\)</span>.</p>
+</div>
+<div id="no-rank-aggregation" class="section level2">
+<h2>No rank aggregation</h2>
+<p>The <code>none</code> option does not aggregate ranks. Rather, scores
+are aggregated by computing the average score of a feature over all
+experiments that contain it. Ranks are then computed from the aggregated
+scores.</p>
+</div>
+<div id="mean-rank-aggregation" class="section level2">
+<h2>Mean rank aggregation</h2>
+<p>The mean rank aggregation method ranks features by computing the mean
+rank of a feature across all experiments that contain it.</p>
+<p><span class="math display">\[s_i = \frac{\sum^{N}_{j=1} \delta_{ij}
+r_{ij}}{\sum^{N}_{j=1} \delta_{ij}}\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in ascending
+order.</p>
+</div>
+<div id="median-rank-aggregation" class="section level2">
+<h2>Median rank aggregation</h2>
+<p>The median rank aggregation method ranks features by computing the
+median rank of a feature across all experiments that contain it.</p>
+<p><span class="math display">\[s_i = \underset{j \in N, \,
+\delta_{ij}=1}{\textrm{median}}(r_{ij})\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in ascending
+order.</p>
+</div>
+<div id="best-rank-aggregation" class="section level2">
+<h2>Best rank aggregation</h2>
+<p>The best rank aggregation method ranks features by the best rank that
+a feature has across all experiments that contain it.</p>
+<p><span class="math display">\[s_i =  \underset{j \in N, \,
+\delta_{ij}=1}{\textrm{min}} (r_{ij})\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in ascending
+order.</p>
+</div>
+<div id="worst-rank-aggregation" class="section level2">
+<h2>Worst rank aggregation</h2>
+<p>The worst rank aggregation method ranks features by the worst rank
+that a feature has across all instances that contain it.</p>
+<p><span class="math display">\[s_i =  \underset{j \in N, \,
+\delta_{ij}=1}{\textrm{max}} (r_{ij})\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in ascending
+order.</p>
+</div>
+<div id="stability-rank-aggregation" class="section level2">
+<h2>Stability rank aggregation</h2>
+<p>The stability aggregation method ranks features by their occurrence
+within the set of highly ranked features across all experiments. Our
+implementation generalises the method originally proposed by Meinshausen
+and Bühlmann <span class="citation">(Meinshausen and Bühlmann
+2010)</span>.</p>
+<p>This method uses threshold <span class="math inline">\(\tau\)</span>
+to designate the highly ranked features. Thus <span class="math inline">\(\delta_{ij} = 1\)</span> if <span class="math inline">\(r_{ij} \leq \tau\)</span>, and <span class="math inline">\(0\)</span> otherwise.</p>
+<p>The aggregate rank score is computed as:</p>
+<p><span class="math display">\[s_i = \frac{1}{N} \sum^N_{j=1}
+\delta_{ij}\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in descending
+order, as more commonly occurring features are considered more
+important.</p>
+</div>
+<div id="exponential-rank-aggregation" class="section level2">
+<h2>Exponential rank aggregation</h2>
+<p>The exponential aggregation method ranks features by the sum of the
+negative exponentials of their normalised ranks in instances where they
+occur within the set of highly ranked features. This method was
+originally suggested by Haury et al. <span class="citation">(Haury,
+Gestraud, and Vert 2011)</span>.</p>
+<p>This method uses threshold <span class="math inline">\(\tau\)</span>
+to designate the highly ranked features. Thus <span class="math inline">\(\delta_{ij} = 1\)</span> if <span class="math inline">\(r_{ij} \leq \tau\)</span>, and <span class="math inline">\(0\)</span> otherwise.</p>
+<p><span class="math display">\[s_i = \sum^N_{j=1} \delta_{ij}
+\exp({-r_{ij} / \tau)}\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in descending
+order.</p>
+</div>
+<div id="borda-rank-aggregation" class="section level2">
+<h2>Borda rank aggregation</h2>
+<p>Borda rank aggregation ranks a feature by the sum of normalised ranks
+(the borda score) across all experiments that contain it. In case every
+experiment contains all features, the result is equivalent to the mean
+aggregation method <span class="citation">(Wald et al. 2012)</span>.</p>
+<p><span class="math display">\[s_i = \sum^N_{j=1} \frac{m_j - r_{ij} +
+1}{m_j}\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in descending
+order.</p>
+</div>
+<div id="enhanced-borda-rank-aggregation" class="section level2">
+<h2>Enhanced borda rank aggregation</h2>
+<p>Enhanced borda rank aggregation combines borda rank aggregation with
+stability rank aggregation. The borda score is multiplied by the
+occurrence of the feature within the set of highly ranked features
+across all experiments <span class="citation">(Wald et al.
+2012)</span>.</p>
+<p>This method uses threshold <span class="math inline">\(\tau\)</span>
+to designate the highly ranked features for the purpose of computing the
+occurrence. Thus <span class="math inline">\(\delta_{ij} = 1\)</span> if
+<span class="math inline">\(r_{ij} \leq \tau\)</span>, and <span class="math inline">\(0\)</span> otherwise.</p>
+<p><span class="math display">\[s_i = \left( \frac{1}{N} \sum^N_{j=1}
+\delta_{ij} \right) \left( \sum^N_{j=1}
+\frac{m_j - r_{ij} + 1}{m_j} \right)\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in descending
+order.</p>
+</div>
+<div id="truncated-borda-rank-aggregation" class="section level2">
+<h2>Truncated borda rank aggregation</h2>
+<p>Truncated borda rank aggregation is borda rank aggregation performed
+with only the set of most highly ranked features in each instance.</p>
+<p>This method uses threshold <span class="math inline">\(\tau\)</span>
+to designate the highly ranked features. Thus <span class="math inline">\(\delta_{ij} = 1\)</span> if <span class="math inline">\(r_{ij} \leq \tau\)</span>, and <span class="math inline">\(0\)</span> otherwise.</p>
+<p><span class="math display">\[s_i = \sum^N_{j=1} \delta_{ij}
+\frac{\tau - r_{ij} + 1}{\tau}\]</span></p>
+<p>Note that compared to the borda method, the number of ranked features
+in an experiment <span class="math inline">\(m_j\)</span> is replaced by
+threshold <span class="math inline">\(\tau\)</span>.</p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in descending
+order.</p>
+</div>
+<div id="truncated-enhanced-borda-rank-aggregation" class="section level2">
+<h2>Truncated enhanced borda rank aggregation</h2>
+<p>Truncated enhanced borda rank aggregation is enhanced borda
+aggregation performed with only the set of most highly ranked features
+in each experiment.</p>
+<p>This method uses threshold <span class="math inline">\(\tau\)</span>
+to designate the highly ranked features. Thus <span class="math inline">\(\delta_{ij} = 1\)</span> if <span class="math inline">\(r_{ij} \leq \tau\)</span>, and <span class="math inline">\(0\)</span> otherwise.</p>
+<p><span class="math display">\[s_i = \left( \frac{1}{N} \sum^N_{j=1}
+\delta_{ij} \right) \left( \sum^N_{j=1}
+\delta_{ij} \frac{\tau - r_{ij} + 1}{\tau} \right)\]</span></p>
+<p>The aggregate rank of features is then determined by sorting
+aggregate scores <span class="math inline">\(s_i\)</span> in descending
+order.</p>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Battiti1994-ja" class="csl-entry">
+Battiti, R. 1994. <span>“Using Mutual Information for Selecting Features
+in Supervised Neural Net Learning.”</span> <em>IEEE Trans. Neural
+Netw.</em> 5 (4): 537–50.
+</div>
+<div id="ref-De_Jay2013-yl" class="csl-entry">
+De Jay, Nicolas, Simon Papillon-Cavanagh, Catharina Olsen, Nehme
+El-Hachem, Gianluca Bontempi, and Benjamin Haibe-Kains. 2013.
+<span>“<span class="nocase">mRMRe</span>: An <span>R</span> Package for
+Parallelized <span class="nocase">mRMR</span> Ensemble Feature
+Selection.”</span> <em>Bioinformatics</em> 29 (18): 2365–68.
+</div>
+<div id="ref-Gelfand1959-de" class="csl-entry">
+Gel′fand, I M, and A M Yaglom. 1959. <span>“Calculation of the Amount of
+Information about a Random Function Contained in Another Such
+Function.”</span> In <em>Eleven Papers on Analysis, Probability and
+Topology</em>, edited by E B Dynkin, I M Gel’fand, A O Gel’fond, and M A
+Krasnosel’skii, 12:199–246. American Mathematical Society Translations:
+Series 2. Providence, Rhode Island: American Mathematical Society.
+</div>
+<div id="ref-Hastie2009-ed" class="csl-entry">
+Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. <em>The
+Elements of Statistical Learning: Data Mining, Inference, and
+Prediction</em>. Second Edition. Springer Series in Statistics. New
+York, NY, United States: Springer Science+Business Media, LLC.
+</div>
+<div id="ref-Haury2011-zd" class="csl-entry">
+Haury, Anne-Claire, Pierre Gestraud, and Jean-Philippe Vert. 2011.
+<span>“The Influence of Feature Selection Methods on Accuracy, Stability
+and Interpretability of Molecular Signatures.”</span> <em>PLoS One</em>
+6 (12): e28210.
+</div>
+<div id="ref-Ishwaran2010-zv" class="csl-entry">
+Ishwaran, Hemant, Udaya B Kogalur, Eiran Z Gorodeski, Andy J Minn, and
+Michael S Lauer. 2010. <span>“<span>High-Dimensional</span> Variable
+Selection for Survival Data.”</span> <em>J. Am. Stat. Assoc.</em> 105
+(489): 205–17.
+</div>
+<div id="ref-Janitza2018-kl" class="csl-entry">
+Janitza, Silke, Ender Celik, and Anne-Laure Boulesteix. 2018. <span>“A
+Computationally Fast Variable Importance Test for Random Forests for
+High-Dimensional Data.”</span> <em>Adv. Data Anal. Classif.</em> 12 (4):
+885–915.
+</div>
+<div id="ref-Meinshausen2010-do" class="csl-entry">
+Meinshausen, Nicolai, and Peter Bühlmann. 2010. <span>“Stability
+Selection.”</span> <em>J. R. Stat. Soc. Series B Stat. Methodol.</em> 72
+(4): 417–73.
+</div>
+<div id="ref-Nembrini2018-ay" class="csl-entry">
+Nembrini, Stefano, Inke R König, and Marvin N Wright. 2018. <span>“The
+Revival of the Gini Importance?”</span> <em>Bioinformatics</em> 34 (21):
+3711–18.
+</div>
+<div id="ref-Oshiro2012-mq" class="csl-entry">
+Oshiro, Thais Mayumi, Pedro Santoro Perez, and José Augusto Baranauskas.
+2012. <span>“How Many Trees in a Random Forest?”</span> In <em>Machine
+Learning and Data Mining in Pattern Recognition</em>, 154–68. Springer
+Berlin Heidelberg.
+</div>
+<div id="ref-Peng2005-oo" class="csl-entry">
+Peng, Hanchuan, Fuhui Long, and Chris Ding. 2005. <span>“Feature
+Selection Based on Mutual Information: Criteria of Max-Dependency,
+Max-Relevance, and Min-Redundancy.”</span> <em>IEEE Trans. Pattern Anal.
+Mach. Intell.</em> 27 (8): 1226–38.
+</div>
+<div id="ref-rcore2018" class="csl-entry">
+R Core Team. 2019. <em>R: A Language and Environment for Statistical
+Computing</em>. Vienna, Austria: R Foundation for Statistical Computing.
+<a href="https://www.R-project.org/">https://www.R-project.org/</a>.
+</div>
+<div id="ref-Simon2011-ih" class="csl-entry">
+Simon, Noah, Jerome Friedman, Trevor Hastie, and Rob Tibshirani. 2011.
+<span>“Regularization Paths for Cox’s Proportional Hazards Model via
+Coordinate Descent.”</span> <em>J. Stat. Softw.</em> 39 (5): 1–13.
+</div>
+<div id="ref-Wald2012-zk" class="csl-entry">
+Wald, R, T M Khoshgoftaar, D Dittman, W Awada, and A Napolitano. 2012.
+<span>“An Extensive Comparison of Feature Ranking Aggregation Techniques
+in Bioinformatics.”</span> In <em>2012 <span>IEEE</span> 13th
+International Conference on Information Reuse Integration
+(<span>IRI</span>)</em>, 377–84.
+</div>
+</div>
+</div>
+
+<div class="footer">
+<br>
+<a rel="license" href="https://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons Licence" style="border-width:0" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAAfCAMAAABUFvrSAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAEZ0FNQQAAsY58+1GTAAAAAXNSR0IB2cksfwAAAW5QTFRF////////////////7+/v39/f1tXV09bS0tXS0tXR0dTR0dTQ0NTQ0NPPz9PPztLOztHNzdHNzdHMz8/PzdDMzNDMzNDLzM/Ly8/Ly8/Ky87Kys3Jyc3Jyc3IyMzIyMzHx8vHxsrGxsrFxcnFxcnExMnExMjDw8jDxMfDw8fCwsfCwcXAwMXAwMW/wMS/v8S+v8O+vsO+vsK9vcK9vcK8v7+/vMG8vMG7vMC8u8C7u8C6ur+6ur+5ub65ub64uL23t7y2tru1tbq0tLqztLmzs7iysrixsrexsbewsbawsLavsLWvr7Wur7SusLOvrrStrrOtr7KvrbOsrLKrr6+vq7Gqn6OenqCdn5+flpmWk5iTkZSRkZORj4+PiYyJhIaEhIWEgoWCgICAfX98fH98eXx5cHJvcHBwYGBgXV5dUFFQUFBQQ0RDQEBAPj8+NTY1MjMxMDAwKSkpKCkoICAgGxsbEBAQDg4ODQ4NAAAAlzoSDQAAAAN0Uk5TAAoO5yEBUwAAAvhJREFUeNq1lutX2kAQxWmXFDVGYy1EIjQ2VZDiu1CsRQQURYvV+qSKj6II8rANYOT+9z0JqIASo9Y5ydkP2f2d2Ts7d2N4jRcJgwEIBwO+SbdTFGw8ZzZz1n5BdLgnfLPBcCT6fW1jY3P78QEYEA76PWMu0W5lGbrNZGrrYNg+u+ga9fgVcmxtY/NJZAOCfs+IY4Bn6eN8RdlEJX9Ed1uFIfdnfzC8uBJbv5tyqqhMLKa0wQHPiEOwMInLW4Eu9xmzfdDtmQ0uLK3cSXmvBBTS6QJQ2tMC+8YcgpnOApAzSa83mZEBZIff2odGfYFQJNqc8s4VchQhhFA5XO1pgCddAxaFKyeNpBpxGSgNmwXXxMxcWE25fkkJGUIIoExESQPsFnkmC0gUuQmjBGQZq+j2BEKR5dUGLVLIvbkGkxxSrcHO92wCkIyENJL3u+2O8Zng/FJsvR5cRF0GFIqtwaKVvoTcSxrCKOOS7hPdXwLhxUYtUFC+Z6AKQgpoDRZ6joEkaYo4cMQKril/KLLcCE4TVYmqFmkNsK0rD9lIiDdXKCSrwwEhREae6Ve0WIiuPg3M0xVlW171BBe21CGjbLbSYR0c/To3H409TQquHTggREKZ8pbjEiRqqxxXtWjjRLdvLrzUAK4Vr5qwZvEsJsCrzExWF9Tk9gIm84e74BRyRN9xeyS4vkHSmg1yK4Wxt5yUIClDayn0t3SteLWq3RQvjQrN31O87e2dEiBl0tJDJmTrykImN8dtq6AOpIw8Y3OMf2s+bvptU+hJqFrc1yCfpmZDkWYX0mv0H9WWpvS2tH6w8z27e58JJVi7c2ImuNBkQvrBOOWZc0CqsyFKtU3+97OuaQBnXGe90RuTMvCHtpziuWCcmDvPm64m+t2vlmuq/YHqqwnGCcfs1l+mCcbSmgtSe8iDGQNnPEsnrq//fZrltXS4tk3oAOPvT2tPF91uMrXTDNv340JrjQ4hbsHAxeE0z1ksHD99eKFdl0dl/P//Cl+9EPcfS+yBAoqk3eUAAAAASUVORK5CYII=" /></a>
+This work is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+Cite as: Alex Zwanenburg. familiar: Vignettes and Documentation (2021). <a href="https://github.com/alexzwanenburg/familiar">https://github.com/alexzwanenburg/familiar</a>
+</div>
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

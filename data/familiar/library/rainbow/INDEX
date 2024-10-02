@@ -1,0 +1,18 @@
+Australiafertility      Australian age-specific fertility data
+ElNino_ERSST_region_1and2
+                        Sea surface temperature data set from January
+                        1950 to December 2018
+ElNino_OISST_region_1and2
+                        Sea surface temperature data set from January
+                        1982 to December 2018
+SVDplot                 Singular value decomposition plot
+Simulationdata          Simulated data
+fboxplot                Functional bagplot and functional HDR boxplot
+fdepth                  Compute functional depth.
+fds                     Create functional objects
+foutliers               Functional outlier detection methods.
+plot.fdepth             Plot functional depth
+plot.fds                Plot functional objects
+rainbow-package         Rainbow Plots, Bagplots and Boxplots for
+                        Functional Data
+summaryfunction         Summary statistics for functional data

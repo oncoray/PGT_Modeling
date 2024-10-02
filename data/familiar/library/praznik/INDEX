@@ -1,0 +1,46 @@
+CMI                     Conditional mutual information maximisation
+                        filter
+CMIM                    Minimal conditional mutual information
+                        maximisation filter
+DISR                    Double input symmetrical relevance filter
+JIM                     Joint impurity filter
+JMI                     Joint mutual information filter
+JMI3                    Third-order joint mutual information filter
+JMIM                    Minimal joint mutual information maximisation
+                        filter
+MIM                     Mutual information maximisation filter
+MRMR                    Minimum redundancy maximal relevancy filter
+MadelonD                Pre-discretised Madelon dataset
+NJMIM                   Minimal normalised joint mutual information
+                        maximisation filter
+cmiMatrix               Conditional mutual information matrix with a
+                        common condition
+cmiScores               Conditional mutual information scores
+dnmiMatrix              Directional normalised mutual information
+                        matrix
+hScores                 Entropy scores
+icmiMatrix              Conditional mutual information matrix with a
+                        common variable
+impScores               Gini impurity scores
+jhScores                Joint entropy scores
+jmiMatrix               Joint mutual information matrix
+jmiScores               Joint mutual information scores
+joinf                   Join factors
+kInverse                Inverse Kendall transform
+kTransform              Kendall transformation
+maxCmiScores            Maximal pairwise conditional mutual information
+                        scores
+maxJmiScores            Maximal pairwise joint mutual information
+                        scores
+miMatrix                Mutual information matrix
+miScores                Mutual information scores
+minCmiScores            Minimal pairwise conditional mutual information
+                        scores
+minMaxCmiScores         Extreme values of pairwise conditional mutual
+                        information scores
+njmiMatrix              Normalised joint mutual information matrix
+njmiScores              Normalised joint mutual information scores
+nmiMatrix               Normalised mutual information matrix
+praznik-package         Tools for information-based feature selection
+                        and scoring
+triScores               Mutual information of feature triples

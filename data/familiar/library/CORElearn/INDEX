@@ -1,0 +1,43 @@
+CORElearn-internal      Internal structures of CORElearn C++ part
+CORElearn-package       R port of CORElearn
+CoreModel               Build a classification or regression model
+attrEval                Attribute evaluation
+calibrate               Calibration of probabilities according to the
+                        given prior.
+classDataGen            Artificial data for testing classification
+                        algorithms
+classPrototypes         The typical instances of each class - class
+                        prototypes
+cvGen                   Cross-validation and stratified
+                        cross-validation
+destroyModels           Destroy single model or all CORElearn models
+discretize              Discretization of numeric attributes
+display.CoreModel       Displaying decision and regression trees
+getCoreModel            Conversion of model to a list
+getRFsizes              Get sizes of the trees in RF
+getRpartModel           Conversion of a CoreModel tree into a
+                        rpart.object
+helpCore                Description of parameters.
+infoCore                Description of certain CORElearn parameters
+modelEval               Statistical evaluation of predictions
+noEqualRows             Number of equal rows in two data sets
+ordDataGen              Artificial data for testing ordEval algorithms
+ordEval                 Evaluation of ordered attributes
+paramCoreIO             Input/output of parameters from/to file
+plot.CoreModel          Visualization of CoreModel models
+plot.ordEval            Visualization of ordEval results
+predict.CoreModel       Prediction using constructed model
+preparePlot             Prepare graphics device
+regDataGen              Artificial data for testing regression
+                        algorithms
+reliabilityPlot         Plots reliability plot of probabilities
+rfAttrEval              Attribute evaluation with random forest
+rfClustering            Random forest based clustering
+rfOOB                   Out-of-bag performance estimation for random
+                        forests
+rfOutliers              Random forest based outlier detection
+rfProximity             A random forest based proximity function
+saveRF                  Saves/loads random forests model to/from file
+testCore                Verification of the CORElearn installation
+testTime                Test functions for manual usage
+versionCore             Package version

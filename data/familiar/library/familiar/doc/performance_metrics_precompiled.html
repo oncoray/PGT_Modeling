@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Alex Zwanenburg" />
+
+<meta name="date" content="2022-12-16" />
+
+<title>Performance metrics</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iDQogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIg0KICAgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIg0KICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCINCiAgIHhtbG5zOmlua3NjYXBlPSJodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy9uYW1lc3BhY2VzL2lua3NjYXBlIg0KICAgdmVyc2lvbj0iMS4xIg0KICAgaWQ9IkxheWVyXzEiDQogICB4PSIwcHgiDQogICB5PSIwcHgiDQogICB2aWV3Qm94PSIwIDAgNzM1IDg1MiINCiAgIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDczNSA4NTI7Ig0KICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSINCiAgIHNvZGlwb2RpOmRvY25hbWU9ImZhbWlsaWFyLnN2ZyINCiAgIGlua3NjYXBlOnZlcnNpb249IjEuMC4xICgzYmMyZTgxM2Y1LCAyMDIwLTA5LTA3KSI+PG1ldGFkYXRhDQogICBpZD0ibWV0YWRhdGE3OSI+PHJkZjpSREY+PGNjOldvcmsNCiAgICAgICByZGY6YWJvdXQ9IiI+PGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+PGRjOnR5cGUNCiAgICAgICAgIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiIC8+PC9jYzpXb3JrPjwvcmRmOlJERj48L21ldGFkYXRhPjxkZWZzDQogICBpZD0iZGVmczc3Ij48Y2xpcFBhdGgNCiAgICAgY2xpcFBhdGhVbml0cz0idXNlclNwYWNlT25Vc2UiDQogICAgIGlkPSJjbGlwUGF0aDEyNjEiPjxwYXRoDQogICAgICAgY2xhc3M9InN0MCINCiAgICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICAgIGlkPSJwYXRoMTI2MyINCiAgICAgICBzdHlsZT0iZGlzcGxheTppbmxpbmU7ZmlsbDojZmZkNWU1IiAvPjwvY2xpcFBhdGg+PC9kZWZzPjxzb2RpcG9kaTpuYW1lZHZpZXcNCiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiINCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2Ig0KICAgYm9yZGVyb3BhY2l0eT0iMSINCiAgIG9iamVjdHRvbGVyYW5jZT0iMTAiDQogICBncmlkdG9sZXJhbmNlPSIxMCINCiAgIGd1aWRldG9sZXJhbmNlPSIxMCINCiAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIg0KICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiINCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMjQ4OSINCiAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEyODkiDQogICBpZD0ibmFtZWR2aWV3NzUiDQogICBzaG93Z3JpZD0iZmFsc2UiDQogICBpbmtzY2FwZTp6b29tPSIwLjcwNTM5OTA2Ig0KICAgaW5rc2NhcGU6Y3g9IjQ1NS4yNDI1MyINCiAgIGlua3NjYXBlOmN5PSI2MC42ODAwNzkiDQogICBpbmtzY2FwZTp3aW5kb3cteD0iMCINCiAgIGlua3NjYXBlOndpbmRvdy15PSIwIg0KICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMCINCiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9ImxheWVyMiIgLz4NCjxzdHlsZQ0KICAgdHlwZT0idGV4dC9jc3MiDQogICBpZD0ic3R5bGUyIj4NCgkuc3Qwe2ZpbGw6IzE0NEY4NTt9DQoJLnN0MXtmaWxsOiMxNzNFNkM7fQ0KCS5zdDJ7ZmlsbDojRTZCMzVBO30NCgkuc3Qze2ZpbGw6I0ZGRkZGRjt9DQoJLnN0NHtmaWxsOiMyMzFGMjA7fQ0KPC9zdHlsZT4NCjxnDQogICBpbmtzY2FwZTpncm91cG1vZGU9ImxheWVyIg0KICAgaWQ9ImxheWVyMyINCiAgIGlua3NjYXBlOmxhYmVsPSJIZXhhZ29uIg0KICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lIj48cGF0aA0KICAgICBjbGFzcz0ic3QwIg0KICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICBpZD0icGF0aDQiDQogICAgIHN0eWxlPSJmaWxsOiNmZmQ1ZTUiIC8+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4Ig0KICAgICBzdHlsZT0iZmlsbDojZmZhYWNjIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjIiDQogICBpbmtzY2FwZTpsYWJlbD0iTmV0d29ya0JHIj48Zw0KICAgICBpZD0iZzEyMDMiDQogICAgIGNsaXAtcGF0aD0idXJsKCNjbGlwUGF0aDEyNjEpIj48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmVlYWE7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNjA0LjgyNzI3LDEyMy44MDc0NCAzNjguODE2MDQsMjYwLjA2ODU5IDI5OC44MTk0NSwyNjEuMTI2MjggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOS4zNTEyLDQ4Mi4yMTY0OCAzMjcuMTI0NTMsMzEwLjI5Njk3IDM5Ny4xMjExMiwzMDkuMjM5MjggNjMzLjEzMjM2LDE3Mi45NzgxMyBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04Ig0KICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NjY2NjY2NjIiAvPjxwYXRoDQogICAgICAgc3R5bGU9ImZpbGw6I2ZmZWVhYTtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MXB4O3N0cm9rZS1saW5lY2FwOmJ1dHQ7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1vcGFjaXR5OjEiDQogICAgICAgZD0iTSA1MjQuNjYwMTYsLTE1LjMzNTY0NyAyODguNjQ4OTMsMTIwLjkyNTUgMjE4LjY1MjM0LDEyMS45ODMxOSAtNzkuMTIwOTg3LDI5My45MDI3IC01MC44MTU4ODMsMzQzLjA3MzM4IDI0Ni45NTc0NCwxNzEuMTUzODcgMzE2Ljk1NDAzLDE3MC4wOTYxOCA1NTIuOTY1MjcsMzMuODM1MDMyIFoiDQogICAgICAgaWQ9InBhdGgxMDMyLTgtOCINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmRkNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNTUyLjk2NTI3LDMzLjgzNTAzMiAzMTYuOTU0MDMsMTcwLjA5NjE4IDI0Ni45NTc0NCwxNzEuMTUzODcgLTUwLjgxNTg4MywzNDMuMDczMzggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOTguODE5NDQsMjYxLjEyNjI4IDM2OC44MTYwMywyNjAuMDY4NTkgNjA0LjgyNzI2LDEyMy44MDc0NCBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04LTgtNyINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48L2c+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4LTQiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmFhY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6I2ZmZWVhYTtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lIg0KICAgICBpZD0icGF0aDEwMTMtMCINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI1OTMuNDM1OTIiDQogICAgIHNvZGlwb2RpOmN5PSIyNzMuNTg1MjMiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2MjguNTUzNDEsMjk5LjEyNTIzIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NywtMjguNTM3OCAtMjUuODUxNzQsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTUsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9IjQuMTQwMzkwOCINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4wMDYzOTg5NTg2IiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNSINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI2NTkuMDg4ODEiDQogICAgIHNvZGlwb2RpOmN5PSIzNTcuMjUxMDEiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2OTQuMjA2MywzODIuNzkxIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NiwtMjguNTM3OCAtMjUuODUxNzUsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTQsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0yLjM3NjIyNDEiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iLTAuMTk2MzkzMzMiDQogICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuNTA4ODM2OTgsMC4zNTEyMzQzNiwtMC4zNTEyMzQzNiwwLjUwODgzNjk4LDQzNy45MDcxLC01MS4yMzg1MDUpIiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNS00Ig0KICAgICBzb2RpcG9kaTpzaWRlcz0iNSINCiAgICAgc29kaXBvZGk6Y3g9IjY1OS4wODg4MSINCiAgICAgc29kaXBvZGk6Y3k9IjM1Ny4yNTEwMSINCiAgICAgc29kaXBvZGk6cjE9IjQzLjQyMjY4OCINCiAgICAgc29kaXBvZGk6cjI9IjIxLjcxMTM0NCINCiAgICAgc29kaXBvZGk6YXJnMT0iMC42Mjg3OTYyOSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS4yNTcxMTQ4Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDY5NC4yMDYzLDM4Mi43OTEgLTI4LjQxODE5LC00Ljg4ODA4IC0yMC4xMzczOCwyMC42MzkxIC00LjEzMjg2LC0yOC41Mzc4IC0yNS44NTE3NSwtMTIuNzczOTYgMjUuODYzOTQsLTEyLjc0OTI1IDQuMTYwMTMsLTI4LjUzMzg0IDIwLjExNzY1LDIwLjY1ODMzIDI4LjQyMjg1LC00Ljg2MDkyIC0xMy40MzA1NCwyNS41MTY4IHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iLTIuMzc2MjI0MSINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4xOTYzOTMzMyINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC41MDg4MzY5OCwwLjM1MTIzNDM2LC0wLjM1MTIzNDM2LDAuNTA4ODM2OTgsNDU4LjI3NjM0LC0xMjguMTM1NjcpIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjEiDQogICBpbmtzY2FwZTpsYWJlbD0iRmFtaWxpYXIiDQogICBzdHlsZT0iZGlzcGxheTppbmxpbmUiDQogICBzb2RpcG9kaTppbnNlbnNpdGl2ZT0idHJ1ZSI+PHBhdGgNCiAgICAgaWQ9InJlY3QxMjY1Ig0KICAgICBzdHlsZT0iZmlsbDojZmZkNWU1O3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjg4ODY2OTtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGQ9Im0gMjQ1LjQ2MDU1LDI1Ny4xNzU2MyAyMjkuOTU3MzcsLTE1LjU5NDAxIDI1LjU0OTExLDY3Ljc1NzI1IC0wLjAzMTYsMTAwLjE2NjU3IC0xMTMuMjE2MDEsNDIuMjI0NTcgLTE0OC42MzgxOSwtNDIuOTMzMzkgeiINCiAgICAgc29kaXBvZGk6bm9kZXR5cGVzPSJjY2NjY2NjIiAvPjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNkNDAwNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjMuMTYyOTUiDQogICAgIGQ9Im0gMTk2LjE4Njc2LDMxNS42MjMxIGMgLTEwLjYzMjUzLDE3LjM4NTc3IC0zMy42NDIyMywxMS42NDE4NiAtNDMuMDA3MzcsMjguNzkxMDMgLTM2LjYxNTA4LDY3LjA0OTM5IDE3LjQzNTM5LDE0NS4wMDMzNCA2Mi4xMzg3NywxODYuOTc4NzkgMTcuNTAwNiwxNi40MzE1IDQyLjc1MDgsNTQuNjY1NzMgNTAuNzM0LDQ2Ljg5MzgzIDcuOTgzMiwtNy43NzE5IC0xNS44MTQ3LC00NC4yODEyMyAtMTUuODE0NywtNDQuMjgxMjMgMjguMjk2NiwtMjAuMjg1NyA4Mi4yOTksNDMuODIxMzkgODYuNjgzNCwxOS4zMDUzNCA0LjM4NDUsLTI0LjUxNjA2IC00Ni44NjM1LC0xOC45NTc0MiAtNjcuNzA1OCwtNDQuNjA4OTEgMTguMzU5NCwwLjAwMyA1OS42OTU3LDEuMjQ2MiA2My4yNTg5LC05LjQ4ODg0IDMuNTYzMywtMTAuNzM1MDQgLTcyLjc0NzcsLTEyLjY1MTc4IC03Mi43NDc3LC0xMi42NTE3OCB2IC05LjQ4ODgzIGMgMzQuMDcwNiwtOS4yOTU5IDU3LjYzOTksMC4wODg2IDkxLjcyNTQsLTAuODE5MjEgNDAuNjM4OCwtMS4wODE3MiA2OC4wNzk1LC0xNS42MzQ0NCAxMDQuMzc3Miw3LjE0NTEgLTI1LjIwNTUsNi4wNjk2OSAtNzIuMzMxMywyNS40ODkxOCAtNjkuNTg0OCwzMS42Mjk0NSAyLjc0NjUsNi4xNDAyNyA3Mi43NDc3LC0zLjE2Mjk0IDcyLjc0NzcsLTMuMTYyOTQgMCwwIC01Ny45ODk2LDU2Ljc3NzggLTM3Ljk1NTMsNjMuMjU4OTEgMjAuMDM0Myw2LjQ4MTExIDQ3LjAwMjUsLTUzLjI2OTU3IDY5LjI0OTUsLTQ2LjM0OTgxIDE4LjM2NDEsNS4yNTA0OSAxMi40Nzk0LDQ4Ljk0NjgzIDI1LjYzODksNDYuMzQ5ODEgMTMuMTU5NSwtMi41OTcwMiAtMS4zNjMzLC0zNS40MTIzNCA0Ljc2NjUsLTUzLjc3MDA4IDE1LjkzMTgsLTQ3LjcxNjE5IDcxLjQ1NzMsLTEyNC40NjYzMyA0NC44MzQ4LC0xNzcuMDY2NDMgLTkuODU4OSwtMTkuNDgxODUgLTM1LjIwMDQsLTE4LjU1NDc5IC00NS45OTU2LC0zOC4wMjg0MSAtMTAuMDkyOSwtMTguMjA3MTggLTguMDE4MSwtMzcuMjU3NiAtMjIuOTI1LC01My43NDMxOSAtMzQuMzU5NzQsLTI0LjY2ODM4IC0zOS4zOTM0NSwtNDAuNTAzNzcgLTEwNy4xOTg2LC00NC4yOTM1OCAwLDAgLTc5LjMyNjg3LDEuOTE0MzYgLTExNS4zOTY5NCwyMC4zNzcwMSAtMzYuMDcwMDYsMTguNDYyNjUgLTYzLjExMDE2LDYyLjk2NTY2IC03Ny44MjMyNiw4Ny4wMjM5NyB6IG0gMjg4LjEwODYsLTQ0LjE0MjA2IGMgLTMxLjExMjYsMy4yMDk0NCAtNTEuMjQzMiw1Ni41MjQzNiAtMTIuNjM5MSw1NS43NDQzOCA5LjIzODksLTAuMTg2NjEgMTcuNjg0LC02Ljk1MjQ3IDI1LjI5MDksLTExLjQ2MzE1IDE0LjkyMjgsNDQuMDg1MTQgLTIwLjI4MDgsNjMuNDUyOCAtNjAuMDk2LDcxLjg0MjIgLTY2Ljk3MTUsMTQuMTExOCAtMTI5LjYxMjEsMjEuNjA3MDMgLTE4OS43NzY3LC0xOC4wNzIxMiA0Ljk1MTYsLTI2LjY1NTczIC02LjM2NzksLTkwLjQ1MDQ0IDE1Ljg3NTgsLTEwMy4wNTY5OSAxMS41MjQ1LC02LjUzMTQ4IDI1LjA4NzgsLTcuOTQ2MjcgMzcuNjA4NywtMy4zOTIyNiAxNi42MDE2LDYuMDM4MzggMjQuOTA1MywyNC44MTY3OSA0MS40MDY0LDMyLjM4MTI5IDM2LjUzOTMsMTYuNzUwMzIgOTEuNzQyOCwtNS4yNjE4OCA4OC41NTk5LC00OS4yODY5MiAyMi45NzE5LDAgNDkuMzI5MywtMy4yMTc2NiA1My43NzAxLDI1LjMwMzU3IG0gLTIwNS4yNDk4LDE4LjE3NDYgYyAtMzEuMDExMSwxMi43ODE0NiAtNy4xNTgxLDY2LjE4NCAyNC4yODYsNTIuNjYyMDkgMjkuMTcsLTEyLjU0MzkyIDYuNTQ5OCwtNjUuMzcxMTIgLTI0LjI4NiwtNTIuNjYyMDkgbSAxMzIuNTAyMSw0MS45MjEzNiAwLjg3NzEsMTEuNzEzOSA4LjM5MTQsLTAuMDY0NSAtMS4wNTE2LC0xMy4wMzM4MSAtOC4yMTY5LDEuMzg0NDUgbSAtNTAuNjA3MSwzLjE2Mjk1IDMuMTYyOSwxMi42NTE3OCBoIDYuMzI1OSBsIDMuMTYyOSwtMTIuNjUxNzggaCAtMTIuNjUxNyBtIDE0Mi4zMzI1LDUwLjYwNzEyIGMgLTUxLjc4MzEsNjIuNDkzNDggLTE1Mi42NzczLDUxLjM0NDEgLTIyMS40MDYyLDM0Ljc5MjQxIDAsMCA3OS4zMjMzLDMuNTYzMjQgMTE2LjY0NzgsLTIuNjY3MzMgMzcuMzI0NSwtNi4yMzA1NiAxMDQuNzU4NCwtMzIuMTI1MDggMTA0Ljc1ODQsLTMyLjEyNTA4IG0gLTUzLjc3MDEsNzUuOTEwNyBjIDcuODY2MiwtNS42MzYzNyA1NC4wMDQxLC0zOS45MDA1NiA1OC4xODU1LC0zNy4zOTg2NyAxMC42NTYsNi4zNzk2NiAtMi45NzYzLDI1LjIyNDQ5IC04LjI1NTIsMzAuMzUxNjMgLTEzLjI0MzMsMTIuODU3MzcgLTMzLjQ2MDgsMTEuOTE0ODEgLTQ5LjkzMDMsNy4wNDcwNCBtIC0xOTIuOTM5NiwtNi4zMjU4OSB2IDYuMzI1ODkgYyAtMjIuMjk2LDEwLjcxMjg5IC0zNS43NTUyLDIuMDkwNzEgLTM3Ljk1NTQsLTIyLjE0MDYyIHoiDQogICAgIGlkPSJwYXRoOTg4Ig0KICAgICBzb2RpcG9kaTpub2RldHlwZXM9InNjY3pjemN6Y2NjY3pjemN6Y2NzY2N6c2NzY2Njc3NzY2Njc2NjY2NjY2NjY2NjY2N6Y2NjY2NjY2NjIiAvPjx0ZXh0DQogICAgIHhtbDpzcGFjZT0icHJlc2VydmUiDQogICAgIHN0eWxlPSJmb250LXNpemU6MTA2LjY2N3B4O2xpbmUtaGVpZ2h0OjEuMjU7Zm9udC1mYW1pbHk6QmFobnNjaHJpZnQ7LWlua3NjYXBlLWZvbnQtc3BlY2lmaWNhdGlvbjpCYWhuc2NocmlmdDtmaWxsOiNmZmZmZmYiDQogICAgIHg9IjEzMy4wMTk3MyINCiAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICBpZD0idGV4dDEwMDciPjx0c3Bhbg0KICAgICAgIHNvZGlwb2RpOnJvbGU9ImxpbmUiDQogICAgICAgaWQ9InRzcGFuMTAwNSINCiAgICAgICB4PSIxMzMuMDE5NzMiDQogICAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICAgIHN0eWxlPSJmb250LXN0eWxlOm5vcm1hbDtmb250LXZhcmlhbnQ6bm9ybWFsO2ZvbnQtd2VpZ2h0Om5vcm1hbDtmb250LXN0cmV0Y2g6bm9ybWFsO2ZvbnQtc2l6ZToxMDYuNjY3cHg7Zm9udC1mYW1pbHk6J0x1Y2lkYSBTYW5zJzstaW5rc2NhcGUtZm9udC1zcGVjaWZpY2F0aW9uOidMdWNpZGEgU2Fucyc7ZmlsbDojZmZmZmZmIj5GQU1JTElBUjwvdHNwYW4+PC90ZXh0PjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNmZmFhY2M7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICBkPSJNIDM2Mi41NzgyMiw4NS41MTIxMDQgMzExLjczMTMsMjQ2Ljg2ODI5IGMgMCwwIDI1LjIyMDMsMzEuNjg0NTcgNTQuODgyNTUsMzAuODI0NDUgMzYuNzg3NDQsLTEuMDY2NzMgNTQuMjY3MDksLTM1LjEyMDM1IDU0LjI2NzA5LC0zNS4xMjAzNSB6Ig0KICAgICBpZD0icGF0aDEwMDkiDQogICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NzY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NjMzNDQ7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEiDQogICAgIHNvZGlwb2RpOnNpZGVzPSI1Ig0KICAgICBzb2RpcG9kaTpjeD0iMzkzLjQzNzI2Ig0KICAgICBzb2RpcG9kaTpjeT0iMjQwLjMzNjc5Ig0KICAgICBzb2RpcG9kaTpyMT0iMjEuNjMwNjA2Ig0KICAgICBzb2RpcG9kaTpyMj0iMTAuODE1MzAzIg0KICAgICBzb2RpcG9kaTphcmcxPSIxLjMwMDQ3MSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS45Mjg3ODk1Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDM5OS4yMTM2LDI2MS4xODE4NiAtOS41NjU5OCwtMTAuNzE1NDMgLTE0LjI1MDIyLDEuODA1NDcgNy4yMzQ5NCwtMTIuNDA5MDMgLTYuMTIwNjcsLTEyLjk5NDg0IDE0LjAzNzQxLDMuMDQ2MjMgMTAuNDY3NDQsLTkuODM2NzMgMS40NDA2NiwxNC4yOTE3MSAxMi41ODk5LDYuOTE1NCAtMTMuMTQ3MDMsNS43ODY1MyB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjc4NDk4NTYiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yOTI5MDUzMSIgLz48cGF0aA0KICAgICBzb2RpcG9kaTp0eXBlPSJzdGFyIg0KICAgICBzdHlsZT0iZmlsbDojZmZlNjgwO3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjU1MjAwNztzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGlkPSJwYXRoMTAxMyINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNjUuOTUzMzEiDQogICAgIHNvZGlwb2RpOmN5PSIxNzEuODA3OTEiDQogICAgIHNvZGlwb2RpOnIxPSIyNC40MTc2MzciDQogICAgIHNvZGlwb2RpOnIyPSIxMi4yMDg4MTgiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzODUuNzAwNzMsMTg2LjE2OTY3IC0xNS45ODAyNCwtMi43NDg2OSAtMTEuMzIzNzQsMTEuNjA1ODcgLTIuMzI0MDEsLTE2LjA0NzUgLTE0LjUzNzA3LC03LjE4MzExIDE0LjU0MzkzLC03LjE2OTIxIDIuMzM5MzQsLTE2LjA0NTI4IDExLjMxMjY1LDExLjYxNjY4IDE1Ljk4Mjg2LC0yLjczMzQxIC03LjU1MjMyLDE0LjM0ODcyIHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iMi4zMjgyNTI2Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXk9Ii0wLjAwMzYwODA2NDYiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NDAxNDU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEtNiINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNDQuNDIxNiINCiAgICAgc29kaXBvZGk6Y3k9IjIyNS40OTQ3NCINCiAgICAgc29kaXBvZGk6cjE9IjIwLjU0NzU1OCINCiAgICAgc29kaXBvZGk6cjI9IjEwLjI3Mzc3OSINCiAgICAgc29kaXBvZGk6YXJnMT0iMS4zMDA0NzEiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuOTI4Nzg5NSINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzNDkuOTA4NzIsMjQ1LjI5NjA5IC05LjA4NywtMTAuMTc4OTEgLTEzLjUzNjcxLDEuNzE1MDcgNi44NzI2OCwtMTEuNzg3NzEgLTUuODE0MjEsLTEyLjM0NDE5IDEzLjMzNDU2LDIuODkzNzEgOS45NDMzMywtOS4zNDQyMSAxLjM2ODUzLDEzLjU3NjEzIDExLjk1OTUyLDYuNTY5MTUgLTEyLjQ4ODc2LDUuNDk2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjY5NTYxMDIiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yNzgyMjQwMyIgLz48L2c+DQo8dGl0bGUNCiAgIGlkPSJ0aXRsZTYiPmZlYXRoZXI8L3RpdGxlPg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KPC9zdmc+DQo=" align="right" width="120" />
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Performance metrics</h1>
+<h4 class="author">Alex Zwanenburg</h4>
+<h4 class="date">2022-12-16</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#categorical-outcomes" id="toc-categorical-outcomes">Categorical outcomes</a>
+<ul>
+<li><a href="#area-under-the-receiver-operating-curve" id="toc-area-under-the-receiver-operating-curve">Area under the
+receiver-operating curve</a></li>
+<li><a href="#brier-score" id="toc-brier-score">Brier score</a></li>
+<li><a href="#contingency-table-based-metrics" id="toc-contingency-table-based-metrics">Contingency table-based
+metrics</a>
+<ul>
+<li><a href="#accuracy" id="toc-accuracy">Accuracy</a></li>
+<li><a href="#balanced-accuracy" id="toc-balanced-accuracy">Balanced
+accuracy</a></li>
+<li><a href="#balanced-error-rate" id="toc-balanced-error-rate">Balanced
+error rate</a></li>
+<li><a href="#f1-score" id="toc-f1-score">F1 score</a></li>
+<li><a href="#false-discovery-rate" id="toc-false-discovery-rate">False
+discovery rate</a></li>
+<li><a href="#informedness" id="toc-informedness">Informedness</a></li>
+<li><a href="#cohens-kappa" id="toc-cohens-kappa">Cohen’s kappa</a></li>
+<li><a href="#markedness" id="toc-markedness">Markedness</a></li>
+<li><a href="#matthews-correlation-efficient" id="toc-matthews-correlation-efficient">Matthews correlation
+efficient</a></li>
+<li><a href="#negative-predictive-value" id="toc-negative-predictive-value">Negative predictive value</a></li>
+<li><a href="#positive-predictive-value" id="toc-positive-predictive-value">Positive predictive value</a></li>
+<li><a href="#recall" id="toc-recall">Recall</a></li>
+<li><a href="#specificity" id="toc-specificity">Specificity</a></li>
+<li><a href="#youdens-j-statistic" id="toc-youdens-j-statistic">Youden’s
+J statistic</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#regression-outcomes" id="toc-regression-outcomes">Regression outcomes</a>
+<ul>
+<li><a href="#explained-variance" id="toc-explained-variance">Explained
+variance</a></li>
+<li><a href="#mean-absolute-error" id="toc-mean-absolute-error">Mean
+absolute error</a></li>
+<li><a href="#relative-absolute-error" id="toc-relative-absolute-error">Relative absolute error</a></li>
+<li><a href="#mean-log-absolute-error" id="toc-mean-log-absolute-error">Mean log absolute error</a></li>
+<li><a href="#mean-squared-error" id="toc-mean-squared-error">Mean
+squared error</a></li>
+<li><a href="#relative-squared-error" id="toc-relative-squared-error">Relative squared error</a></li>
+<li><a href="#mean-squared-log-error" id="toc-mean-squared-log-error">Mean squared log error</a></li>
+<li><a href="#median-absolute-error" id="toc-median-absolute-error">Median absolute error</a></li>
+<li><a href="#r2-score" id="toc-r2-score">R<sup>2</sup> score</a></li>
+<li><a href="#root-mean-square-error" id="toc-root-mean-square-error">Root mean square error</a></li>
+<li><a href="#root-relative-squared-error" id="toc-root-relative-squared-error">Root relative squared
+error</a></li>
+<li><a href="#root-mean-square-log-error" id="toc-root-mean-square-log-error">Root mean square log error</a></li>
+</ul></li>
+<li><a href="#survival-outcomes" id="toc-survival-outcomes">Survival
+outcomes</a>
+<ul>
+<li><a href="#concordance-index" id="toc-concordance-index">Concordance
+index</a></li>
+</ul></li>
+<li><a href="#references" id="toc-references">References</a></li>
+</ul>
+</div>
+
+<p>When we train a model, we usually want to know how good the model is.
+Model performance is assessed using different metrics that quantify how
+well a model discriminates cases, stratifies groups or predicts values.
+<code>familiar</code> implements metrics that are typically used to
+assess the performance of categorical, regression and survival
+models.</p>
+<div id="categorical-outcomes" class="section level1">
+<h1>Categorical outcomes</h1>
+<p>Performance metrics for models with categorical outcomes,
+i.e. <code>binomial</code> and <code>multinomial</code> are listed
+below.</p>
+<table>
+<caption>Overview of performance metrics for categorical outcomes. Some
+contingency table-based metrics require averaging for
+<code>multinomial</code> outcomes as their original definition only
+covers <code>binomial</code> problems with two classes.</caption>
+<colgroup>
+<col width="37%" />
+<col width="49%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>method</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>averaging</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">accuracy</td>
+<td align="left"><code>accuracy</code></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">area under the receiver-operating curve</td>
+<td align="left"><code>auc</code>, <code>auc_roc</code></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">balanced accuracy</td>
+<td align="left"><code>bac</code>, <code>balanced_accuracy</code></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">balanced error rate</td>
+<td align="left"><code>ber</code>, <code>balanced_error_rate</code></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">Brier score</td>
+<td align="left"><code>brier</code></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">Cohen’s kappa</td>
+<td align="left"><code>kappa</code>, <code>cohen_kappa</code></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">f1 score</td>
+<td align="left"><code>f1_score</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">false discovery rate</td>
+<td align="left"><code>fdr</code>,
+<code>false_discovery_rate</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">informedness</td>
+<td align="left"><code>informedness</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">markedness</td>
+<td align="left"><code>markedness</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">Matthews’ correlation coefficient</td>
+<td align="left"><code>mcc</code>,
+<code>matthews_correlation_coefficient</code></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">negative predictive value</td>
+<td align="left"><code>npv</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">positive predictive value</td>
+<td align="left"><code>precision</code>, <code>ppv</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">recall</td>
+<td align="left"><code>recall</code>, <code>sensitivity</code>,
+<code>tpr</code>, <code>true_positive_rate</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">specificity</td>
+<td align="left"><code>specificity</code>, <code>tnr</code>,
+<code>true_negative_rate</code></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">Youden’s J</td>
+<td align="left"><code>youden_j</code>, <code>youden_index</code></td>
+<td align="center">×</td>
+</tr>
+</tbody>
+</table>
+<div id="area-under-the-receiver-operating-curve" class="section level2">
+<h2>Area under the receiver-operating curve</h2>
+<p>The area under the receiver-operating curve is quite literally that.
+It is the area under the curve created by plotting the true positive
+rate (sensitivity) against the false positive rate (1-specificity). TPR
+and FPR are derived from a contingency table, which is created by
+comparing predicted class probabilities against a threshold. The
+receiver-operating curve is created by iterating over1 threshold values.
+The AUC of a model that predicts perfectly is <span class="math inline">\(1.0\)</span>, while <span class="math inline">\(0.5\)</span> indicates predictions that are no
+better than random.</p>
+<p>The implementation in <code>familiar</code> does not use the ROC
+curve to compute the AUC. Instead, an algebraic equation by <span class="citation">Hand and Till (2001)</span> is used. For
+<code>multinomial</code> outcomes the AUC is computed for each pairwise
+comparison of outcome classes, and averaged <span class="citation">(Hand
+and Till 2001)</span>.</p>
+</div>
+<div id="brier-score" class="section level2">
+<h2>Brier score</h2>
+<p>The Brier score <span class="citation">(Brier 1950)</span> is a
+measure of deviation of predicted probabilities from the ideal situation
+where the probability for class <em>a</em> is <span class="math inline">\(1.0\)</span> if the observed class is <em>a</em>
+and <span class="math inline">\(0.0\)</span> if it is not <em>a</em>.
+Hence, it can be viewed as a measure of calibration as well. A value of
+<span class="math inline">\(0.0\)</span> is optimal.</p>
+<p>The implementation in <code>familiar</code> iterates over all outcome
+classes in a one-versus-all approach, as originally devised by <span class="citation">Brier (1950)</span>. For <code>binomial</code>
+outcomes, the score is divided by 2, so that it falls in the <span class="math inline">\([0.0, 1.0]\)</span> range.</p>
+</div>
+<div id="contingency-table-based-metrics" class="section level2">
+<h2>Contingency table-based metrics</h2>
+<p>A contingency table or confusion matrix displays the observed and
+predicted classes. When dealing with two classes, e.g. <em>a</em> and
+<em>b</em>, one of the classes is usually termed ‘positive’ and the
+other ‘negative’. For example, let <em>b</em> be the ‘positive’ class.
+Then we can define the following four categories:</p>
+<ul>
+<li>True positive (<span class="math inline">\(TP\)</span>): <em>b</em>
+is predicted and observed.</li>
+<li>True negative (<span class="math inline">\(TN\)</span>): <em>a</em>
+is predicted and observed.</li>
+<li>False negative (<span class="math inline">\(FN\)</span>): <em>b</em>
+was observed, but <em>a</em> was predicted.</li>
+<li>False positive (<span class="math inline">\(FP\)</span>): <em>a</em>
+was observed, but <em>b</em> was predicted.</li>
+</ul>
+<p>A contingency table contains the occurrence of each of the four
+cases. If a model is good, most samples will be either true positive or
+true negative. Models that are not as good may have larger numbers of
+false positives and/or false negatives.</p>
+<p>Metrics based on the contingency table use two or more of the four
+categories to characterise model performance. The extension from two
+classes (<code>binomial</code>) to more (<code>multinomial</code>) is
+often not trivial. For many metrics, <code>familiar</code> uses a
+one-versus-all approach. Here, all classes are iteratively used as the
+‘positive’ class, with the rest grouped as ‘negative’. Three options can
+be used to obtain performance values for <code>multinomial</code>
+problems, with an implementation similar to that of
+<code>scikit.learn</code>:</p>
+<ul>
+<li><p><code>micro</code>: The number of true positives, true negatives,
+false positives and false negatives are computed for each class
+iteration, and then summed over all classes. The score is calculated
+afterwards.</p></li>
+<li><p><code>macro</code>: A score is computed for each class iteration,
+and then averaged.</p></li>
+<li><p><code>weighted</code>: A score is computed for each class
+iteration, and the averaged with a weight corresponding to the number of
+samples with the observed ‘positive’ class, i.e. the
+prevalence.</p></li>
+</ul>
+<p>By default, <code>familiar</code> uses <code>macro</code>, but the
+averaging procedure may be selected through appending
+<code>_micro</code>, <code>_macro</code> or <code>_weighted</code> to
+the name of the metric. For example, <code>recall_micro</code> will
+compute the recall metric using <code>micro</code> averaging.</p>
+<p>Averaging only applies to <code>multinomial</code> outcomes. No
+averaging is performed for <code>binomial</code> problems with two
+classes. In this case <code>familiar</code> will always consider the
+second class level to correspond to the ‘positive’ class.</p>
+<div id="accuracy" class="section level3">
+<h3>Accuracy</h3>
+<p>Accuracy quantifies the number of correctly predicted classes: <span class="math inline">\(s_{acc}=(TP + TN) / (TP + TN + FP + FN)\)</span>.
+The extension to more than 2 classes is trivial. No averaging is
+performed for the accuracy metric.</p>
+</div>
+<div id="balanced-accuracy" class="section level3">
+<h3>Balanced accuracy</h3>
+<p>Accuracy is known to be sensitive to imbalances in the class
+distribution. A balanced accuracy was therefore defined <span class="citation">(Brodersen et al. 2010)</span>, which is the averaged
+within-class true positive rate (also known as recall or sensitivity):
+<span class="math inline">\(s_{bac}=0.5 (TP / (TP + FN) + TN / (TN +
+FP))\)</span>.</p>
+<p>The extension to more than 2 classes involves summation of in-class
+true positive rate <span class="math inline">\(TP / (TP + FN)\)</span>
+for each positive class and subsequent division by the number of
+classes. No averaging is performed for balanced accuracy.</p>
+</div>
+<div id="balanced-error-rate" class="section level3">
+<h3>Balanced error rate</h3>
+<p>The balanced error rate is closely related to balanced accuracy,
+i.e. instead of the in-class true positive rate, the in-class false
+negative rate is used: <span class="math inline">\(s_{ber}=0.5 (FN / (TP
++ FN) + FP / (TN + FP))\)</span>.</p>
+<p>The extension to more than 2 classes involves summation of in-class
+false negative rate <span class="math inline">\(FN / (TP + FN)\)</span>
+for each positive class and subsequent division by the number of
+classes. No averaging is performed for balanced error rate.</p>
+</div>
+<div id="f1-score" class="section level3">
+<h3>F1 score</h3>
+<p>The F1 score is the harmonic mean of precision and sensitivity: <span class="math inline">\(s_{f1} = 2 \; TP / (2 \; TP + FP +
+FN)\)</span>.</p>
+<p>The metric is not invariant to class permutation. Averaging is
+therefore performed for <code>multinomial</code> outcomes.</p>
+</div>
+<div id="false-discovery-rate" class="section level3">
+<h3>False discovery rate</h3>
+<p>The false discovery rate quantifies the proportion of false positives
+among all predicted positives, i.e. the Type I error: <span class="math inline">\(s_{fdr} = FP / (TP + FP)\)</span>.</p>
+<p>The metric is not invariant to class permutation. Averaging is
+therefore performed for <code>multinomial</code> outcomes.</p>
+</div>
+<div id="informedness" class="section level3">
+<h3>Informedness</h3>
+<p>Informedness is a generalisation of Youden’s J statistic <span class="citation">(Powers 2011)</span>. Informedness can be extended to
+multiple classes, and no averaging is therefore required.</p>
+<p>For <code>binomial</code> problems, informedness and the Youden J
+statistic are the same.</p>
+</div>
+<div id="cohens-kappa" class="section level3">
+<h3>Cohen’s kappa</h3>
+<p>Cohen’s kappa coefficient is a measure of correspondence between the
+observed and predicted classes <span class="citation">(Cohen
+1960)</span>. Cohen’s kappa coefficient is invariant to class
+permutations and no averaging is performed for Cohen’s kappa.</p>
+</div>
+<div id="markedness" class="section level3">
+<h3>Markedness</h3>
+<p>Markedness is related to the precision or positive predictive value
+<span class="citation">(Powers 2011)</span>.</p>
+</div>
+<div id="matthews-correlation-efficient" class="section level3">
+<h3>Matthews correlation efficient</h3>
+<p>Matthews’ correlation coefficient measures the correlation between
+observed and predicted classes [Matthews1975-kh].</p>
+<p>An extension to multiple classes, i.e. multinomial outcomes, was
+devised by <span class="citation">Gorodkin (2004)</span>.</p>
+</div>
+<div id="negative-predictive-value" class="section level3">
+<h3>Negative predictive value</h3>
+<p>The negative predictive value (NPV) is the fraction of predicted
+negative classes that were also observed to be negative: <span class="math inline">\(s_{npv} = TN / (TN + FN)\)</span>.</p>
+<p>The NPV is not invariant to class permutations. Averaging is
+performed for <code>multinomial</code> outcomes.</p>
+</div>
+<div id="positive-predictive-value" class="section level3">
+<h3>Positive predictive value</h3>
+<p>The positive predictive value (PPV) is the fraction of predicted
+positive classes that were also observed to be positive: <span class="math inline">\(s_{ppv} = TP / (TP + FP)\)</span>.</p>
+<p>The PPV is also referred to as precision. The PPV is not invariant to
+class permutations. Averaging is performed for <code>multinomial</code>
+outcomes. <code>micro</code>-averaging effectively computes the
+accuracy.</p>
+</div>
+<div id="recall" class="section level3">
+<h3>Recall</h3>
+<p>Recall, also known as sensitivity or true positive rate, is the
+fraction of observed positive classes that were also predicted to be
+positive: <span class="math inline">\(s_{recall} = TP / (TP +
+FN)\)</span>.</p>
+<p>Recall is not invariant to class permutations and averaging is
+performed for <code>multinomial</code> outcomes. Both <code>micro</code>
+and <code>weighted</code> averaging effectively compute the
+accuracy.</p>
+</div>
+<div id="specificity" class="section level3">
+<h3>Specificity</h3>
+<p>Specificity, also known as the true negative rate, is the fraction of
+observed negative classes that were also predicted to be negative: <span class="math inline">\(s_{spec} = TN / (TN + FP)\)</span>.</p>
+<p>Specificity is not invariant to class permutations and averaging is
+performed for <code>multinomial</code> outcomes.</p>
+</div>
+<div id="youdens-j-statistic" class="section level3">
+<h3>Youden’s J statistic</h3>
+<p>Youden’s J statistic <span class="citation">(Youden 1950)</span> is
+the sum of recall and specificity minus 1: <span class="math inline">\(s_{youden} = TP / (TP + FN) + TN / (TN + FP) -
+1\)</span>.</p>
+<p>Youden’s J statistic is not invariant to class permutations and
+averaging is performed for <code>multinomial</code> outcomes.</p>
+<p>For <code>binomial</code> problems, informedness and the Youden J
+statistic are the same.</p>
+</div>
+</div>
+</div>
+<div id="regression-outcomes" class="section level1">
+<h1>Regression outcomes</h1>
+<p>Performance metrics for models with regression outcomes,
+i.e. <code>count</code> and <code>continuous</code>, are listed
+below.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left"><strong>method</strong></th>
+<th align="left"><strong>tag</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">explained variance</td>
+<td align="left"><code>explained_variance</code></td>
+</tr>
+<tr class="even">
+<td align="left">mean absolute error</td>
+<td align="left"><code>mae</code>, <code>mean_absolute_error</code></td>
+</tr>
+<tr class="odd">
+<td align="left">relative absolute error</td>
+<td align="left"><code>rae</code>,
+<code>relative_absolutive_error</code></td>
+</tr>
+<tr class="even">
+<td align="left">mean log absolute error</td>
+<td align="left"><code>mlae</code>,
+<code>mean_log_absolute_error</code></td>
+</tr>
+<tr class="odd">
+<td align="left">mean squared error</td>
+<td align="left"><code>mse</code>, <code>mean_squared_error</code></td>
+</tr>
+<tr class="even">
+<td align="left">relative squared error</td>
+<td align="left"><code>rse</code>,
+<code>relative_squared_error</code></td>
+</tr>
+<tr class="odd">
+<td align="left">mean squared log error</td>
+<td align="left"><code>msle</code>,
+<code>mean_squared_log_error</code></td>
+</tr>
+<tr class="even">
+<td align="left">median absolute error</td>
+<td align="left"><code>medae</code>,
+<code>median_absolute_error</code></td>
+</tr>
+<tr class="odd">
+<td align="left">R<sup>2</sup> score</td>
+<td align="left"><code>r2_score</code>, <code>r_squared</code></td>
+</tr>
+<tr class="even">
+<td align="left">root mean square error</td>
+<td align="left"><code>rmse</code>,
+<code>root_mean_square_error</code></td>
+</tr>
+<tr class="odd">
+<td align="left">root relative squared error</td>
+<td align="left"><code>rrse</code>,
+<code>root_relative_squared_error</code></td>
+</tr>
+<tr class="even">
+<td align="left">root mean square log error</td>
+<td align="left"><code>rmsle</code>,
+<code>root_mean_square_log_error</code></td>
+</tr>
+</tbody>
+</table>
+<p>Each of the above metrics can be made more robust against rare
+outliers by appending <code>_winsor</code> or <code>_trim</code> as a
+suffix to the metric name. This respectively performs winsorising
+(clipping) and trimming (truncating) based on the absolute prediction
+error, prior to computing the metric. Winsorising clips the predicted
+values for 5% of the instances with the most extreme absolute errors
+prior to computing the performance metric, whereas trimming removes
+these instances. For example, winsored and trimmed versions of the mean
+squared error metric are specified as <code>mse_winsor</code> and
+<code>mse_trim</code> respectively.</p>
+<p>Let <span class="math inline">\(y\)</span> be the set of observed
+values, and <span class="math inline">\(\hat{y}\)</span> the
+corresponding predicted values. The error is then <span class="math inline">\(\epsilon = y-\hat{y}\)</span>.</p>
+<div id="explained-variance" class="section level2">
+<h2>Explained variance</h2>
+<p>The explained variance is defined as <span class="math inline">\(1 -
+\text{Var}\left(\epsilon\right) / \text{Var}\left(y\right)\)</span>.
+This metric is not sensitive to differences in offset between observed
+and predicted values.</p>
+</div>
+<div id="mean-absolute-error" class="section level2">
+<h2>Mean absolute error</h2>
+<p>The mean absolute error is defined as <span class="math inline">\(1/N
+\sum_i^N \left|\epsilon_i\right|\)</span>, with <span class="math inline">\(N\)</span> the number of samples.</p>
+</div>
+<div id="relative-absolute-error" class="section level2">
+<h2>Relative absolute error</h2>
+<p>The relative absolute error is defined as <span class="math inline">\(\sum_i^N \left|\epsilon_i\right|/ \sum_i^N
+\left|y_i - \bar{y}\right|\)</span>.</p>
+</div>
+<div id="mean-log-absolute-error" class="section level2">
+<h2>Mean log absolute error</h2>
+<p>The mean log absolute error is defined as <span class="math inline">\(1/N \sum_i^N \log(\left|\epsilon_i\right| +
+1)\)</span>.</p>
+</div>
+<div id="mean-squared-error" class="section level2">
+<h2>Mean squared error</h2>
+<p>The mean squared error is defined as <span class="math inline">\(1/N
+\sum_i^N \left(\epsilon_i \right)^2\)</span>.</p>
+</div>
+<div id="relative-squared-error" class="section level2">
+<h2>Relative squared error</h2>
+<p>The relative squared error is defined as <span class="math inline">\(\sum_i^N \left(\epsilon_i\right)^2/ \sum_i^N
+\left(y_i - \bar{y}\right)^2\)</span>.</p>
+</div>
+<div id="mean-squared-log-error" class="section level2">
+<h2>Mean squared log error</h2>
+<p>Mean squared log error is defined as <span class="math inline">\(1/N
+\sum_i^N \left(\log \left(y_i + 1\right) - \log\left(\hat{y}_i +
+1\right)\right)^2\)</span>. Note that this score only applies to
+observed and predicted values in the positive domain. It is not defined
+for negative values.</p>
+</div>
+<div id="median-absolute-error" class="section level2">
+<h2>Median absolute error</h2>
+<p>The median absolute error is the median of absolute error <span class="math inline">\(\left|\epsilon\right|\)</span>.</p>
+</div>
+<div id="r2-score" class="section level2">
+<h2>R<sup>2</sup> score</h2>
+<p>The R<sup>2</sup> score is defined as: <span class="math display">\[R^2 = 1 -
+\frac{\sum_i^N(\epsilon_i)^2}{\sum_i^N(y_i - \bar{y})^2}\]</span> Here
+<span class="math inline">\(\bar{y}\)</span> denotes the mean value of
+<span class="math inline">\(y\)</span>.</p>
+</div>
+<div id="root-mean-square-error" class="section level2">
+<h2>Root mean square error</h2>
+<p>The root mean square error is defined as <span class="math inline">\(\sqrt{1/N \sum_i^N \left(\epsilon_i
+\right)^2}\)</span>.</p>
+</div>
+<div id="root-relative-squared-error" class="section level2">
+<h2>Root relative squared error</h2>
+<p>The root relative squared error is defined as <span class="math inline">\(\sqrt{\sum_i^N \left(\epsilon_i\right)^2/ \sum_i^N
+\left(y_i - \bar{y}\right)^2}\)</span>.</p>
+</div>
+<div id="root-mean-square-log-error" class="section level2">
+<h2>Root mean square log error</h2>
+<p>The root mean square log error is defined as <span class="math inline">\(\sqrt{1/N \sum_i^N \left(\log \left(y_i + 1\right)
+- \log\left(\hat{y}_i + 1\right)\right)^2}\)</span>. Note that this
+score only applies to observed and predicted values in the positive
+domain. It is not defined for negative values.</p>
+</div>
+</div>
+<div id="survival-outcomes" class="section level1">
+<h1>Survival outcomes</h1>
+<p>Performance metrics for models with survival outcomes,
+i.e. <code>survival</code>, are listed below.</p>
+<table>
+<colgroup>
+<col width="56%" />
+<col width="43%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>method</strong></th>
+<th align="left"><strong>tag</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">concordance index</td>
+<td align="left"><code>concordance_index</code>, <code>c_index</code>,
+<code>concordance_index_harrell</code>,
+<code>c_index_harrell</code></td>
+</tr>
+</tbody>
+</table>
+<div id="concordance-index" class="section level2">
+<h2>Concordance index</h2>
+<p>The concordance index assesses ordering between observed and
+predicted values. Let <span class="math inline">\(T\)</span> be observed
+times, <span class="math inline">\(c\)</span> the censoring status
+(<span class="math inline">\(0\)</span>: no observed event; <span class="math inline">\(1\)</span>: event observed) and <span class="math inline">\(\hat{T}\)</span> predicted times. Concordance
+between all pairs of values is determined as follows <span class="citation">(Pencina and D’Agostino 2004)</span>:</p>
+<ul>
+<li>Concordant: a pair is concordant if <span class="math inline">\(T_i
+&lt; T_j\)</span> and <span class="math inline">\(\hat{T}_i &lt;
+\hat{T}_j\)</span> (provided <span class="math inline">\(c_i=1\)</span>), or if <span class="math inline">\(T_i &gt; T_j\)</span> and <span class="math inline">\(\hat{T}_i &gt; \hat{T}_j\)</span> (provided <span class="math inline">\(c_j=1\)</span>).</li>
+<li>Discordant: a pair is discordant if <span class="math inline">\(T_i
+&lt; T_j\)</span> and <span class="math inline">\(\hat{T}_i &gt;
+\hat{T}_j\)</span> (provided <span class="math inline">\(c_i=1\)</span>), or if <span class="math inline">\(T_i &gt; T_j\)</span> and <span class="math inline">\(\hat{T}_i &lt; \hat{T}_j\)</span> (provided <span class="math inline">\(c_j=1\)</span>).</li>
+<li>Tied: a pair is tied if <span class="math inline">\(\hat{T}_i =
+\hat{T}_j\)</span>, provided that <span class="math inline">\(c_i=c_j=1\)</span>.</li>
+<li>Not comparable: otherwise. This occurs, for example, if sample <span class="math inline">\(i\)</span> was censored before an event was
+observed in sample <span class="math inline">\(j\)</span>, or both
+samples were censored.</li>
+</ul>
+<p>The concordance index is then computed as: <span class="math display">\[ci = \frac{n_{concord} + 0.5
+n_{tied}}{n_{concord} + n_{discord} + n_{tied}}\]</span></p>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Brier1950-lo" class="csl-entry">
+Brier, Glenn W. 1950. <span>“Verification of Forecasts Expressed in
+Terms of Probability.”</span> <em>Mon. Weather Rev.</em> 78 (1): 1–3.
+</div>
+<div id="ref-Brodersen2010-vb" class="csl-entry">
+Brodersen, K H, C S Ong, K E Stephan, and J M Buhmann. 2010. <span>“The
+Balanced Accuracy and Its Posterior Distribution.”</span> In <em>2010
+20th International Conference on Pattern Recognition</em>, 3121–24.
+</div>
+<div id="ref-Cohen1960-kc" class="csl-entry">
+Cohen, Jacob. 1960. <span>“A Coefficient of Agreement for Nominal
+Scales.”</span> <em>Educ. Psychol. Meas.</em> 20 (1): 37–46.
+</div>
+<div id="ref-Gorodkin2004-tx" class="csl-entry">
+Gorodkin, J. 2004. <span>“Comparing Two k-Category Assignments by a
+k-Category Correlation Coefficient.”</span> <em>Comput. Biol. Chem.</em>
+28 (5-6): 367–74.
+</div>
+<div id="ref-Hand2001-ij" class="csl-entry">
+Hand, David J, and Robert J Till. 2001. <span>“A Simple Generalisation
+of the Area Under the <span>ROC</span> Curve for Multiple Class
+Classification Problems.”</span> <em>Mach. Learn.</em> 45 (2): 171–86.
+</div>
+<div id="ref-Pencina2004-ii" class="csl-entry">
+Pencina, Michael J, and Ralph B D’Agostino. 2004. <span>“Overall
+<span>C</span> as a Measure of Discrimination in Survival Analysis:
+Model Specific Population Value and Confidence Interval
+Estimation.”</span> <em>Stat. Med.</em> 23 (13): 2109–23.
+</div>
+<div id="ref-Powers2011-jt" class="csl-entry">
+Powers, David Martin. 2011. <span>“Evaluation: From Precision, Recall
+and f-Measure to <span>ROC</span>, Informedness, Markedness and
+Correlation.”</span> <em>International Journal of Machine Learning
+Technology</em> 2 (1): 37–63.
+</div>
+<div id="ref-Youden1950-no" class="csl-entry">
+Youden, W J. 1950. <span>“Index for Rating Diagnostic Tests.”</span>
+<em>Cancer</em> 3 (1): 32–35.
+</div>
+</div>
+</div>
+
+<div class="footer">
+<br>
+<a rel="license" href="https://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons Licence" style="border-width:0" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAAfCAMAAABUFvrSAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAEZ0FNQQAAsY58+1GTAAAAAXNSR0IB2cksfwAAAW5QTFRF////////////////7+/v39/f1tXV09bS0tXS0tXR0dTR0dTQ0NTQ0NPPz9PPztLOztHNzdHNzdHMz8/PzdDMzNDMzNDLzM/Ly8/Ly8/Ky87Kys3Jyc3Jyc3IyMzIyMzHx8vHxsrGxsrFxcnFxcnExMnExMjDw8jDxMfDw8fCwsfCwcXAwMXAwMW/wMS/v8S+v8O+vsO+vsK9vcK9vcK8v7+/vMG8vMG7vMC8u8C7u8C6ur+6ur+5ub65ub64uL23t7y2tru1tbq0tLqztLmzs7iysrixsrexsbewsbawsLavsLWvr7Wur7SusLOvrrStrrOtr7KvrbOsrLKrr6+vq7Gqn6OenqCdn5+flpmWk5iTkZSRkZORj4+PiYyJhIaEhIWEgoWCgICAfX98fH98eXx5cHJvcHBwYGBgXV5dUFFQUFBQQ0RDQEBAPj8+NTY1MjMxMDAwKSkpKCkoICAgGxsbEBAQDg4ODQ4NAAAAlzoSDQAAAAN0Uk5TAAoO5yEBUwAAAvhJREFUeNq1lutX2kAQxWmXFDVGYy1EIjQ2VZDiu1CsRQQURYvV+qSKj6II8rANYOT+9z0JqIASo9Y5ydkP2f2d2Ts7d2N4jRcJgwEIBwO+SbdTFGw8ZzZz1n5BdLgnfLPBcCT6fW1jY3P78QEYEA76PWMu0W5lGbrNZGrrYNg+u+ga9fgVcmxtY/NJZAOCfs+IY4Bn6eN8RdlEJX9Ed1uFIfdnfzC8uBJbv5tyqqhMLKa0wQHPiEOwMInLW4Eu9xmzfdDtmQ0uLK3cSXmvBBTS6QJQ2tMC+8YcgpnOApAzSa83mZEBZIff2odGfYFQJNqc8s4VchQhhFA5XO1pgCddAxaFKyeNpBpxGSgNmwXXxMxcWE25fkkJGUIIoExESQPsFnkmC0gUuQmjBGQZq+j2BEKR5dUGLVLIvbkGkxxSrcHO92wCkIyENJL3u+2O8Zng/FJsvR5cRF0GFIqtwaKVvoTcSxrCKOOS7hPdXwLhxUYtUFC+Z6AKQgpoDRZ6joEkaYo4cMQKril/KLLcCE4TVYmqFmkNsK0rD9lIiDdXKCSrwwEhREae6Ve0WIiuPg3M0xVlW171BBe21CGjbLbSYR0c/To3H409TQquHTggREKZ8pbjEiRqqxxXtWjjRLdvLrzUAK4Vr5qwZvEsJsCrzExWF9Tk9gIm84e74BRyRN9xeyS4vkHSmg1yK4Wxt5yUIClDayn0t3SteLWq3RQvjQrN31O87e2dEiBl0tJDJmTrykImN8dtq6AOpIw8Y3OMf2s+bvptU+hJqFrc1yCfpmZDkWYX0mv0H9WWpvS2tH6w8z27e58JJVi7c2ImuNBkQvrBOOWZc0CqsyFKtU3+97OuaQBnXGe90RuTMvCHtpziuWCcmDvPm64m+t2vlmuq/YHqqwnGCcfs1l+mCcbSmgtSe8iDGQNnPEsnrq//fZrltXS4tk3oAOPvT2tPF91uMrXTDNv340JrjQ4hbsHAxeE0z1ksHD99eKFdl0dl/P//Cl+9EPcfS+yBAoqk3eUAAAAASUVORK5CYII=" /></a>
+This work is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+Cite as: Alex Zwanenburg. familiar: Vignettes and Documentation (2021). <a href="https://github.com/alexzwanenburg/familiar">https://github.com/alexzwanenburg/familiar</a>
+</div>
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

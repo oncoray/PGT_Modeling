@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head><title>R: Bayesian Additive Regression Trees</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body><div class="container">
+<h1> Bayesian Additive Regression Trees
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]" />
+</h1>
+<hr/>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]" /></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]" /></a>
+</div><h2>Documentation for package &lsquo;BART&rsquo; version 2.9.4</h2>
+
+<ul><li><a href="../DESCRIPTION">DESCRIPTION file</a>.</li>
+<li><a href="../doc/index.html">User guides, package vignettes and other documentation.</a></li>
+<li><a href="../demo">Code demos</a>.  Use <a href="../../utils/help/demo">demo()</a> to run them.</li>
+<li><a href="../NEWS">Package NEWS</a>.</li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="BART-package.html">BART-package</a></td>
+<td>Bayesian Additive Regression Trees</td></tr>
+<tr><td style="width: 25%;"><a href="abart.html">abart</a></td>
+<td>AFT BART for time-to-event outcomes</td></tr>
+<tr><td style="width: 25%;"><a href="ACTG175.html">ACTG175</a></td>
+<td>AIDS Clinical Trials Group Study 175</td></tr>
+<tr><td style="width: 25%;"><a href="alligator.html">alligator</a></td>
+<td>American alligator Food Choice</td></tr>
+<tr><td style="width: 25%;"><a href="arq.html">arq</a></td>
+<td>NHANES 2009-2010 Arthritis Questionnaire</td></tr>
+<tr><td style="width: 25%;"><a href="BART-package.html">BART</a></td>
+<td>Bayesian Additive Regression Trees</td></tr>
+<tr><td style="width: 25%;"><a href="bartModelMatrix.html">bartModelMatrix</a></td>
+<td>Create a matrix out of a vector or data.frame</td></tr>
+<tr><td style="width: 25%;"><a href="bladder.html">bladder</a></td>
+<td>Bladder Cancer Recurrences</td></tr>
+<tr><td style="width: 25%;"><a href="bladder.html">bladder1</a></td>
+<td>Bladder Cancer Recurrences</td></tr>
+<tr><td style="width: 25%;"><a href="bladder.html">bladder2</a></td>
+<td>Bladder Cancer Recurrences</td></tr>
+<tr><td style="width: 25%;"><a href="lung.html">cancer</a></td>
+<td>NCCTG Lung Cancer Data</td></tr>
+<tr><td style="width: 25%;"><a href="crisk.bart.html">crisk.bart</a></td>
+<td>BART for competing risks</td></tr>
+<tr><td style="width: 25%;"><a href="crisk.pre.bart.html">crisk.pre.bart</a></td>
+<td>Data construction for competing risks with BART</td></tr>
+<tr><td style="width: 25%;"><a href="crisk2.bart.html">crisk2.bart</a></td>
+<td>BART for competing risks</td></tr>
+<tr><td style="width: 25%;"><a href="draw_lambda_i.html">draw_lambda_i</a></td>
+<td>Testing truncated Normal sampling</td></tr>
+<tr><td style="width: 25%;"><a href="gbart.html">gbart</a></td>
+<td>Generalized BART for continuous and binary outcomes</td></tr>
+<tr><td style="width: 25%;"><a href="gewekediag.html">gewekediag</a></td>
+<td>Geweke's convergence diagnostic</td></tr>
+<tr><td style="width: 25%;"><a href="lbart.html">lbart</a></td>
+<td>Logit BART for dichotomous outcomes with Logistic latents</td></tr>
+<tr><td style="width: 25%;"><a href="leukemia.html">leukemia</a></td>
+<td>Bone marrow transplantation for leukemia and multi-state models</td></tr>
+<tr><td style="width: 25%;"><a href="lung.html">lung</a></td>
+<td>NCCTG Lung Cancer Data</td></tr>
+<tr><td style="width: 25%;"><a href="mbart.html">mbart</a></td>
+<td>Multinomial BART for categorical outcomes with fewer categories</td></tr>
+<tr><td style="width: 25%;"><a href="mbart2.html">mbart2</a></td>
+<td>Multinomial BART for categorical outcomes with more categories</td></tr>
+<tr><td style="width: 25%;"><a href="abart.html">mc.abart</a></td>
+<td>AFT BART for time-to-event outcomes</td></tr>
+<tr><td style="width: 25%;"><a href="mc.cores.openmp.html">mc.cores.openmp</a></td>
+<td>Detecting OpenMP</td></tr>
+<tr><td style="width: 25%;"><a href="crisk.bart.html">mc.crisk.bart</a></td>
+<td>BART for competing risks</td></tr>
+<tr><td style="width: 25%;"><a href="mc.crisk.pwbart.html">mc.crisk.pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="crisk2.bart.html">mc.crisk2.bart</a></td>
+<td>BART for competing risks</td></tr>
+<tr><td style="width: 25%;"><a href="mc.crisk2.pwbart.html">mc.crisk2.pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="gbart.html">mc.gbart</a></td>
+<td>Generalized BART for continuous and binary outcomes</td></tr>
+<tr><td style="width: 25%;"><a href="mc.lbart.html">mc.lbart</a></td>
+<td>Logit BART for dichotomous outcomes with Logistic latents and parallel computation</td></tr>
+<tr><td style="width: 25%;"><a href="mbart.html">mc.mbart</a></td>
+<td>Multinomial BART for categorical outcomes with fewer categories</td></tr>
+<tr><td style="width: 25%;"><a href="mbart2.html">mc.mbart2</a></td>
+<td>Multinomial BART for categorical outcomes with more categories</td></tr>
+<tr><td style="width: 25%;"><a href="mc.pbart.html">mc.pbart</a></td>
+<td>Probit BART for dichotomous outcomes with Normal latents and parallel computation</td></tr>
+<tr><td style="width: 25%;"><a href="pwbart.html">mc.pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="recur.bart.html">mc.recur.bart</a></td>
+<td>BART for recurrent events</td></tr>
+<tr><td style="width: 25%;"><a href="mc.surv.pwbart.html">mc.recur.pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="surv.bart.html">mc.surv.bart</a></td>
+<td>Survival analysis with BART</td></tr>
+<tr><td style="width: 25%;"><a href="mc.surv.pwbart.html">mc.surv.pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="mc.wbart.html">mc.wbart</a></td>
+<td>BART for continuous outcomes with parallel computation</td></tr>
+<tr><td style="width: 25%;"><a href="mc.wbart.gse.html">mc.wbart.gse</a></td>
+<td>Global SE variable selection for BART with parallel computation</td></tr>
+<tr><td style="width: 25%;"><a href="pbart.html">pbart</a></td>
+<td>Probit BART for dichotomous outcomes with Normal latents</td></tr>
+<tr><td style="width: 25%;"><a href="predict.crisk2bart.html">predict.crisk2bart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.criskbart.html">predict.criskbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.lbart.html">predict.lbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.mbart.html">predict.mbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.mbart.html">predict.mbart2</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.pbart.html">predict.pbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.recurbart.html">predict.recurbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.survbart.html">predict.survbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="predict.wbart.html">predict.wbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="pwbart.html">pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="recur.bart.html">recur.bart</a></td>
+<td>BART for recurrent events</td></tr>
+<tr><td style="width: 25%;"><a href="recur.pre.bart.html">recur.pre.bart</a></td>
+<td>Data construction for recurrent events with BART</td></tr>
+<tr><td style="width: 25%;"><a href="mc.surv.pwbart.html">recur.pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="rs.pbart.html">rs.pbart</a></td>
+<td>BART for dichotomous outcomes with parallel computation and stratified random sampling</td></tr>
+<tr><td style="width: 25%;"><a href="rtgamma.html">rtgamma</a></td>
+<td>Testing truncated Gamma sampling</td></tr>
+<tr><td style="width: 25%;"><a href="rtnorm.html">rtnorm</a></td>
+<td>Testing truncated Normal sampling</td></tr>
+<tr><td style="width: 25%;"><a href="spectrum0ar.html">spectrum0ar</a></td>
+<td>Estimate spectral density at zero</td></tr>
+<tr><td style="width: 25%;"><a href="srstepwise.html">srstepwise</a></td>
+<td>Stepwise Variable Selection Procedure for survreg</td></tr>
+<tr><td style="width: 25%;"><a href="stratrs.html">stratrs</a></td>
+<td>Perform stratified random sampling to balance outcomes</td></tr>
+<tr><td style="width: 25%;"><a href="surv.bart.html">surv.bart</a></td>
+<td>Survival analysis with BART</td></tr>
+<tr><td style="width: 25%;"><a href="surv.pre.bart.html">surv.pre.bart</a></td>
+<td>Data construction for survival analysis with BART</td></tr>
+<tr><td style="width: 25%;"><a href="mc.surv.pwbart.html">surv.pwbart</a></td>
+<td>Predicting new observations with a previously fitted BART model</td></tr>
+<tr><td style="width: 25%;"><a href="transplant.html">transplant</a></td>
+<td>Liver transplant waiting list</td></tr>
+<tr><td style="width: 25%;"><a href="wbart.html">wbart</a></td>
+<td>BART for continuous outcomes</td></tr>
+<tr><td style="width: 25%;"><a href="xdm20.test.html">xdm20.test</a></td>
+<td>A data set used in example of 'recur.bart'.</td></tr>
+<tr><td style="width: 25%;"><a href="xdm20.train.html">xdm20.train</a></td>
+<td>A real data example for 'recur.bart'.</td></tr>
+<tr><td style="width: 25%;"><a href="ydm20.train.html">ydm20.test</a></td>
+<td>A data set used in example of 'recur.bart'.</td></tr>
+<tr><td style="width: 25%;"><a href="ydm20.train.html">ydm20.train</a></td>
+<td>A data set used in example of 'recur.bart'.</td></tr>
+</table>
+</div></body></html>

@@ -1,0 +1,154 @@
+aggregate_vimp_table    Aggregate variable importance from multiple
+                        variable importance objects.
+as_data_object          Creates a valid data object from input data.
+as_familiar_collection
+                        Conversion to familiarCollection object.
+as_familiar_data        Conversion to familiarData object.
+as_familiar_ensemble    Conversion to familiarEnsemble object.
+coef                    Extract model coefficients
+dataObject-class        Data object
+experimentData-class    Experiment data
+export_all              Extract and export all data.
+export_auc_data         Extract and export ROC and Precision-Recall
+                        curves.
+export_calibration_data
+                        Extract and export calibration and
+                        goodness-of-fit tests.
+export_calibration_info
+                        Extract and export calibration information.
+export_confusion_matrix_data
+                        Extract and export confusion matrices.
+export_decision_curve_analysis_data
+                        Extract and export decision curve analysis
+                        data.
+export_feature_expressions
+                        Extract and export feature expressions.
+export_feature_similarity
+                        Extract and export mutual correlation between
+                        features.
+export_fs_vimp          Extract and export feature selection variable
+                        importance.
+export_hyperparameters
+                        Extract and export model hyperparameters.
+export_ice_data         Extract and export individual conditional
+                        expectation data.
+export_model_performance
+                        Extract and export metrics for model
+                        performance.
+export_model_vimp       Extract and export model-based variable
+                        importance.
+export_partial_dependence_data
+                        Extract and export partial dependence data.
+export_permutation_vimp
+                        Extract and export permutation variable
+                        importance.
+export_prediction_data
+                        Extract and export predicted values.
+export_risk_stratification_data
+                        Extract and export sample risk group
+                        stratification and associated tests.
+export_risk_stratification_info
+                        Extract and export cut-off values for risk
+                        group stratification.
+export_sample_similarity
+                        Extract and export mutual correlation between
+                        features.
+export_univariate_analysis_data
+                        Extract and export univariate analysis data of
+                        features.
+familiar                familiar: Fully Automated Machine Learning with
+                        Interpretable Analysis of Results
+familiarCollection-class
+                        Collection of familiar data.
+familiarData-class      Dataset obtained after evaluating models on a
+                        dataset.
+familiarDataElement-class
+                        Data container for evaluation data.
+familiarEnsemble-class
+                        Ensemble of familiar models.
+familiarHyperparameterLearner-class
+                        Hyperparameter learner.
+familiarMetric-class    Model performance metric.
+familiarModel-class     Familiar model.
+familiarNoveltyDetector-class
+                        Novelty detector.
+familiarVimpMethod-class
+                        Variable importance method object.
+featureInfo-class       Feature information object.
+featureInfoParameters-class
+                        Feature information parameters object.
+get_class_names,familiarCollection-method
+                        Get outcome class labels
+get_data_set_names,familiarCollection-method
+                        Get current name of datasets
+get_feature_names,familiarCollection-method
+                        Get current feature labels
+get_fs_method_names,familiarCollection-method
+                        Get current feature selection method name
+                        labels
+get_learner_names,familiarCollection-method
+                        Get current learner name labels
+get_risk_group_names,familiarCollection-method
+                        Get current risk group labels
+get_vimp_table          Extract variable importance table.
+get_xml_config          Create an empty xml configuration file
+outcomeInfo-class       Outcome information object.
+plot_auc_precision_recall_curve
+                        Plot the precision-recall curve.
+plot_auc_roc_curve      Plot the receiver operating characteristic
+                        curve.
+plot_calibration_data   Plot calibration figures.
+plot_confusion_matrix   Plot confusion matrix.
+plot_decision_curve     Plot decision curves.
+plot_feature_similarity
+                        Plot heatmaps for pairwise similarity between
+                        features.
+plot_ice                Plot individual conditional expectation plots.
+plot_kaplan_meier       Plot Kaplan-Meier survival curves.
+plot_model_performance
+                        Plot model performance.
+plot_pd                 Plot partial dependence.
+plot_permutation_variable_importance
+                        Plot permutation variable importance.
+plot_sample_clustering
+                        Plot heatmaps for pairwise similarity between
+                        features.
+plot_univariate_importance
+                        Plot univariate importance.
+plot_variable_importance
+                        Plot variable importance scores of features
+                        during feature selection or after training a
+                        model.
+precompute_data_assignment
+                        Pre-compute data assignment
+precompute_feature_info
+                        Pre-compute feature information
+precompute_vimp         Pre-compute variable importance
+predict                 Model predictions for familiar models and model
+                        ensembles
+set_class_names,familiarCollection-method
+                        Rename outcome classes for plotting and export
+set_data_set_names,familiarCollection-method
+                        Name datasets for plotting and export
+set_feature_names,familiarCollection-method
+                        Rename features for plotting and export
+set_fs_method_names,familiarCollection-method
+                        Rename feature selection methods for plotting
+                        and export
+set_learner_names,familiarCollection-method
+                        Rename learners for plotting and export
+set_risk_group_names,familiarCollection-method
+                        Rename risk groups for plotting and export
+summary                 Model summaries
+summon_familiar         Perform end-to-end machine learning and data
+                        analysis
+theme_familiar          Familiar ggplot2 theme
+train_familiar          Create models using end-to-end machine learning
+update_model_dir_path   Updates model directory path for ensemble
+                        objects.
+update_object           Update familiar S4 objects to the most recent
+                        version.
+vcov                    Calculate variance-covariance matrix for a
+                        model
+vimpTable-class         Variable importance table
+waiver                  Create a waiver object

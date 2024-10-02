@@ -1,0 +1,78 @@
+ACTG175                 AIDS Clinical Trials Group Study 175
+BART-package            Bayesian Additive Regression Trees
+abart                   AFT BART for time-to-event outcomes
+alligator               American alligator Food Choice
+arq                     NHANES 2009-2010 Arthritis Questionnaire
+bartModelMatrix         Create a matrix out of a vector or data.frame
+bladder                 Bladder Cancer Recurrences
+crisk.bart              BART for competing risks
+crisk.pre.bart          Data construction for competing risks with BART
+crisk2.bart             BART for competing risks
+draw_lambda_i           Testing truncated Normal sampling
+gbart                   Generalized BART for continuous and binary
+                        outcomes
+gewekediag              Geweke's convergence diagnostic
+lbart                   Logit BART for dichotomous outcomes with
+                        Logistic latents
+leukemia                Bone marrow transplantation for leukemia and
+                        multi-state models
+lung                    NCCTG Lung Cancer Data
+mbart                   Multinomial BART for categorical outcomes with
+                        fewer categories
+mbart2                  Multinomial BART for categorical outcomes with
+                        more categories
+mc.cores.openmp         Detecting OpenMP
+mc.crisk.pwbart         Predicting new observations with a previously
+                        fitted BART model
+mc.crisk2.pwbart        Predicting new observations with a previously
+                        fitted BART model
+mc.lbart                Logit BART for dichotomous outcomes with
+                        Logistic latents and parallel computation
+mc.pbart                Probit BART for dichotomous outcomes with
+                        Normal latents and parallel computation
+mc.surv.pwbart          Predicting new observations with a previously
+                        fitted BART model
+mc.wbart                BART for continuous outcomes with parallel
+                        computation
+mc.wbart.gse            Global SE variable selection for BART with
+                        parallel computation
+pbart                   Probit BART for dichotomous outcomes with
+                        Normal latents
+predict.crisk2bart      Predicting new observations with a previously
+                        fitted BART model
+predict.criskbart       Predicting new observations with a previously
+                        fitted BART model
+predict.lbart           Predicting new observations with a previously
+                        fitted BART model
+predict.mbart           Predicting new observations with a previously
+                        fitted BART model
+predict.pbart           Predicting new observations with a previously
+                        fitted BART model
+predict.recurbart       Predicting new observations with a previously
+                        fitted BART model
+predict.survbart        Predicting new observations with a previously
+                        fitted BART model
+predict.wbart           Predicting new observations with a previously
+                        fitted BART model
+pwbart                  Predicting new observations with a previously
+                        fitted BART model
+recur.bart              BART for recurrent events
+recur.pre.bart          Data construction for recurrent events with
+                        BART
+rs.pbart                BART for dichotomous outcomes with parallel
+                        computation and stratified random sampling
+rtgamma                 Testing truncated Gamma sampling
+rtnorm                  Testing truncated Normal sampling
+spectrum0ar             Estimate spectral density at zero
+srstepwise              Stepwise Variable Selection Procedure for
+                        survreg
+stratrs                 Perform stratified random sampling to balance
+                        outcomes
+surv.bart               Survival analysis with BART
+surv.pre.bart           Data construction for survival analysis with
+                        BART
+transplant              Liver transplant waiting list
+wbart                   BART for continuous outcomes
+xdm20.test              A data set used in example of 'recur.bart'.
+xdm20.train             A real data example for 'recur.bart'.
+ydm20.train             A data set used in example of 'recur.bart'.

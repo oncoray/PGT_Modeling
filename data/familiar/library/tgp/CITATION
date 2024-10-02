@@ -1,0 +1,36 @@
+bibentry(bibtype = "Article",
+  title        = "{tgp}: An {R} Package for Bayesian Nonstationary, Semiparametric Nonlinear Regression and Design by Treed Gaussian Process Models",
+  author       = c(person(given="Robert B.", family="Gramacy")),
+  journal      = "Journal of Statistical Software",
+  year         = "2007",
+  volume       = "19",
+  number       = "9",
+  pages        = "1--46",
+  url          = "https://www.jstatsoft.org/v19/i09/",
+  doi          = "10.18637/jss.v019.i09",
+
+  textVersion  =
+  paste("Robert B. Gramacy (2007).",
+        "tgp: An R Package for Bayesian Nonstationary, Semiparametric Nonlinear Regression and Design by Treed Gaussian Process Models.",
+        "Journal of Statistical Software, 19(9), 1-46.",
+        "URL https://www.jstatsoft.org/v19/i09/.")
+)
+
+bibentry(bibtype = "Article",
+  title        = "Categorical Inputs, Sensitivity Analysis, Optimization and Importance Tempering with {tgp} Version 2, an {R} Package for Treed Gaussian Process Models",
+  author       = c(person(given="Robert B.", family="Gramacy"),
+                   person(given="Matthew", family="Taddy")),
+  journal      = "Journal of Statistical Software",
+  year         = "2010",
+  volume       = "33",
+  number       = "6",
+  pages        = "1--48",
+  url          = "https://www.jstatsoft.org/v33/i06/",
+  doi          = "10.18637/jss.v033.i06",
+
+  textVersion  =
+  paste("Robert B. Gramacy, Matthew Taddy (2010).",
+        "Categorical Inputs, Sensitivity Analysis, Optimization and Importance Tempering with tgp Version 2, an R Package for Treed Gaussian Process Models.",
+        "Journal of Statistical Software, 33(6), 1-48.",
+        "URL https://www.jstatsoft.org/v33/i06/.")
+)

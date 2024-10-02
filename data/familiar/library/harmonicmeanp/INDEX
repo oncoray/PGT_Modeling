@@ -1,0 +1,13 @@
+dLandau                 The Landau Distribution
+dharmonicmeanp          The Harmonic Mean p-Value Asymptotic
+                        Distribution
+dmamml                  Model-Averaged Mean Maximized Likelihood Ratio
+                        Asymptotic Distribution
+harmonicmeanp           Harmonic mean p-values and model averaging by
+                        mean maximum likelihood
+hmp.stat                Compute the Harmonic Mean _p_-Value
+mamml.stat              Compute the Model-Averaged Mean Maximized
+                        Likelihood
+p.hmp                   Asymptotically Exact Harmonic Mean p-Value
+p.mamml                 Compute a combined _p_-value via the
+                        model-averaged mean maximized likelihood ratio

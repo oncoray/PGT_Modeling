@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Alex Zwanenburg" />
+
+<meta name="date" content="2022-12-16" />
+
+<title>Introducing familiar</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iDQogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIg0KICAgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIg0KICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCINCiAgIHhtbG5zOmlua3NjYXBlPSJodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy9uYW1lc3BhY2VzL2lua3NjYXBlIg0KICAgdmVyc2lvbj0iMS4xIg0KICAgaWQ9IkxheWVyXzEiDQogICB4PSIwcHgiDQogICB5PSIwcHgiDQogICB2aWV3Qm94PSIwIDAgNzM1IDg1MiINCiAgIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDczNSA4NTI7Ig0KICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSINCiAgIHNvZGlwb2RpOmRvY25hbWU9ImZhbWlsaWFyLnN2ZyINCiAgIGlua3NjYXBlOnZlcnNpb249IjEuMC4xICgzYmMyZTgxM2Y1LCAyMDIwLTA5LTA3KSI+PG1ldGFkYXRhDQogICBpZD0ibWV0YWRhdGE3OSI+PHJkZjpSREY+PGNjOldvcmsNCiAgICAgICByZGY6YWJvdXQ9IiI+PGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+PGRjOnR5cGUNCiAgICAgICAgIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiIC8+PC9jYzpXb3JrPjwvcmRmOlJERj48L21ldGFkYXRhPjxkZWZzDQogICBpZD0iZGVmczc3Ij48Y2xpcFBhdGgNCiAgICAgY2xpcFBhdGhVbml0cz0idXNlclNwYWNlT25Vc2UiDQogICAgIGlkPSJjbGlwUGF0aDEyNjEiPjxwYXRoDQogICAgICAgY2xhc3M9InN0MCINCiAgICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICAgIGlkPSJwYXRoMTI2MyINCiAgICAgICBzdHlsZT0iZGlzcGxheTppbmxpbmU7ZmlsbDojZmZkNWU1IiAvPjwvY2xpcFBhdGg+PC9kZWZzPjxzb2RpcG9kaTpuYW1lZHZpZXcNCiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiINCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2Ig0KICAgYm9yZGVyb3BhY2l0eT0iMSINCiAgIG9iamVjdHRvbGVyYW5jZT0iMTAiDQogICBncmlkdG9sZXJhbmNlPSIxMCINCiAgIGd1aWRldG9sZXJhbmNlPSIxMCINCiAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIg0KICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiINCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMjQ4OSINCiAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEyODkiDQogICBpZD0ibmFtZWR2aWV3NzUiDQogICBzaG93Z3JpZD0iZmFsc2UiDQogICBpbmtzY2FwZTp6b29tPSIwLjcwNTM5OTA2Ig0KICAgaW5rc2NhcGU6Y3g9IjQ1NS4yNDI1MyINCiAgIGlua3NjYXBlOmN5PSI2MC42ODAwNzkiDQogICBpbmtzY2FwZTp3aW5kb3cteD0iMCINCiAgIGlua3NjYXBlOndpbmRvdy15PSIwIg0KICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMCINCiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9ImxheWVyMiIgLz4NCjxzdHlsZQ0KICAgdHlwZT0idGV4dC9jc3MiDQogICBpZD0ic3R5bGUyIj4NCgkuc3Qwe2ZpbGw6IzE0NEY4NTt9DQoJLnN0MXtmaWxsOiMxNzNFNkM7fQ0KCS5zdDJ7ZmlsbDojRTZCMzVBO30NCgkuc3Qze2ZpbGw6I0ZGRkZGRjt9DQoJLnN0NHtmaWxsOiMyMzFGMjA7fQ0KPC9zdHlsZT4NCjxnDQogICBpbmtzY2FwZTpncm91cG1vZGU9ImxheWVyIg0KICAgaWQ9ImxheWVyMyINCiAgIGlua3NjYXBlOmxhYmVsPSJIZXhhZ29uIg0KICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lIj48cGF0aA0KICAgICBjbGFzcz0ic3QwIg0KICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICBpZD0icGF0aDQiDQogICAgIHN0eWxlPSJmaWxsOiNmZmQ1ZTUiIC8+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4Ig0KICAgICBzdHlsZT0iZmlsbDojZmZhYWNjIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjIiDQogICBpbmtzY2FwZTpsYWJlbD0iTmV0d29ya0JHIj48Zw0KICAgICBpZD0iZzEyMDMiDQogICAgIGNsaXAtcGF0aD0idXJsKCNjbGlwUGF0aDEyNjEpIj48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmVlYWE7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNjA0LjgyNzI3LDEyMy44MDc0NCAzNjguODE2MDQsMjYwLjA2ODU5IDI5OC44MTk0NSwyNjEuMTI2MjggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOS4zNTEyLDQ4Mi4yMTY0OCAzMjcuMTI0NTMsMzEwLjI5Njk3IDM5Ny4xMjExMiwzMDkuMjM5MjggNjMzLjEzMjM2LDE3Mi45NzgxMyBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04Ig0KICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NjY2NjY2NjIiAvPjxwYXRoDQogICAgICAgc3R5bGU9ImZpbGw6I2ZmZWVhYTtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MXB4O3N0cm9rZS1saW5lY2FwOmJ1dHQ7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1vcGFjaXR5OjEiDQogICAgICAgZD0iTSA1MjQuNjYwMTYsLTE1LjMzNTY0NyAyODguNjQ4OTMsMTIwLjkyNTUgMjE4LjY1MjM0LDEyMS45ODMxOSAtNzkuMTIwOTg3LDI5My45MDI3IC01MC44MTU4ODMsMzQzLjA3MzM4IDI0Ni45NTc0NCwxNzEuMTUzODcgMzE2Ljk1NDAzLDE3MC4wOTYxOCA1NTIuOTY1MjcsMzMuODM1MDMyIFoiDQogICAgICAgaWQ9InBhdGgxMDMyLTgtOCINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmRkNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNTUyLjk2NTI3LDMzLjgzNTAzMiAzMTYuOTU0MDMsMTcwLjA5NjE4IDI0Ni45NTc0NCwxNzEuMTUzODcgLTUwLjgxNTg4MywzNDMuMDczMzggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOTguODE5NDQsMjYxLjEyNjI4IDM2OC44MTYwMywyNjAuMDY4NTkgNjA0LjgyNzI2LDEyMy44MDc0NCBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04LTgtNyINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48L2c+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4LTQiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmFhY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6I2ZmZWVhYTtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lIg0KICAgICBpZD0icGF0aDEwMTMtMCINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI1OTMuNDM1OTIiDQogICAgIHNvZGlwb2RpOmN5PSIyNzMuNTg1MjMiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2MjguNTUzNDEsMjk5LjEyNTIzIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NywtMjguNTM3OCAtMjUuODUxNzQsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTUsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9IjQuMTQwMzkwOCINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4wMDYzOTg5NTg2IiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNSINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI2NTkuMDg4ODEiDQogICAgIHNvZGlwb2RpOmN5PSIzNTcuMjUxMDEiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2OTQuMjA2MywzODIuNzkxIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NiwtMjguNTM3OCAtMjUuODUxNzUsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTQsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0yLjM3NjIyNDEiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iLTAuMTk2MzkzMzMiDQogICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuNTA4ODM2OTgsMC4zNTEyMzQzNiwtMC4zNTEyMzQzNiwwLjUwODgzNjk4LDQzNy45MDcxLC01MS4yMzg1MDUpIiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNS00Ig0KICAgICBzb2RpcG9kaTpzaWRlcz0iNSINCiAgICAgc29kaXBvZGk6Y3g9IjY1OS4wODg4MSINCiAgICAgc29kaXBvZGk6Y3k9IjM1Ny4yNTEwMSINCiAgICAgc29kaXBvZGk6cjE9IjQzLjQyMjY4OCINCiAgICAgc29kaXBvZGk6cjI9IjIxLjcxMTM0NCINCiAgICAgc29kaXBvZGk6YXJnMT0iMC42Mjg3OTYyOSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS4yNTcxMTQ4Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDY5NC4yMDYzLDM4Mi43OTEgLTI4LjQxODE5LC00Ljg4ODA4IC0yMC4xMzczOCwyMC42MzkxIC00LjEzMjg2LC0yOC41Mzc4IC0yNS44NTE3NSwtMTIuNzczOTYgMjUuODYzOTQsLTEyLjc0OTI1IDQuMTYwMTMsLTI4LjUzMzg0IDIwLjExNzY1LDIwLjY1ODMzIDI4LjQyMjg1LC00Ljg2MDkyIC0xMy40MzA1NCwyNS41MTY4IHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iLTIuMzc2MjI0MSINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4xOTYzOTMzMyINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC41MDg4MzY5OCwwLjM1MTIzNDM2LC0wLjM1MTIzNDM2LDAuNTA4ODM2OTgsNDU4LjI3NjM0LC0xMjguMTM1NjcpIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjEiDQogICBpbmtzY2FwZTpsYWJlbD0iRmFtaWxpYXIiDQogICBzdHlsZT0iZGlzcGxheTppbmxpbmUiDQogICBzb2RpcG9kaTppbnNlbnNpdGl2ZT0idHJ1ZSI+PHBhdGgNCiAgICAgaWQ9InJlY3QxMjY1Ig0KICAgICBzdHlsZT0iZmlsbDojZmZkNWU1O3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjg4ODY2OTtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGQ9Im0gMjQ1LjQ2MDU1LDI1Ny4xNzU2MyAyMjkuOTU3MzcsLTE1LjU5NDAxIDI1LjU0OTExLDY3Ljc1NzI1IC0wLjAzMTYsMTAwLjE2NjU3IC0xMTMuMjE2MDEsNDIuMjI0NTcgLTE0OC42MzgxOSwtNDIuOTMzMzkgeiINCiAgICAgc29kaXBvZGk6bm9kZXR5cGVzPSJjY2NjY2NjIiAvPjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNkNDAwNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjMuMTYyOTUiDQogICAgIGQ9Im0gMTk2LjE4Njc2LDMxNS42MjMxIGMgLTEwLjYzMjUzLDE3LjM4NTc3IC0zMy42NDIyMywxMS42NDE4NiAtNDMuMDA3MzcsMjguNzkxMDMgLTM2LjYxNTA4LDY3LjA0OTM5IDE3LjQzNTM5LDE0NS4wMDMzNCA2Mi4xMzg3NywxODYuOTc4NzkgMTcuNTAwNiwxNi40MzE1IDQyLjc1MDgsNTQuNjY1NzMgNTAuNzM0LDQ2Ljg5MzgzIDcuOTgzMiwtNy43NzE5IC0xNS44MTQ3LC00NC4yODEyMyAtMTUuODE0NywtNDQuMjgxMjMgMjguMjk2NiwtMjAuMjg1NyA4Mi4yOTksNDMuODIxMzkgODYuNjgzNCwxOS4zMDUzNCA0LjM4NDUsLTI0LjUxNjA2IC00Ni44NjM1LC0xOC45NTc0MiAtNjcuNzA1OCwtNDQuNjA4OTEgMTguMzU5NCwwLjAwMyA1OS42OTU3LDEuMjQ2MiA2My4yNTg5LC05LjQ4ODg0IDMuNTYzMywtMTAuNzM1MDQgLTcyLjc0NzcsLTEyLjY1MTc4IC03Mi43NDc3LC0xMi42NTE3OCB2IC05LjQ4ODgzIGMgMzQuMDcwNiwtOS4yOTU5IDU3LjYzOTksMC4wODg2IDkxLjcyNTQsLTAuODE5MjEgNDAuNjM4OCwtMS4wODE3MiA2OC4wNzk1LC0xNS42MzQ0NCAxMDQuMzc3Miw3LjE0NTEgLTI1LjIwNTUsNi4wNjk2OSAtNzIuMzMxMywyNS40ODkxOCAtNjkuNTg0OCwzMS42Mjk0NSAyLjc0NjUsNi4xNDAyNyA3Mi43NDc3LC0zLjE2Mjk0IDcyLjc0NzcsLTMuMTYyOTQgMCwwIC01Ny45ODk2LDU2Ljc3NzggLTM3Ljk1NTMsNjMuMjU4OTEgMjAuMDM0Myw2LjQ4MTExIDQ3LjAwMjUsLTUzLjI2OTU3IDY5LjI0OTUsLTQ2LjM0OTgxIDE4LjM2NDEsNS4yNTA0OSAxMi40Nzk0LDQ4Ljk0NjgzIDI1LjYzODksNDYuMzQ5ODEgMTMuMTU5NSwtMi41OTcwMiAtMS4zNjMzLC0zNS40MTIzNCA0Ljc2NjUsLTUzLjc3MDA4IDE1LjkzMTgsLTQ3LjcxNjE5IDcxLjQ1NzMsLTEyNC40NjYzMyA0NC44MzQ4LC0xNzcuMDY2NDMgLTkuODU4OSwtMTkuNDgxODUgLTM1LjIwMDQsLTE4LjU1NDc5IC00NS45OTU2LC0zOC4wMjg0MSAtMTAuMDkyOSwtMTguMjA3MTggLTguMDE4MSwtMzcuMjU3NiAtMjIuOTI1LC01My43NDMxOSAtMzQuMzU5NzQsLTI0LjY2ODM4IC0zOS4zOTM0NSwtNDAuNTAzNzcgLTEwNy4xOTg2LC00NC4yOTM1OCAwLDAgLTc5LjMyNjg3LDEuOTE0MzYgLTExNS4zOTY5NCwyMC4zNzcwMSAtMzYuMDcwMDYsMTguNDYyNjUgLTYzLjExMDE2LDYyLjk2NTY2IC03Ny44MjMyNiw4Ny4wMjM5NyB6IG0gMjg4LjEwODYsLTQ0LjE0MjA2IGMgLTMxLjExMjYsMy4yMDk0NCAtNTEuMjQzMiw1Ni41MjQzNiAtMTIuNjM5MSw1NS43NDQzOCA5LjIzODksLTAuMTg2NjEgMTcuNjg0LC02Ljk1MjQ3IDI1LjI5MDksLTExLjQ2MzE1IDE0LjkyMjgsNDQuMDg1MTQgLTIwLjI4MDgsNjMuNDUyOCAtNjAuMDk2LDcxLjg0MjIgLTY2Ljk3MTUsMTQuMTExOCAtMTI5LjYxMjEsMjEuNjA3MDMgLTE4OS43NzY3LC0xOC4wNzIxMiA0Ljk1MTYsLTI2LjY1NTczIC02LjM2NzksLTkwLjQ1MDQ0IDE1Ljg3NTgsLTEwMy4wNTY5OSAxMS41MjQ1LC02LjUzMTQ4IDI1LjA4NzgsLTcuOTQ2MjcgMzcuNjA4NywtMy4zOTIyNiAxNi42MDE2LDYuMDM4MzggMjQuOTA1MywyNC44MTY3OSA0MS40MDY0LDMyLjM4MTI5IDM2LjUzOTMsMTYuNzUwMzIgOTEuNzQyOCwtNS4yNjE4OCA4OC41NTk5LC00OS4yODY5MiAyMi45NzE5LDAgNDkuMzI5MywtMy4yMTc2NiA1My43NzAxLDI1LjMwMzU3IG0gLTIwNS4yNDk4LDE4LjE3NDYgYyAtMzEuMDExMSwxMi43ODE0NiAtNy4xNTgxLDY2LjE4NCAyNC4yODYsNTIuNjYyMDkgMjkuMTcsLTEyLjU0MzkyIDYuNTQ5OCwtNjUuMzcxMTIgLTI0LjI4NiwtNTIuNjYyMDkgbSAxMzIuNTAyMSw0MS45MjEzNiAwLjg3NzEsMTEuNzEzOSA4LjM5MTQsLTAuMDY0NSAtMS4wNTE2LC0xMy4wMzM4MSAtOC4yMTY5LDEuMzg0NDUgbSAtNTAuNjA3MSwzLjE2Mjk1IDMuMTYyOSwxMi42NTE3OCBoIDYuMzI1OSBsIDMuMTYyOSwtMTIuNjUxNzggaCAtMTIuNjUxNyBtIDE0Mi4zMzI1LDUwLjYwNzEyIGMgLTUxLjc4MzEsNjIuNDkzNDggLTE1Mi42NzczLDUxLjM0NDEgLTIyMS40MDYyLDM0Ljc5MjQxIDAsMCA3OS4zMjMzLDMuNTYzMjQgMTE2LjY0NzgsLTIuNjY3MzMgMzcuMzI0NSwtNi4yMzA1NiAxMDQuNzU4NCwtMzIuMTI1MDggMTA0Ljc1ODQsLTMyLjEyNTA4IG0gLTUzLjc3MDEsNzUuOTEwNyBjIDcuODY2MiwtNS42MzYzNyA1NC4wMDQxLC0zOS45MDA1NiA1OC4xODU1LC0zNy4zOTg2NyAxMC42NTYsNi4zNzk2NiAtMi45NzYzLDI1LjIyNDQ5IC04LjI1NTIsMzAuMzUxNjMgLTEzLjI0MzMsMTIuODU3MzcgLTMzLjQ2MDgsMTEuOTE0ODEgLTQ5LjkzMDMsNy4wNDcwNCBtIC0xOTIuOTM5NiwtNi4zMjU4OSB2IDYuMzI1ODkgYyAtMjIuMjk2LDEwLjcxMjg5IC0zNS43NTUyLDIuMDkwNzEgLTM3Ljk1NTQsLTIyLjE0MDYyIHoiDQogICAgIGlkPSJwYXRoOTg4Ig0KICAgICBzb2RpcG9kaTpub2RldHlwZXM9InNjY3pjemN6Y2NjY3pjemN6Y2NzY2N6c2NzY2Njc3NzY2Njc2NjY2NjY2NjY2NjY2N6Y2NjY2NjY2NjIiAvPjx0ZXh0DQogICAgIHhtbDpzcGFjZT0icHJlc2VydmUiDQogICAgIHN0eWxlPSJmb250LXNpemU6MTA2LjY2N3B4O2xpbmUtaGVpZ2h0OjEuMjU7Zm9udC1mYW1pbHk6QmFobnNjaHJpZnQ7LWlua3NjYXBlLWZvbnQtc3BlY2lmaWNhdGlvbjpCYWhuc2NocmlmdDtmaWxsOiNmZmZmZmYiDQogICAgIHg9IjEzMy4wMTk3MyINCiAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICBpZD0idGV4dDEwMDciPjx0c3Bhbg0KICAgICAgIHNvZGlwb2RpOnJvbGU9ImxpbmUiDQogICAgICAgaWQ9InRzcGFuMTAwNSINCiAgICAgICB4PSIxMzMuMDE5NzMiDQogICAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICAgIHN0eWxlPSJmb250LXN0eWxlOm5vcm1hbDtmb250LXZhcmlhbnQ6bm9ybWFsO2ZvbnQtd2VpZ2h0Om5vcm1hbDtmb250LXN0cmV0Y2g6bm9ybWFsO2ZvbnQtc2l6ZToxMDYuNjY3cHg7Zm9udC1mYW1pbHk6J0x1Y2lkYSBTYW5zJzstaW5rc2NhcGUtZm9udC1zcGVjaWZpY2F0aW9uOidMdWNpZGEgU2Fucyc7ZmlsbDojZmZmZmZmIj5GQU1JTElBUjwvdHNwYW4+PC90ZXh0PjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNmZmFhY2M7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICBkPSJNIDM2Mi41NzgyMiw4NS41MTIxMDQgMzExLjczMTMsMjQ2Ljg2ODI5IGMgMCwwIDI1LjIyMDMsMzEuNjg0NTcgNTQuODgyNTUsMzAuODI0NDUgMzYuNzg3NDQsLTEuMDY2NzMgNTQuMjY3MDksLTM1LjEyMDM1IDU0LjI2NzA5LC0zNS4xMjAzNSB6Ig0KICAgICBpZD0icGF0aDEwMDkiDQogICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NzY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NjMzNDQ7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEiDQogICAgIHNvZGlwb2RpOnNpZGVzPSI1Ig0KICAgICBzb2RpcG9kaTpjeD0iMzkzLjQzNzI2Ig0KICAgICBzb2RpcG9kaTpjeT0iMjQwLjMzNjc5Ig0KICAgICBzb2RpcG9kaTpyMT0iMjEuNjMwNjA2Ig0KICAgICBzb2RpcG9kaTpyMj0iMTAuODE1MzAzIg0KICAgICBzb2RpcG9kaTphcmcxPSIxLjMwMDQ3MSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS45Mjg3ODk1Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDM5OS4yMTM2LDI2MS4xODE4NiAtOS41NjU5OCwtMTAuNzE1NDMgLTE0LjI1MDIyLDEuODA1NDcgNy4yMzQ5NCwtMTIuNDA5MDMgLTYuMTIwNjcsLTEyLjk5NDg0IDE0LjAzNzQxLDMuMDQ2MjMgMTAuNDY3NDQsLTkuODM2NzMgMS40NDA2NiwxNC4yOTE3MSAxMi41ODk5LDYuOTE1NCAtMTMuMTQ3MDMsNS43ODY1MyB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjc4NDk4NTYiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yOTI5MDUzMSIgLz48cGF0aA0KICAgICBzb2RpcG9kaTp0eXBlPSJzdGFyIg0KICAgICBzdHlsZT0iZmlsbDojZmZlNjgwO3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjU1MjAwNztzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGlkPSJwYXRoMTAxMyINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNjUuOTUzMzEiDQogICAgIHNvZGlwb2RpOmN5PSIxNzEuODA3OTEiDQogICAgIHNvZGlwb2RpOnIxPSIyNC40MTc2MzciDQogICAgIHNvZGlwb2RpOnIyPSIxMi4yMDg4MTgiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzODUuNzAwNzMsMTg2LjE2OTY3IC0xNS45ODAyNCwtMi43NDg2OSAtMTEuMzIzNzQsMTEuNjA1ODcgLTIuMzI0MDEsLTE2LjA0NzUgLTE0LjUzNzA3LC03LjE4MzExIDE0LjU0MzkzLC03LjE2OTIxIDIuMzM5MzQsLTE2LjA0NTI4IDExLjMxMjY1LDExLjYxNjY4IDE1Ljk4Mjg2LC0yLjczMzQxIC03LjU1MjMyLDE0LjM0ODcyIHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iMi4zMjgyNTI2Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXk9Ii0wLjAwMzYwODA2NDYiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NDAxNDU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEtNiINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNDQuNDIxNiINCiAgICAgc29kaXBvZGk6Y3k9IjIyNS40OTQ3NCINCiAgICAgc29kaXBvZGk6cjE9IjIwLjU0NzU1OCINCiAgICAgc29kaXBvZGk6cjI9IjEwLjI3Mzc3OSINCiAgICAgc29kaXBvZGk6YXJnMT0iMS4zMDA0NzEiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuOTI4Nzg5NSINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzNDkuOTA4NzIsMjQ1LjI5NjA5IC05LjA4NywtMTAuMTc4OTEgLTEzLjUzNjcxLDEuNzE1MDcgNi44NzI2OCwtMTEuNzg3NzEgLTUuODE0MjEsLTEyLjM0NDE5IDEzLjMzNDU2LDIuODkzNzEgOS45NDMzMywtOS4zNDQyMSAxLjM2ODUzLDEzLjU3NjEzIDExLjk1OTUyLDYuNTY5MTUgLTEyLjQ4ODc2LDUuNDk2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjY5NTYxMDIiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yNzgyMjQwMyIgLz48L2c+DQo8dGl0bGUNCiAgIGlkPSJ0aXRsZTYiPmZlYXRoZXI8L3RpdGxlPg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KPC9zdmc+DQo=" align="right" width="120" />
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introducing familiar</h1>
+<h4 class="author">Alex Zwanenburg</h4>
+<h4 class="date">2022-12-16</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#familiar-in-brief" id="toc-familiar-in-brief">Familiar in
+brief</a>
+<ul>
+<li><a href="#installing-familiar" id="toc-installing-familiar">Installing familiar</a></li>
+<li><a href="#pipeline" id="toc-pipeline">Pipeline</a></li>
+<li><a href="#supported-outcomes" id="toc-supported-outcomes">Supported
+outcomes</a></li>
+</ul></li>
+<li><a href="#running-familiar" id="toc-running-familiar">Running
+familiar</a>
+<ul>
+<li><a href="#configuring-familiar" id="toc-configuring-familiar">Configuring familiar</a></li>
+<li><a href="#preparing-your-data" id="toc-preparing-your-data">Preparing your data</a>
+<ul>
+<li><a href="#identifier-columns" id="toc-identifier-columns">Identifier
+columns</a></li>
+<li><a href="#outcome-columns" id="toc-outcome-columns">Outcome
+columns</a></li>
+<li><a href="#feature-columns" id="toc-feature-columns">Feature
+columns</a></li>
+</ul></li>
+<li><a href="#experimental-designs" id="toc-experimental-designs">Experimental designs</a></li>
+<li><a href="#warm-start" id="toc-warm-start">Warm start</a></li>
+</ul></li>
+<li><a href="#references" id="toc-references">References</a></li>
+</ul>
+</div>
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(familiar)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span></code></pre></div>
+<p>Familiar is a package that allows for end-to-end machine learning of
+tabular data, with subsequent evaluation and explanation of models. This
+vignette provides an overview of its functionality and how to configure
+and run an experiment.</p>
+<div id="familiar-in-brief" class="section level1">
+<h1>Familiar in brief</h1>
+<p>This section provides installation instructions, a brief overview of
+the package, and the pipeline encapsulated by the
+<code>summon_familiar</code> function that is used to run an
+experiment.</p>
+<div id="installing-familiar" class="section level2">
+<h2>Installing familiar</h2>
+<p>Stable versions of familiar can be installed from CRAN.
+<code>dependencies=TRUE</code> prevents being prompted to install
+packages when using familiar.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;familiar&quot;</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">dependencies=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<p>It can also be installed directly from the GitHub repository:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(devtools)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;https://github.com/alexzwanenburg/familiar&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">dependencies=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+</div>
+<div id="pipeline" class="section level2">
+<h2>Pipeline</h2>
+<p>The pipeline implemented in familiar follows a standard machine
+learning process. A development dataset is used to perform the steps
+listed below. Many aspects of these steps can be configured, but the
+overall process is fixed:</p>
+<ul>
+<li><p><strong>Data processing</strong>: Features in the development
+dataset are assessed during this step:</p>
+<ul>
+<li><p>General feature information: Are features categorical (e.g. has
+the values <code>FALSE</code>, <code>TRUE</code>) or numeric? Which
+levels does a categorical or ordinal feature have?</p></li>
+<li><p>Invariance: Which features are invariant and should be
+dropped?</p></li>
+<li><p>Transformation: How should numeric features be transformed using
+a power transformation to make these features behave more according to a
+normal distribution?</p></li>
+<li><p>Normalisation: How should numeric features be normalised to
+reduce differences in scale between features the dataset? Note that
+familiar also allows for normalisation at the batch level to remove
+systematic differences in feature values between different batches or
+cohorts.</p></li>
+<li><p>Robustness: Should non-robust features, assessed using repeated
+measurements, be filtered?</p></li>
+<li><p>Importance: Should generally unimportant features be filtered
+after univariate analysis?</p></li>
+<li><p>Imputation: How should missing feature values be
+imputed?</p></li>
+<li><p>Redundancy clustering: Which features are similar and should be
+clustered together?</p></li>
+</ul></li>
+<li><p><strong>Feature selection</strong>: Which features are important
+for the endpoint of interest? Familiar supports various univariate and
+multivariate feature selection methods (see the <em>Feature selection
+methods</em> vignette). Note that feature selection, at least in
+familiar, is a misnomer. Instead of selecting features, in the sense of
+selecting the features to be included in a model by a learner, features
+in the data are ranked according to their importance. Actual feature
+selection is conducted during hyperparameter optimisation.</p></li>
+<li><p><strong>Hyperparameter optimisation</strong>: Most learners have
+hyperparameters, which are parameters that determine a specific aspect
+of the model created by the learner. Examples are the number of trees in
+a random forest, the width of the radial kernel in support vector
+machines, and the number of features in the signature of a model. Such
+parameters may significantly influence model performance. During
+hyperparameter optimisation, the aim is to find the set of
+hyperparameters that leads to a generalisable model. Since
+hyperparameter spaces can be high-dimensional, familiar uses Bayesian
+optimisation for efficiently exploring hyperparameter space. The
+<em>learning algorithms and hyperparameter optimisation</em> vignette
+describes model-specific hyperparameters and hyperparameter optimisation
+in more detail.</p></li>
+<li><p><strong>Model training</strong>: During the final model training
+step, the development data are fitted using the previously determined
+set of hyperparameters. By default, the models are trimmed after
+creation to remove extraneous information such as copies of the
+development data. The model objects that are created in this step
+contain more than just the model. Notably, the following information is
+included to allow for prospective use and evaluation:</p>
+<ul>
+<li><p>Feature information, as generated during the data processing
+step, is stored to allow for preparing datasets in the same manner as
+the development dataset and for checking if new datasets are formatted
+as expected. It is also used to create default ranges for individual
+conditional expectation and partial dependence plots.</p></li>
+<li><p>Outcome information is stored. This is primarily used to check
+whether outcome data in new datasets are formatted in accordance with
+the development data. It is also used in computing several performance
+metrics.</p></li>
+<li><p>A novelty detector is trained to detect out-of-distribution
+samples and assess when a model starts extrapolating. The novelty
+detector is currently based on extended isolation forests in the
+<code>isotree</code> package <span class="citation">Cortes
+(2021)</span>.</p></li>
+<li><p>Models used to recalibrate the output of specific models (see
+<em>Learning algorithm</em> vignette) are stored.</p></li>
+<li><p>Calibration information is added. This currently is only done for
+survival analysis, for which we store baseline survival curves <span class="citation">Royston and Altman (2013)</span>.</p></li>
+<li><p>Risk stratification thresholds used for assigning risk strata are
+stored.</p></li>
+</ul></li>
+</ul>
+<p>After training the models, the models are assessed using the
+development and any validation datasets. Models, and results from this
+analysis are written to a local directory.</p>
+</div>
+<div id="supported-outcomes" class="section level2">
+<h2>Supported outcomes</h2>
+<p>Familiar supports modelling and evaluation of several types of
+endpoints:</p>
+<ul>
+<li><p>Categorical endpoints, where the outcome consists of two or more
+classes. Familiar distinguishes between two-class
+(<code>binomial</code>) and multi-class (<code>multinomial</code>)
+outcomes. These differ in that fewer feature selection methods and
+learners are available for multi-class outcomes. Additionally some
+evaluation and explanation steps will assess all classes separately in a
+one-against-all fashion for multi-class outcomes, whereas for two-class
+outcomes only the <em>positive</em> class is assessed.</p></li>
+<li><p>Numerical endpoints, where the outcome consists of numeric
+values. Count-like <code>count</code> outcomes and generic numerical
+<code>continuous</code> outcomes are supported. If you are unsure that
+your outcome is generated through some counting or event mechanism, it
+may be safer to use the more generic <code>continuous</code>
+option.</p></li>
+<li><p>Survival endpoints, where the outcome consists of a pair of time
+and event status variables. Familiar supports right-censored
+time-to-event data (<code>survival</code>).</p></li>
+</ul>
+<p>Other endpoints are not supported. Handling of competing risk
+survival endpoints is planned for future releases.</p>
+</div>
+</div>
+<div id="running-familiar" class="section level1">
+<h1>Running familiar</h1>
+<p>The end-to-end pipeline is implemented in the
+<code>summon_familiar</code> function. This is the main function to
+use.</p>
+<p>In the example below, we use the <em>iris</em> dataset, specify some
+minimal configuration parameters, and run the experiment. In practice,
+you may need to specify some additional configuration parameters, see
+the <a href="#configuring-familiar">Configuring familiar</a>
+section.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example experiment using the iris dataset.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># You may want to specify a different path for experiment_dir.</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># This is where results are written to.</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>familiar<span class="sc">::</span><span class="fu">summon_familiar</span>(<span class="at">data=</span>iris,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">experiment_dir=</span><span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;familiar_1&quot;</span>),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outcome_type=</span><span class="st">&quot;multinomial&quot;</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outcome_column=</span><span class="st">&quot;Species&quot;</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                          <span class="at">experimental_design=</span><span class="st">&quot;fs+mb&quot;</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cluster_method=</span><span class="st">&quot;none&quot;</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                          <span class="at">fs_method=</span><span class="st">&quot;mrmr&quot;</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>                          <span class="at">learner=</span><span class="st">&quot;glm&quot;</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                          <span class="at">parallel=</span><span class="cn">FALSE</span>)</span></code></pre></div>
+<p>It is also possible to use a formula instead. This is generally
+feasible only for datasets with few features:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example experiment using a formula interface.</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># You may want to specify a different path for experiment_dir.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># This is where results are written to.</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>familiar<span class="sc">::</span><span class="fu">summon_familiar</span>(Species <span class="sc">~</span> Sepal.Length <span class="sc">+</span> Sepal.Width <span class="sc">+</span> Petal.Length <span class="sc">+</span> Petal.Width,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">data=</span>iris,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">experiment_dir=</span><span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;familiar_2&quot;</span>),</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outcome_type=</span><span class="st">&quot;multinomial&quot;</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                          <span class="at">experimental_design=</span><span class="st">&quot;fs+mb&quot;</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cluster_method=</span><span class="st">&quot;none&quot;</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                          <span class="at">fs_method=</span><span class="st">&quot;mrmr&quot;</span>,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                          <span class="at">learner=</span><span class="st">&quot;glm&quot;</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                          <span class="at">parallel=</span><span class="cn">FALSE</span>)</span></code></pre></div>
+<p>Data does not need to be loaded prior to calling
+<code>summon_familiar</code>. A path to a <em>csv</em> file can also be
+provided. The data can also be a <code>data.frame</code> or
+<code>data.table</code> contained in an <em>RDS</em> or <em>RData</em>
+file. Other data formats are currently not supported. If categorical
+features are encoded using integer values, it is recommended to load the
+data and manually encode them, as is explained in the <a href="#preparing-your-data">Preparing your data</a> section.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example experiment using a csv datafile.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that because the file does not exist,</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># you will not be able to execute the code as is.</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>familiar<span class="sc">::</span><span class="fu">summon_familiar</span>(<span class="at">data=</span><span class="st">&quot;path_to_data/iris.csv&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">experiment_dir=</span><span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;familiar_3&quot;</span>),</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outcome_type=</span><span class="st">&quot;multinomial&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">outcome_column=</span><span class="st">&quot;Species&quot;</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                          <span class="at">class_levels=</span><span class="fu">c</span>(<span class="st">&quot;setosa&quot;</span>, <span class="st">&quot;versicolor&quot;</span>, <span class="st">&quot;virginica&quot;</span>),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                          <span class="at">experimental_design=</span><span class="st">&quot;fs+mb&quot;</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                          <span class="at">cluster_method=</span><span class="st">&quot;none&quot;</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                          <span class="at">fs_method=</span><span class="st">&quot;mrmr&quot;</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                          <span class="at">learner=</span><span class="st">&quot;glm&quot;</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                          <span class="at">parallel=</span><span class="cn">FALSE</span>)</span></code></pre></div>
+<p>For reproducibility purposes, it may be useful to configure
+<code>summon_familiar</code> using the configuration <em>xml</em> file.
+In that case, we will point to a data file using the
+<code>data_file</code> parameter.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example experiment using a configuration file.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that because the file does not exist,</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># you will not be able to execute the code as is.</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>familiar<span class="sc">::</span><span class="fu">summon_familiar</span>(<span class="at">config=</span><span class="st">&quot;path_to_configuration_file/config.xml&quot;</span>)</span></code></pre></div>
+<p>Configuration parameters may also be mixed between parameters
+specified in the <em>xml</em> file and function arguments. Function
+arguments supersede parameters specified in the <em>xml</em> file:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example experiment using a csv datafile, but with additional arguments.</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Note that because the configuration file does not exist,</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># you will not be able to execute the code as is.</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>familiar<span class="sc">::</span><span class="fu">summon_familiar</span>(<span class="at">config=</span><span class="st">&quot;path_to_configuration_file/config.xml&quot;</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">data=</span>iris,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">parallel=</span><span class="cn">FALSE</span>)</span></code></pre></div>
+<div id="configuring-familiar" class="section level2">
+<h2>Configuring familiar</h2>
+<p>Familiar is highly configurable. Parameters can be specified in two
+ways:</p>
+<ol style="list-style-type: decimal">
+<li><p>Using a configuration file. An empty copy of the configuration
+file can be obtained using the <code>familiar::get_xml_config</code>
+function. The <code>familiar::summon_familiar</code> function should
+subsequently be called by specifying the <code>config</code>
+argument.</p></li>
+<li><p>By specifying function arguments for the
+<code>familiar::summon_familiar</code> function.</p></li>
+</ol>
+<p>All configuration parameters are documented in the help file of the
+<code>familiar::summon_familiar</code> function. Often, the default
+settings suffice. The parameters below should always be specified:</p>
+<ul>
+<li><p><code>experimental_design</code>: Specifies the design of the
+experiment. This is described more extensively further in the vignette,
+in the <a href="#experimental-designs">Experimental designs</a>
+section.</p></li>
+<li><p><code>fs_method</code>: Specify one or more feature selection
+methods. See the <em>Feature selection methods</em> vignette for
+available methods.</p></li>
+<li><p><code>learner</code>: Specify one or more learners used to create
+models. See the <em>learning algorithms and hyperparameter
+optimisation</em> vignette for available learners.</p></li>
+</ul>
+<p>Though not always required, specifying the following parameters is
+recommended or situationally required:</p>
+<ul>
+<li><p><code>experiment_dir</code>: This specifies the drive location
+where files generated during the experiment are written to. This
+includes files containing the trained models, which we usually want to
+preserve. If this location is not specified, such files are temporarily
+written to the temporary R directory, and subsequently removed.</p></li>
+<li><p><code>outcome_column</code>: Specifies the name of the column
+that contains the outcome values. In case of survival outcomes two
+columns should be specified that indicate time and event status,
+respectively. For survival outcomes familiar determines which columns
+contain time and event data. The <code>outcome_column</code> parameter
+is not required in case the formula interface is used.</p></li>
+<li><p><code>outcome_type</code>: Specifies the type of outcome being
+modelled. Should be one of the outcome types mentioned above in the <a href="#supported-outcomes">Supported outcomes</a> section. If not
+specified, it can potentially be inferred from the data contained in the
+column(s) specified by the <code>outcome_column</code>
+parameter.</p></li>
+<li><p><code>class_levels</code>: Specify the class levels of two-class
+(<code>binomial</code>) and multi-class (<code>multinomial</code>)
+outcomes. For two-class outcomes, the second level specifies the class
+regarded as the positive class. The values should match values present
+in the outcome column Specifying this argument is not necessary in case
+the outcome column is encoded as a factor. If left unspecified, the
+unique values in the outcome column are used as values.</p></li>
+<li><p><code>event_indicator</code>, <code>censoring_indicator</code>,
+<code>competing_risk_indicator</code>: Specifies the values that should
+be used as event, censoring, and competing risk indicators for survival
+analysis, respectively. Familiar uses default values for censoring
+(e.g. <code>0</code>, <code>FALSE</code>, <code>no</code>) and event
+(e.g. <code>1</code>, <code>TRUE</code>, <code>yes</code>) status
+otherwise. Note that the <code>competing_risk</code> outcome type will
+be fully implemented in a future release.</p></li>
+<li><p><code>batch_id_column</code>, <code>sample_id_column</code>,
+<code>series_id_column</code>: Specifies the names of the columns
+containing batch, sample, and series identifiers respectively. These are
+described in more detail in the <a href="#preparing-your-data">Preparing
+your data</a> section.</p></li>
+</ul>
+</div>
+<div id="preparing-your-data" class="section level2">
+<h2>Preparing your data</h2>
+<p>Familiar processes tabular data. In this case, a table consists of
+rows that represent instances, and columns that represent features and
+additional information. This is a very common representation for tabular
+data. Let us look at the <em>colon</em> dataset found in the survival
+package, which contains data from a clinical trial to assess a new
+anti-cancer drug in patients with colon cancer:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the colon dataset.</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">as.data.table</span>(survival<span class="sc">::</span>colon)[etype<span class="sc">==</span><span class="dv">1</span>]</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop some irrelevant columns.</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>data[, <span class="st">&quot;:=&quot;</span>(<span class="st">&quot;node4&quot;</span><span class="ot">=</span><span class="cn">NULL</span>, <span class="st">&quot;etype&quot;</span><span class="ot">=</span><span class="cn">NULL</span>)]</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(data[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>])</span></code></pre></div>
+<table>
+<colgroup>
+<col width="3%" />
+<col width="7%" />
+<col width="9%" />
+<col width="4%" />
+<col width="4%" />
+<col width="10%" />
+<col width="8%" />
+<col width="8%" />
+<col width="7%" />
+<col width="8%" />
+<col width="8%" />
+<col width="8%" />
+<col width="5%" />
+<col width="5%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">id</th>
+<th align="right">study</th>
+<th align="left">rx</th>
+<th align="right">sex</th>
+<th align="right">age</th>
+<th align="right">obstruct</th>
+<th align="right">perfor</th>
+<th align="right">adhere</th>
+<th align="right">nodes</th>
+<th align="right">status</th>
+<th align="right">differ</th>
+<th align="right">extent</th>
+<th align="right">surg</th>
+<th align="right">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">Lev+5FU</td>
+<td align="right">1</td>
+<td align="right">43</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="right">0</td>
+<td align="right">968</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="left">Lev+5FU</td>
+<td align="right">1</td>
+<td align="right">63</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="right">0</td>
+<td align="right">3087</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="left">Obs</td>
+<td align="right">0</td>
+<td align="right">71</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">1</td>
+<td align="right">7</td>
+<td align="right">1</td>
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="right">0</td>
+<td align="right">542</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="left">Lev+5FU</td>
+<td align="right">0</td>
+<td align="right">66</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">6</td>
+<td align="right">1</td>
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">245</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="left">Obs</td>
+<td align="right">1</td>
+<td align="right">69</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">22</td>
+<td align="right">1</td>
+<td align="right">2</td>
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">523</td>
+</tr>
+</tbody>
+</table>
+<p>Here we see that each row contains a separate instance.</p>
+<div id="identifier-columns" class="section level3">
+<h3>Identifier columns</h3>
+<p>The <code>id</code> and <code>study</code> columns are identifier
+columns. Familiar distinguishes four different types of identifiers:</p>
+<ul>
+<li><p>Batch identifiers are used to identify data belonging to a batch,
+cohort or specific dataset. This is typically used for specifying
+external validation datasets (using the <code>validation_batch_id</code>
+parameter). It also used to define the batches for batch normalisation.
+The name of the column containing batch identifiers (if any) can be
+specified using the <code>batch_id_column</code> parameter. If no column
+with batch identifiers is specified, all instances are assumed to belong
+to the same batch. In the <em>colon</em> dataset, the <code>study</code>
+column is a batch identifier column.</p></li>
+<li><p>Sample identifiers are used to identify data belonging to a
+single sample, such as a patient, subject, customer, etc. Sample
+identifiers are used to ensure that instances from the same sample are
+not inadvertently spread across development and validation data subsets
+created for cross-validation or bootstrapping. This prevents information
+leakage, as instances from the same sample are often related – knowing
+one instance of a sample would make it easy to predict another, thus
+increasing the risk of overfitting. The name of the column containing
+sample identifiers can be specified using the
+<code>sample_id_column</code> parameter. If not specified, it is assumed
+that each instance forms a separate sample. In the <em>colon</em>
+dataset, the <code>id</code> column contains sample
+identifiers.</p></li>
+<li><p>Within a sample, it is possible to have multiple series, for
+example due to measurements at different locations in the same sample. A
+series differs from repeated measurements. While for series the outcome
+value may change, this is not allowed for repeated measurements. The
+column containing series identifiers may be specified by providing the
+column name as the <code>series_id_column</code> parameter. If not set,
+all instances of a sample with a different outcome value will be
+assigned a unique identifier.</p></li>
+<li><p>Within a sample, or series, it is possible to have repeated
+measurements, where one or more feature values may change but the
+outcome value does not. Such instances can for example used to assess
+feature robustness. Repeated measurement identifiers are automatically
+assigned for instances that have the same batch, sample and series
+identifiers.</p></li>
+</ul>
+</div>
+<div id="outcome-columns" class="section level3">
+<h3>Outcome columns</h3>
+<p>The <em>colon</em> dataset also contains two outcome columns:
+<code>time</code> and <code>status</code> that define (censoring) time
+and survival status respectively. Survival status are encoded as
+<code>0</code> for alive, censored patients and <code>1</code> for
+patients that passed away after treatment. Note that these correspond to
+default values present in familiar. It is not necessary to pass these
+values as <code>censoring_indicator</code> and
+<code>event_indicator</code> parameters.</p>
+</div>
+<div id="feature-columns" class="section level3">
+<h3>Feature columns</h3>
+<p>The remaining columns in the <em>colon</em> dataset represent
+features. There are two numeric features, <code>age</code> and
+<code>nodes</code>, a categorical feature <code>rx</code> and several
+categorical and ordinal features encoded with integer values. Familiar
+will automatically detect and encode features that consist of
+<code>character</code>, <code>logical</code> or <code>factor</code>
+type. However, it will not automatically convert the features encoded
+with integer values. This is by design – familiar cannot determine
+whether a feature with integer values is intended to be a categorical
+feature or not. Should categorical features that are encoded with
+integers be present in your dataset, you should manually encode such
+values in the data prior to passing the data to familiar. For the
+<em>colon</em> dataset, this could be done as follows:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Categorical features</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>sex <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="at">x=</span>data<span class="sc">$</span>sex, <span class="at">levels=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;female&quot;</span>, <span class="st">&quot;male&quot;</span>))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>obstruct <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>obstruct, <span class="at">levels=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels=</span><span class="fu">c</span>(<span class="cn">FALSE</span>, <span class="cn">TRUE</span>))</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>perfor <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>perfor, <span class="at">levels=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels=</span><span class="fu">c</span>(<span class="cn">FALSE</span>, <span class="cn">TRUE</span>))</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>adhere <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>adhere, <span class="at">levels=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels=</span><span class="fu">c</span>(<span class="cn">FALSE</span>, <span class="cn">TRUE</span>))</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>surg <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>surg, <span class="at">levels=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;short&quot;</span>, <span class="st">&quot;long&quot;</span>))</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Ordinal features</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>differ <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>differ, <span class="at">levels=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>), <span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;well&quot;</span>, <span class="st">&quot;moderate&quot;</span>, <span class="st">&quot;poor&quot;</span>), <span class="at">ordered=</span><span class="cn">TRUE</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>extent <span class="ot">&lt;-</span> <span class="fu">factor</span>(data<span class="sc">$</span>extent, <span class="at">levels=</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>), <span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;submucosa&quot;</span>, <span class="st">&quot;muscle&quot;</span>,  <span class="st">&quot;serosa&quot;</span>, <span class="st">&quot;contiguous_structures&quot;</span>), <span class="at">ordered=</span><span class="cn">TRUE</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(data[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>])</span></code></pre></div>
+<table>
+<colgroup>
+<col width="3%" />
+<col width="6%" />
+<col width="8%" />
+<col width="7%" />
+<col width="4%" />
+<col width="9%" />
+<col width="7%" />
+<col width="7%" />
+<col width="6%" />
+<col width="7%" />
+<col width="9%" />
+<col width="7%" />
+<col width="6%" />
+<col width="5%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="right">id</th>
+<th align="right">study</th>
+<th align="left">rx</th>
+<th align="left">sex</th>
+<th align="right">age</th>
+<th align="left">obstruct</th>
+<th align="left">perfor</th>
+<th align="left">adhere</th>
+<th align="right">nodes</th>
+<th align="right">status</th>
+<th align="left">differ</th>
+<th align="left">extent</th>
+<th align="left">surg</th>
+<th align="right">time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="left">Lev+5FU</td>
+<td align="left">male</td>
+<td align="right">43</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="left">moderate</td>
+<td align="left">serosa</td>
+<td align="left">short</td>
+<td align="right">968</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="left">Lev+5FU</td>
+<td align="left">male</td>
+<td align="right">63</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="left">moderate</td>
+<td align="left">serosa</td>
+<td align="left">short</td>
+<td align="right">3087</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="left">Obs</td>
+<td align="left">female</td>
+<td align="right">71</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">TRUE</td>
+<td align="right">7</td>
+<td align="right">1</td>
+<td align="left">moderate</td>
+<td align="left">muscle</td>
+<td align="left">short</td>
+<td align="right">542</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="left">Lev+5FU</td>
+<td align="left">female</td>
+<td align="right">66</td>
+<td align="left">TRUE</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="right">6</td>
+<td align="right">1</td>
+<td align="left">moderate</td>
+<td align="left">serosa</td>
+<td align="left">long</td>
+<td align="right">245</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="left">Obs</td>
+<td align="left">male</td>
+<td align="right">69</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="left">FALSE</td>
+<td align="right">22</td>
+<td align="right">1</td>
+<td align="left">moderate</td>
+<td align="left">serosa</td>
+<td align="left">long</td>
+<td align="right">523</td>
+</tr>
+</tbody>
+</table>
+<p>Manual encoding also has the advantage that ordinal features can be
+specified. Familiar cannot determine whether features with
+<code>character</code> type values have an associated order and will
+encode these as regular categorical variables. Another advantage is that
+manual encoding allows for specifying the reference level, i.e. the
+level to which other levels of a feature are compared in regression
+models. Otherwise, the reference level is taken as the first level after
+sorting the levels.</p>
+</div>
+</div>
+<div id="experimental-designs" class="section level2">
+<h2>Experimental designs</h2>
+<p>The experimental design defines how data analysis is performed.
+Familiar allows for various designs, from very straightforward training
+on a single dataset, to complex nested cross-validation with external
+validation. Experimental design is defined using the
+<code>experimental_design</code> parameter and consists of basic
+workflow components and subsampling methods. The basic workflow
+components are:</p>
+<ul>
+<li><p><code>fs</code>: positions the feature selection step. This
+component should always be present, even if
+<code>fs_method=&quot;none&quot;</code>. Moreover, note that the feature selection
+step only determines variable importance. Actual feature selection takes
+place after optimisation for model hyperparameters determines the
+optimal number of features.</p></li>
+<li><p><code>mb</code>: positions the model building step. This
+component should always be present.</p></li>
+<li><p><code>ev</code>: positions the external validation step. This
+should be used in conjunction with the <code>validation_batch_id</code>
+parameter to specify which batches/cohorts should be used for external
+validation. Unlike <code>fs</code> and <code>mb</code> components,
+<code>ev</code> is optional.</p></li>
+</ul>
+<p>Each basic workflow component can only appear once in the
+experimental design. It is possible to form an experiment using just the
+basic workflow components, i.e. <code>fs+mb</code> or
+<code>fs+mb+ev</code>. In these experiments, feature selection is
+directly followed by modelling, with external validation of the model on
+one or more validation cohorts for <code>fs+mb+ev</code>. These options
+correspond to TRIPOD type 1a and 3, respectively. TRIPOD analysis types
+1b and 2 require more complicated experimental designs, which are
+facilitated by subsampling.</p>
+<p>Hyperparameter optimisation does not require explicit specification.
+Hyperparameter optimisation is conducted when required to determine
+variable importance and prior to building a model.</p>
+<p>Subsampling methods are used to (randomly) sample the data that are
+not used for external validation, and divide these data into internal
+development and validation sets. Thus the dataset as a whole is at most
+divided into three parts: internal development, internal validation and
+external validation. Familiar implements the following subsampling
+methods:</p>
+<ul>
+<li><p><code>bs(x,n)</code>: (stratified) .632 bootstrap, with
+<code>n</code> the number of bootstraps. Bootstrapping randomly samples
+the data with replacement, and on average assigns 63.2% of the samples
+to the new subsampled subset to form the in-bag dataset with the same
+size as the original dataset. Remaining, unselected samples form the
+out-of-bag dataset. All pre-processing steps and hyperparameter
+optimisation (if any) are performed using the in-bag data.</p></li>
+<li><p><code>bt(x,n)</code>: (stratified) .632 bootstrap, with
+<code>n</code> the number of bootstraps. Functions like <code>bs</code>,
+but pre-processing parameters and hyperparameters (if any) are inherited
+from the enveloping layer. That is, for <code>bt(fs+mb,20)+ev</code>
+twenty bootstraps are created from the development dataset, and feature
+selection and modelling are performed on the in-bag data. However,
+pre-processing parameters and hyperparameters are determined on the
+<strong>main development</strong> dataset. The most practical
+application of <code>bt</code> is for repeating feature selection
+multiple times (e.g. <code>bt(fs,50)+mb+ev</code>), as this allows for
+aggregating variable importance and reducing the effect of random
+selection.</p></li>
+<li><p><code>cv(x,n,p)</code>: (stratified) <code>n</code>-fold
+cross-validation, repeated <code>p</code> times. <code>p</code> equals 1
+by default. Cross-validation randomly assigns samples to <code>n</code>
+folds. Cross-validation forms <code>n</code> experiments where one fold
+is assigned as a validation fold, and the remainder as training folds.
+All pre-processing steps and hyperparameter optimisation (if any) are
+performed using data in the training folds.</p></li>
+<li><p><code>lv(x)</code>: leave-one-out-cross-validation. This is the
+same as <code>n</code>-fold cross-validations with <code>n</code> the
+number of samples.</p></li>
+<li><p><code>ip(x)</code>: imbalance partitioning for addressing class
+imbalances in the dataset. This creates subsets of the data with
+balanced classes and can be used in conjunction with
+<code>binomial</code> and <code>multinomial</code> outcomes. All
+pre-processing steps and hyperparameter optimisation are determined
+within the partitions. The number of partitions generated depends on the
+imbalance correction method (specified using the
+<code>imbalance_correction_method</code> parameter). Imbalance
+partitioning does not generate validation sets.</p></li>
+</ul>
+<p>The <code>x</code> argument of subsample methods can contain one or
+more of the workflow components. Moreover, it is possible to nest
+subsample methods. For example,
+<code>experiment_design=&quot;cv(bt(fs,50)+mb,5)+ev&quot;</code> would create a
+5-fold cross-validation of the development dataset, with each set of
+training folds again subsampled for feature selection. After aggregating
+variable importance obtained over 50 bootstraps, a model is trained
+within each set of training folds, resulting in 5 models overall. The
+ensemble of these models is then evaluated on an external dataset.</p>
+<p>Other designs, such as
+<code>experiment_design=&quot;bs(fs+mb,400)+ev&quot;</code> allow for building
+large ensembles, and capturing the posterior distribution of the model
+predictions.</p>
+<p>As a final remark: Though it is possible to encapsulate the external
+validation (<code>ev</code>) workflow component in a subsampler, this is
+completely unnecessary. Unlike the feature selection (<code>fs</code>)
+and modelling (<code>mb</code>) components, <code>ev</code> is passive,
+and only indicates whether external validation should be performed.</p>
+</div>
+<div id="warm-start" class="section level2">
+<h2>Warm start</h2>
+<p>Calling <code>summon_familiar</code> as described above, provides a
+cold start of the process. For some purposes, such as to ensure that the
+same data splits are used, a (partial) warm start may be required across
+different experiments. Three functions allow for generating data for a
+warm start:</p>
+<ul>
+<li><p><code>precompute_data_assignment</code>: Generates data
+assignment.</p></li>
+<li><p><code>precompute_feature_info</code>: Generates data assignment
+and corresponding feature information.</p></li>
+<li><p><code>precompute_vimp</code>: Generates data assignment,
+corresponding feature information and variable importance.</p></li>
+</ul>
+<p>All of functions above create an <code>experimentData</code> object,
+which contains data that can be used to warm-start other familiar
+experiments that use the same data. This object can then be supplied as
+the <code>experiment_data</code> argument for
+<code>summon_familiar</code>.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This creates both data assignment (5 bootstraps) and the corresponding feature</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># information.</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>experiment_data <span class="ot">=</span> familiar<span class="sc">::</span><span class="fu">precompute_feature_info</span>(</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data=</span>iris,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">experiment_dir=</span><span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;familiar_1&quot;</span>),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">outcome_type=</span><span class="st">&quot;multinomial&quot;</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">outcome_column=</span><span class="st">&quot;Species&quot;</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">experimental_design=</span><span class="st">&quot;bs(fs+mb,5)&quot;</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster_method=</span><span class="st">&quot;none&quot;</span>,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">parallel=</span><span class="cn">FALSE</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Now we can warm-start a new experiment using the precomputed data.</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>familiar<span class="sc">::</span><span class="fu">summon_familiar</span>(</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">data=</span>iris,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">experiment_data =</span> experiment_data,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">experiment_dir=</span><span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;familiar_2&quot;</span>),</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">outcome_type=</span><span class="st">&quot;multinomial&quot;</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">outcome_column=</span><span class="st">&quot;Species&quot;</span>,</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">fs_method=</span><span class="st">&quot;mrmr&quot;</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">learner=</span><span class="st">&quot;glm&quot;</span>,</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">parallel=</span><span class="cn">FALSE</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Cortes2021-aa" class="csl-entry">
+Cortes, David. 2021. <em>Isotree: Isolation-Based Outlier
+Detection</em>. <a href="https://CRAN.R-project.org/package=isotree">https://CRAN.R-project.org/package=isotree</a>.
+</div>
+<div id="ref-Royston2013-ch" class="csl-entry">
+Royston, Patrick, and Douglas G Altman. 2013. <span>“External Validation
+of a Cox Prognostic Model: Principles and Methods.”</span> <em>BMC Med.
+Res. Methodol.</em> 13 (March): 33.
+</div>
+</div>
+</div>
+
+<div class="footer">
+<br>
+<a rel="license" href="https://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons Licence" style="border-width:0" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAAfCAMAAABUFvrSAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAEZ0FNQQAAsY58+1GTAAAAAXNSR0IB2cksfwAAAW5QTFRF////////////////7+/v39/f1tXV09bS0tXS0tXR0dTR0dTQ0NTQ0NPPz9PPztLOztHNzdHNzdHMz8/PzdDMzNDMzNDLzM/Ly8/Ly8/Ky87Kys3Jyc3Jyc3IyMzIyMzHx8vHxsrGxsrFxcnFxcnExMnExMjDw8jDxMfDw8fCwsfCwcXAwMXAwMW/wMS/v8S+v8O+vsO+vsK9vcK9vcK8v7+/vMG8vMG7vMC8u8C7u8C6ur+6ur+5ub65ub64uL23t7y2tru1tbq0tLqztLmzs7iysrixsrexsbewsbawsLavsLWvr7Wur7SusLOvrrStrrOtr7KvrbOsrLKrr6+vq7Gqn6OenqCdn5+flpmWk5iTkZSRkZORj4+PiYyJhIaEhIWEgoWCgICAfX98fH98eXx5cHJvcHBwYGBgXV5dUFFQUFBQQ0RDQEBAPj8+NTY1MjMxMDAwKSkpKCkoICAgGxsbEBAQDg4ODQ4NAAAAlzoSDQAAAAN0Uk5TAAoO5yEBUwAAAvhJREFUeNq1lutX2kAQxWmXFDVGYy1EIjQ2VZDiu1CsRQQURYvV+qSKj6II8rANYOT+9z0JqIASo9Y5ydkP2f2d2Ts7d2N4jRcJgwEIBwO+SbdTFGw8ZzZz1n5BdLgnfLPBcCT6fW1jY3P78QEYEA76PWMu0W5lGbrNZGrrYNg+u+ga9fgVcmxtY/NJZAOCfs+IY4Bn6eN8RdlEJX9Ed1uFIfdnfzC8uBJbv5tyqqhMLKa0wQHPiEOwMInLW4Eu9xmzfdDtmQ0uLK3cSXmvBBTS6QJQ2tMC+8YcgpnOApAzSa83mZEBZIff2odGfYFQJNqc8s4VchQhhFA5XO1pgCddAxaFKyeNpBpxGSgNmwXXxMxcWE25fkkJGUIIoExESQPsFnkmC0gUuQmjBGQZq+j2BEKR5dUGLVLIvbkGkxxSrcHO92wCkIyENJL3u+2O8Zng/FJsvR5cRF0GFIqtwaKVvoTcSxrCKOOS7hPdXwLhxUYtUFC+Z6AKQgpoDRZ6joEkaYo4cMQKril/KLLcCE4TVYmqFmkNsK0rD9lIiDdXKCSrwwEhREae6Ve0WIiuPg3M0xVlW171BBe21CGjbLbSYR0c/To3H409TQquHTggREKZ8pbjEiRqqxxXtWjjRLdvLrzUAK4Vr5qwZvEsJsCrzExWF9Tk9gIm84e74BRyRN9xeyS4vkHSmg1yK4Wxt5yUIClDayn0t3SteLWq3RQvjQrN31O87e2dEiBl0tJDJmTrykImN8dtq6AOpIw8Y3OMf2s+bvptU+hJqFrc1yCfpmZDkWYX0mv0H9WWpvS2tH6w8z27e58JJVi7c2ImuNBkQvrBOOWZc0CqsyFKtU3+97OuaQBnXGe90RuTMvCHtpziuWCcmDvPm64m+t2vlmuq/YHqqwnGCcfs1l+mCcbSmgtSe8iDGQNnPEsnrq//fZrltXS4tk3oAOPvT2tPF91uMrXTDNv340JrjQ4hbsHAxeE0z1ksHD99eKFdl0dl/P//Cl+9EPcfS+yBAoqk3eUAAAAASUVORK5CYII=" /></a>
+This work is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+Cite as: Alex Zwanenburg. familiar: Vignettes and Documentation (2021). <a href="https://github.com/alexzwanenburg/familiar">https://github.com/alexzwanenburg/familiar</a>
+</div>
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

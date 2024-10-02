@@ -1,0 +1,21 @@
+aGP                     Localized Approximate GP Regression For Many
+                        Predictive Locations
+alcGP                   Improvement statistics for sequential or local
+                        design
+blhs                    Bootstrapped block Latin hypercube subsampling
+darg                    Generate Priors for GP correlation
+deleteGP                Delete C-side Gaussian Process Objects
+discrep.est             Estimate Discrepancy in Calibration Model
+distance                Calculate the squared Euclidean distance
+                        between pairs of points
+fcalib                  Objective function for performing large scale
+                        computer model calibration via optimization
+laGP                    Localized Approximate GP Prediction At a Single
+                        Input Location
+llikGP                  Calculate a GP log likelihood
+mleGP                   Inference for GP correlation parameters
+newGP                   Create A New GP Object
+optim.auglag            Optimize an objective function under multiple
+                        blackbox constraints
+predGP                  GP Prediction/Kriging
+randLine                Generate two-dimensional random paths

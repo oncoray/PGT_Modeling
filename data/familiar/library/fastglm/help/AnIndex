@@ -1,0 +1,12 @@
+%*%,big.matrix,vector-method	extract-methods
+%*%,vector,big.matrix-method	extract-methods
+deviance.fastglm	deviance
+family.fastglm	family
+fastglm	fastglm
+fastglm.default	fastglm
+fastglmPure	fastglmPure
+logLik.fastglm	logLik
+predict.fastglm	predict.fastglm
+print.fastglm	print
+residuals.fastglm	residuals
+summary.fastglm	summary

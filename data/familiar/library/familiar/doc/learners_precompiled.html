@@ -1,0 +1,3423 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Alex Zwanenburg" />
+
+<meta name="date" content="2022-12-16" />
+
+<title>Learning algorithms and hyperparameter optimisation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnDQogICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iDQogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIg0KICAgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIg0KICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyINCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCINCiAgIHhtbG5zOmlua3NjYXBlPSJodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy9uYW1lc3BhY2VzL2lua3NjYXBlIg0KICAgdmVyc2lvbj0iMS4xIg0KICAgaWQ9IkxheWVyXzEiDQogICB4PSIwcHgiDQogICB5PSIwcHgiDQogICB2aWV3Qm94PSIwIDAgNzM1IDg1MiINCiAgIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDczNSA4NTI7Ig0KICAgeG1sOnNwYWNlPSJwcmVzZXJ2ZSINCiAgIHNvZGlwb2RpOmRvY25hbWU9ImZhbWlsaWFyLnN2ZyINCiAgIGlua3NjYXBlOnZlcnNpb249IjEuMC4xICgzYmMyZTgxM2Y1LCAyMDIwLTA5LTA3KSI+PG1ldGFkYXRhDQogICBpZD0ibWV0YWRhdGE3OSI+PHJkZjpSREY+PGNjOldvcmsNCiAgICAgICByZGY6YWJvdXQ9IiI+PGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+PGRjOnR5cGUNCiAgICAgICAgIHJkZjpyZXNvdXJjZT0iaHR0cDovL3B1cmwub3JnL2RjL2RjbWl0eXBlL1N0aWxsSW1hZ2UiIC8+PC9jYzpXb3JrPjwvcmRmOlJERj48L21ldGFkYXRhPjxkZWZzDQogICBpZD0iZGVmczc3Ij48Y2xpcFBhdGgNCiAgICAgY2xpcFBhdGhVbml0cz0idXNlclNwYWNlT25Vc2UiDQogICAgIGlkPSJjbGlwUGF0aDEyNjEiPjxwYXRoDQogICAgICAgY2xhc3M9InN0MCINCiAgICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICAgIGlkPSJwYXRoMTI2MyINCiAgICAgICBzdHlsZT0iZGlzcGxheTppbmxpbmU7ZmlsbDojZmZkNWU1IiAvPjwvY2xpcFBhdGg+PC9kZWZzPjxzb2RpcG9kaTpuYW1lZHZpZXcNCiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiINCiAgIGJvcmRlcmNvbG9yPSIjNjY2NjY2Ig0KICAgYm9yZGVyb3BhY2l0eT0iMSINCiAgIG9iamVjdHRvbGVyYW5jZT0iMTAiDQogICBncmlkdG9sZXJhbmNlPSIxMCINCiAgIGd1aWRldG9sZXJhbmNlPSIxMCINCiAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIg0KICAgaW5rc2NhcGU6cGFnZXNoYWRvdz0iMiINCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMjQ4OSINCiAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEyODkiDQogICBpZD0ibmFtZWR2aWV3NzUiDQogICBzaG93Z3JpZD0iZmFsc2UiDQogICBpbmtzY2FwZTp6b29tPSIwLjcwNTM5OTA2Ig0KICAgaW5rc2NhcGU6Y3g9IjQ1NS4yNDI1MyINCiAgIGlua3NjYXBlOmN5PSI2MC42ODAwNzkiDQogICBpbmtzY2FwZTp3aW5kb3cteD0iMCINCiAgIGlua3NjYXBlOndpbmRvdy15PSIwIg0KICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMCINCiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9ImxheWVyMiIgLz4NCjxzdHlsZQ0KICAgdHlwZT0idGV4dC9jc3MiDQogICBpZD0ic3R5bGUyIj4NCgkuc3Qwe2ZpbGw6IzE0NEY4NTt9DQoJLnN0MXtmaWxsOiMxNzNFNkM7fQ0KCS5zdDJ7ZmlsbDojRTZCMzVBO30NCgkuc3Qze2ZpbGw6I0ZGRkZGRjt9DQoJLnN0NHtmaWxsOiMyMzFGMjA7fQ0KPC9zdHlsZT4NCjxnDQogICBpbmtzY2FwZTpncm91cG1vZGU9ImxheWVyIg0KICAgaWQ9ImxheWVyMyINCiAgIGlua3NjYXBlOmxhYmVsPSJIZXhhZ29uIg0KICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lIj48cGF0aA0KICAgICBjbGFzcz0ic3QwIg0KICAgICBkPSJNIDE4LjIsNjI2LjQgViAyMjMuMSBMIDY5LjgsMTkzLjMgMzY3LjUsMjEuNSB2IDAgbCAyOTYuNywxNzEuMyA1Mi42LDMwLjMgViA2MjYuNCBMIDM2Ny41LDgyOCBaIg0KICAgICBpZD0icGF0aDQiDQogICAgIHN0eWxlPSJmaWxsOiNmZmQ1ZTUiIC8+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4Ig0KICAgICBzdHlsZT0iZmlsbDojZmZhYWNjIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjIiDQogICBpbmtzY2FwZTpsYWJlbD0iTmV0d29ya0JHIj48Zw0KICAgICBpZD0iZzEyMDMiDQogICAgIGNsaXAtcGF0aD0idXJsKCNjbGlwUGF0aDEyNjEpIj48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmVlYWE7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNjA0LjgyNzI3LDEyMy44MDc0NCAzNjguODE2MDQsMjYwLjA2ODU5IDI5OC44MTk0NSwyNjEuMTI2MjggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOS4zNTEyLDQ4Mi4yMTY0OCAzMjcuMTI0NTMsMzEwLjI5Njk3IDM5Ny4xMjExMiwzMDkuMjM5MjggNjMzLjEzMjM2LDE3Mi45NzgxMyBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04Ig0KICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NjY2NjY2NjIiAvPjxwYXRoDQogICAgICAgc3R5bGU9ImZpbGw6I2ZmZWVhYTtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MXB4O3N0cm9rZS1saW5lY2FwOmJ1dHQ7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1vcGFjaXR5OjEiDQogICAgICAgZD0iTSA1MjQuNjYwMTYsLTE1LjMzNTY0NyAyODguNjQ4OTMsMTIwLjkyNTUgMjE4LjY1MjM0LDEyMS45ODMxOSAtNzkuMTIwOTg3LDI5My45MDI3IC01MC44MTU4ODMsMzQzLjA3MzM4IDI0Ni45NTc0NCwxNzEuMTUzODcgMzE2Ljk1NDAzLDE3MC4wOTYxOCA1NTIuOTY1MjcsMzMuODM1MDMyIFoiDQogICAgICAgaWQ9InBhdGgxMDMyLTgtOCINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48cGF0aA0KICAgICAgIHN0eWxlPSJmaWxsOiNmZmRkNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICAgIGQ9Ik0gNTUyLjk2NTI3LDMzLjgzNTAzMiAzMTYuOTU0MDMsMTcwLjA5NjE4IDI0Ni45NTc0NCwxNzEuMTUzODcgLTUwLjgxNTg4MywzNDMuMDczMzggMS4wNDYxMTIxLDQzMy4wNDU3OSAyOTguODE5NDQsMjYxLjEyNjI4IDM2OC44MTYwMywyNjAuMDY4NTkgNjA0LjgyNzI2LDEyMy44MDc0NCBaIg0KICAgICAgIGlkPSJwYXRoMTAzMi04LTgtNyINCiAgICAgICBzb2RpcG9kaTpub2RldHlwZXM9ImNjY2NjY2NjYyIgLz48L2c+PHBhdGgNCiAgICAgY2xhc3M9InN0MSINCiAgICAgZD0iTSA3MDUuNiwxOTYuMiA0MjcuOCwzNS44IDM2Ny41LDEgMzA3LjIsMzUuOCAyOS40LDE5Ni4yIDAuMSwyMTMuMSB2IDQyNC4yIGwgMjkuMywxNi45IDI4MS4zLDE2Mi40IDU2LjksMzIuOCA1Ni45LC0zMi44IDI4MS4zLC0xNjIuNCAyOS4zLC0xNi45IFYgMjEzLjEgWiBtIDAsNDI1LjMgTCAzNjcuNSw4MTYuNyAyOS40LDYyMS41IFYgMjMxIEwgMzY3LjUsMzUuOCB2IDAgTCA3MDUuNiwyMzEgWiINCiAgICAgaWQ9InBhdGg4LTQiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmFhY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6I2ZmZWVhYTtzdHJva2Utd2lkdGg6MTA7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kO3N0cm9rZS1taXRlcmxpbWl0OjQ7c3Ryb2tlLWRhc2hhcnJheTpub25lIg0KICAgICBpZD0icGF0aDEwMTMtMCINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI1OTMuNDM1OTIiDQogICAgIHNvZGlwb2RpOmN5PSIyNzMuNTg1MjMiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2MjguNTUzNDEsMjk5LjEyNTIzIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NywtMjguNTM3OCAtMjUuODUxNzQsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTUsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9IjQuMTQwMzkwOCINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4wMDYzOTg5NTg2IiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNSINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSI2NTkuMDg4ODEiDQogICAgIHNvZGlwb2RpOmN5PSIzNTcuMjUxMDEiDQogICAgIHNvZGlwb2RpOnIxPSI0My40MjI2ODgiDQogICAgIHNvZGlwb2RpOnIyPSIyMS43MTEzNDQiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSA2OTQuMjA2MywzODIuNzkxIC0yOC40MTgxOSwtNC44ODgwOCAtMjAuMTM3MzgsMjAuNjM5MSAtNC4xMzI4NiwtMjguNTM3OCAtMjUuODUxNzUsLTEyLjc3Mzk2IDI1Ljg2Mzk0LC0xMi43NDkyNSA0LjE2MDEzLC0yOC41MzM4NCAyMC4xMTc2NSwyMC42NTgzMyAyOC40MjI4NSwtNC44NjA5MiAtMTMuNDMwNTQsMjUuNTE2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0yLjM3NjIyNDEiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iLTAuMTk2MzkzMzMiDQogICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuNTA4ODM2OTgsMC4zNTEyMzQzNiwtMC4zNTEyMzQzNiwwLjUwODgzNjk4LDQzNy45MDcxLC01MS4yMzg1MDUpIiAvPjxwYXRoDQogICAgIHNvZGlwb2RpOnR5cGU9InN0YXIiDQogICAgIHN0eWxlPSJkaXNwbGF5OmlubGluZTtmaWxsOiNmZmU2ODA7c3Ryb2tlOiNmZmVlYWE7c3Ryb2tlLXdpZHRoOjEwO3N0cm9rZS1saW5lY2FwOnJvdW5kO3N0cm9rZS1saW5lam9pbjpyb3VuZDtzdHJva2UtbWl0ZXJsaW1pdDo0O3N0cm9rZS1kYXNoYXJyYXk6bm9uZSINCiAgICAgaWQ9InBhdGgxMDEzLTAtNS00Ig0KICAgICBzb2RpcG9kaTpzaWRlcz0iNSINCiAgICAgc29kaXBvZGk6Y3g9IjY1OS4wODg4MSINCiAgICAgc29kaXBvZGk6Y3k9IjM1Ny4yNTEwMSINCiAgICAgc29kaXBvZGk6cjE9IjQzLjQyMjY4OCINCiAgICAgc29kaXBvZGk6cjI9IjIxLjcxMTM0NCINCiAgICAgc29kaXBvZGk6YXJnMT0iMC42Mjg3OTYyOSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS4yNTcxMTQ4Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDY5NC4yMDYzLDM4Mi43OTEgLTI4LjQxODE5LC00Ljg4ODA4IC0yMC4xMzczOCwyMC42MzkxIC00LjEzMjg2LC0yOC41Mzc4IC0yNS44NTE3NSwtMTIuNzczOTYgMjUuODYzOTQsLTEyLjc0OTI1IDQuMTYwMTMsLTI4LjUzMzg0IDIwLjExNzY1LDIwLjY1ODMzIDI4LjQyMjg1LC00Ljg2MDkyIC0xMy40MzA1NCwyNS41MTY4IHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iLTIuMzc2MjI0MSINCiAgICAgaW5rc2NhcGU6dHJhbnNmb3JtLWNlbnRlci15PSItMC4xOTYzOTMzMyINCiAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC41MDg4MzY5OCwwLjM1MTIzNDM2LC0wLjM1MTIzNDM2LDAuNTA4ODM2OTgsNDU4LjI3NjM0LC0xMjguMTM1NjcpIiAvPjwvZz48Zw0KICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciINCiAgIGlkPSJsYXllcjEiDQogICBpbmtzY2FwZTpsYWJlbD0iRmFtaWxpYXIiDQogICBzdHlsZT0iZGlzcGxheTppbmxpbmUiDQogICBzb2RpcG9kaTppbnNlbnNpdGl2ZT0idHJ1ZSI+PHBhdGgNCiAgICAgaWQ9InJlY3QxMjY1Ig0KICAgICBzdHlsZT0iZmlsbDojZmZkNWU1O3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjg4ODY2OTtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGQ9Im0gMjQ1LjQ2MDU1LDI1Ny4xNzU2MyAyMjkuOTU3MzcsLTE1LjU5NDAxIDI1LjU0OTExLDY3Ljc1NzI1IC0wLjAzMTYsMTAwLjE2NjU3IC0xMTMuMjE2MDEsNDIuMjI0NTcgLTE0OC42MzgxOSwtNDIuOTMzMzkgeiINCiAgICAgc29kaXBvZGk6bm9kZXR5cGVzPSJjY2NjY2NjIiAvPjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNkNDAwNTU7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjMuMTYyOTUiDQogICAgIGQ9Im0gMTk2LjE4Njc2LDMxNS42MjMxIGMgLTEwLjYzMjUzLDE3LjM4NTc3IC0zMy42NDIyMywxMS42NDE4NiAtNDMuMDA3MzcsMjguNzkxMDMgLTM2LjYxNTA4LDY3LjA0OTM5IDE3LjQzNTM5LDE0NS4wMDMzNCA2Mi4xMzg3NywxODYuOTc4NzkgMTcuNTAwNiwxNi40MzE1IDQyLjc1MDgsNTQuNjY1NzMgNTAuNzM0LDQ2Ljg5MzgzIDcuOTgzMiwtNy43NzE5IC0xNS44MTQ3LC00NC4yODEyMyAtMTUuODE0NywtNDQuMjgxMjMgMjguMjk2NiwtMjAuMjg1NyA4Mi4yOTksNDMuODIxMzkgODYuNjgzNCwxOS4zMDUzNCA0LjM4NDUsLTI0LjUxNjA2IC00Ni44NjM1LC0xOC45NTc0MiAtNjcuNzA1OCwtNDQuNjA4OTEgMTguMzU5NCwwLjAwMyA1OS42OTU3LDEuMjQ2MiA2My4yNTg5LC05LjQ4ODg0IDMuNTYzMywtMTAuNzM1MDQgLTcyLjc0NzcsLTEyLjY1MTc4IC03Mi43NDc3LC0xMi42NTE3OCB2IC05LjQ4ODgzIGMgMzQuMDcwNiwtOS4yOTU5IDU3LjYzOTksMC4wODg2IDkxLjcyNTQsLTAuODE5MjEgNDAuNjM4OCwtMS4wODE3MiA2OC4wNzk1LC0xNS42MzQ0NCAxMDQuMzc3Miw3LjE0NTEgLTI1LjIwNTUsNi4wNjk2OSAtNzIuMzMxMywyNS40ODkxOCAtNjkuNTg0OCwzMS42Mjk0NSAyLjc0NjUsNi4xNDAyNyA3Mi43NDc3LC0zLjE2Mjk0IDcyLjc0NzcsLTMuMTYyOTQgMCwwIC01Ny45ODk2LDU2Ljc3NzggLTM3Ljk1NTMsNjMuMjU4OTEgMjAuMDM0Myw2LjQ4MTExIDQ3LjAwMjUsLTUzLjI2OTU3IDY5LjI0OTUsLTQ2LjM0OTgxIDE4LjM2NDEsNS4yNTA0OSAxMi40Nzk0LDQ4Ljk0NjgzIDI1LjYzODksNDYuMzQ5ODEgMTMuMTU5NSwtMi41OTcwMiAtMS4zNjMzLC0zNS40MTIzNCA0Ljc2NjUsLTUzLjc3MDA4IDE1LjkzMTgsLTQ3LjcxNjE5IDcxLjQ1NzMsLTEyNC40NjYzMyA0NC44MzQ4LC0xNzcuMDY2NDMgLTkuODU4OSwtMTkuNDgxODUgLTM1LjIwMDQsLTE4LjU1NDc5IC00NS45OTU2LC0zOC4wMjg0MSAtMTAuMDkyOSwtMTguMjA3MTggLTguMDE4MSwtMzcuMjU3NiAtMjIuOTI1LC01My43NDMxOSAtMzQuMzU5NzQsLTI0LjY2ODM4IC0zOS4zOTM0NSwtNDAuNTAzNzcgLTEwNy4xOTg2LC00NC4yOTM1OCAwLDAgLTc5LjMyNjg3LDEuOTE0MzYgLTExNS4zOTY5NCwyMC4zNzcwMSAtMzYuMDcwMDYsMTguNDYyNjUgLTYzLjExMDE2LDYyLjk2NTY2IC03Ny44MjMyNiw4Ny4wMjM5NyB6IG0gMjg4LjEwODYsLTQ0LjE0MjA2IGMgLTMxLjExMjYsMy4yMDk0NCAtNTEuMjQzMiw1Ni41MjQzNiAtMTIuNjM5MSw1NS43NDQzOCA5LjIzODksLTAuMTg2NjEgMTcuNjg0LC02Ljk1MjQ3IDI1LjI5MDksLTExLjQ2MzE1IDE0LjkyMjgsNDQuMDg1MTQgLTIwLjI4MDgsNjMuNDUyOCAtNjAuMDk2LDcxLjg0MjIgLTY2Ljk3MTUsMTQuMTExOCAtMTI5LjYxMjEsMjEuNjA3MDMgLTE4OS43NzY3LC0xOC4wNzIxMiA0Ljk1MTYsLTI2LjY1NTczIC02LjM2NzksLTkwLjQ1MDQ0IDE1Ljg3NTgsLTEwMy4wNTY5OSAxMS41MjQ1LC02LjUzMTQ4IDI1LjA4NzgsLTcuOTQ2MjcgMzcuNjA4NywtMy4zOTIyNiAxNi42MDE2LDYuMDM4MzggMjQuOTA1MywyNC44MTY3OSA0MS40MDY0LDMyLjM4MTI5IDM2LjUzOTMsMTYuNzUwMzIgOTEuNzQyOCwtNS4yNjE4OCA4OC41NTk5LC00OS4yODY5MiAyMi45NzE5LDAgNDkuMzI5MywtMy4yMTc2NiA1My43NzAxLDI1LjMwMzU3IG0gLTIwNS4yNDk4LDE4LjE3NDYgYyAtMzEuMDExMSwxMi43ODE0NiAtNy4xNTgxLDY2LjE4NCAyNC4yODYsNTIuNjYyMDkgMjkuMTcsLTEyLjU0MzkyIDYuNTQ5OCwtNjUuMzcxMTIgLTI0LjI4NiwtNTIuNjYyMDkgbSAxMzIuNTAyMSw0MS45MjEzNiAwLjg3NzEsMTEuNzEzOSA4LjM5MTQsLTAuMDY0NSAtMS4wNTE2LC0xMy4wMzM4MSAtOC4yMTY5LDEuMzg0NDUgbSAtNTAuNjA3MSwzLjE2Mjk1IDMuMTYyOSwxMi42NTE3OCBoIDYuMzI1OSBsIDMuMTYyOSwtMTIuNjUxNzggaCAtMTIuNjUxNyBtIDE0Mi4zMzI1LDUwLjYwNzEyIGMgLTUxLjc4MzEsNjIuNDkzNDggLTE1Mi42NzczLDUxLjM0NDEgLTIyMS40MDYyLDM0Ljc5MjQxIDAsMCA3OS4zMjMzLDMuNTYzMjQgMTE2LjY0NzgsLTIuNjY3MzMgMzcuMzI0NSwtNi4yMzA1NiAxMDQuNzU4NCwtMzIuMTI1MDggMTA0Ljc1ODQsLTMyLjEyNTA4IG0gLTUzLjc3MDEsNzUuOTEwNyBjIDcuODY2MiwtNS42MzYzNyA1NC4wMDQxLC0zOS45MDA1NiA1OC4xODU1LC0zNy4zOTg2NyAxMC42NTYsNi4zNzk2NiAtMi45NzYzLDI1LjIyNDQ5IC04LjI1NTIsMzAuMzUxNjMgLTEzLjI0MzMsMTIuODU3MzcgLTMzLjQ2MDgsMTEuOTE0ODEgLTQ5LjkzMDMsNy4wNDcwNCBtIC0xOTIuOTM5NiwtNi4zMjU4OSB2IDYuMzI1ODkgYyAtMjIuMjk2LDEwLjcxMjg5IC0zNS43NTUyLDIuMDkwNzEgLTM3Ljk1NTQsLTIyLjE0MDYyIHoiDQogICAgIGlkPSJwYXRoOTg4Ig0KICAgICBzb2RpcG9kaTpub2RldHlwZXM9InNjY3pjemN6Y2NjY3pjemN6Y2NzY2N6c2NzY2Njc3NzY2Njc2NjY2NjY2NjY2NjY2N6Y2NjY2NjY2NjIiAvPjx0ZXh0DQogICAgIHhtbDpzcGFjZT0icHJlc2VydmUiDQogICAgIHN0eWxlPSJmb250LXNpemU6MTA2LjY2N3B4O2xpbmUtaGVpZ2h0OjEuMjU7Zm9udC1mYW1pbHk6QmFobnNjaHJpZnQ7LWlua3NjYXBlLWZvbnQtc3BlY2lmaWNhdGlvbjpCYWhuc2NocmlmdDtmaWxsOiNmZmZmZmYiDQogICAgIHg9IjEzMy4wMTk3MyINCiAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICBpZD0idGV4dDEwMDciPjx0c3Bhbg0KICAgICAgIHNvZGlwb2RpOnJvbGU9ImxpbmUiDQogICAgICAgaWQ9InRzcGFuMTAwNSINCiAgICAgICB4PSIxMzMuMDE5NzMiDQogICAgICAgeT0iNjY5LjAyMDI2Ig0KICAgICAgIHN0eWxlPSJmb250LXN0eWxlOm5vcm1hbDtmb250LXZhcmlhbnQ6bm9ybWFsO2ZvbnQtd2VpZ2h0Om5vcm1hbDtmb250LXN0cmV0Y2g6bm9ybWFsO2ZvbnQtc2l6ZToxMDYuNjY3cHg7Zm9udC1mYW1pbHk6J0x1Y2lkYSBTYW5zJzstaW5rc2NhcGUtZm9udC1zcGVjaWZpY2F0aW9uOidMdWNpZGEgU2Fucyc7ZmlsbDojZmZmZmZmIj5GQU1JTElBUjwvdHNwYW4+PC90ZXh0PjxwYXRoDQogICAgIHN0eWxlPSJmaWxsOiNmZmFhY2M7c3Ryb2tlOm5vbmU7c3Ryb2tlLXdpZHRoOjFweDtzdHJva2UtbGluZWNhcDpidXR0O3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2Utb3BhY2l0eToxIg0KICAgICBkPSJNIDM2Mi41NzgyMiw4NS41MTIxMDQgMzExLjczMTMsMjQ2Ljg2ODI5IGMgMCwwIDI1LjIyMDMsMzEuNjg0NTcgNTQuODgyNTUsMzAuODI0NDUgMzYuNzg3NDQsLTEuMDY2NzMgNTQuMjY3MDksLTM1LjEyMDM1IDU0LjI2NzA5LC0zNS4xMjAzNSB6Ig0KICAgICBpZD0icGF0aDEwMDkiDQogICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NzY2MiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NjMzNDQ7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEiDQogICAgIHNvZGlwb2RpOnNpZGVzPSI1Ig0KICAgICBzb2RpcG9kaTpjeD0iMzkzLjQzNzI2Ig0KICAgICBzb2RpcG9kaTpjeT0iMjQwLjMzNjc5Ig0KICAgICBzb2RpcG9kaTpyMT0iMjEuNjMwNjA2Ig0KICAgICBzb2RpcG9kaTpyMj0iMTAuODE1MzAzIg0KICAgICBzb2RpcG9kaTphcmcxPSIxLjMwMDQ3MSINCiAgICAgc29kaXBvZGk6YXJnMj0iMS45Mjg3ODk1Ig0KICAgICBpbmtzY2FwZTpmbGF0c2lkZWQ9ImZhbHNlIg0KICAgICBpbmtzY2FwZTpyb3VuZGVkPSIwIg0KICAgICBpbmtzY2FwZTpyYW5kb21pemVkPSIwIg0KICAgICBkPSJtIDM5OS4yMTM2LDI2MS4xODE4NiAtOS41NjU5OCwtMTAuNzE1NDMgLTE0LjI1MDIyLDEuODA1NDcgNy4yMzQ5NCwtMTIuNDA5MDMgLTYuMTIwNjcsLTEyLjk5NDg0IDE0LjAzNzQxLDMuMDQ2MjMgMTAuNDY3NDQsLTkuODM2NzMgMS40NDA2NiwxNC4yOTE3MSAxMi41ODk5LDYuOTE1NCAtMTMuMTQ3MDMsNS43ODY1MyB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjc4NDk4NTYiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yOTI5MDUzMSIgLz48cGF0aA0KICAgICBzb2RpcG9kaTp0eXBlPSJzdGFyIg0KICAgICBzdHlsZT0iZmlsbDojZmZlNjgwO3N0cm9rZTpub25lO3N0cm9rZS13aWR0aDowLjU1MjAwNztzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQiDQogICAgIGlkPSJwYXRoMTAxMyINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNjUuOTUzMzEiDQogICAgIHNvZGlwb2RpOmN5PSIxNzEuODA3OTEiDQogICAgIHNvZGlwb2RpOnIxPSIyNC40MTc2MzciDQogICAgIHNvZGlwb2RpOnIyPSIxMi4yMDg4MTgiDQogICAgIHNvZGlwb2RpOmFyZzE9IjAuNjI4Nzk2MjkiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuMjU3MTE0OCINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzODUuNzAwNzMsMTg2LjE2OTY3IC0xNS45ODAyNCwtMi43NDg2OSAtMTEuMzIzNzQsMTEuNjA1ODcgLTIuMzI0MDEsLTE2LjA0NzUgLTE0LjUzNzA3LC03LjE4MzExIDE0LjU0MzkzLC03LjE2OTIxIDIuMzM5MzQsLTE2LjA0NTI4IDExLjMxMjY1LDExLjYxNjY4IDE1Ljk4Mjg2LC0yLjczMzQxIC03LjU1MjMyLDE0LjM0ODcyIHoiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteD0iMi4zMjgyNTI2Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXk9Ii0wLjAwMzYwODA2NDYiIC8+PHBhdGgNCiAgICAgc29kaXBvZGk6dHlwZT0ic3RhciINCiAgICAgc3R5bGU9ImRpc3BsYXk6aW5saW5lO2ZpbGw6I2ZmZTY4MDtzdHJva2U6bm9uZTtzdHJva2Utd2lkdGg6MC40NDAxNDU7c3Ryb2tlLWxpbmVjYXA6cm91bmQ7c3Ryb2tlLWxpbmVqb2luOnJvdW5kIg0KICAgICBpZD0icGF0aDEwMTEtNiINCiAgICAgc29kaXBvZGk6c2lkZXM9IjUiDQogICAgIHNvZGlwb2RpOmN4PSIzNDQuNDIxNiINCiAgICAgc29kaXBvZGk6Y3k9IjIyNS40OTQ3NCINCiAgICAgc29kaXBvZGk6cjE9IjIwLjU0NzU1OCINCiAgICAgc29kaXBvZGk6cjI9IjEwLjI3Mzc3OSINCiAgICAgc29kaXBvZGk6YXJnMT0iMS4zMDA0NzEiDQogICAgIHNvZGlwb2RpOmFyZzI9IjEuOTI4Nzg5NSINCiAgICAgaW5rc2NhcGU6ZmxhdHNpZGVkPSJmYWxzZSINCiAgICAgaW5rc2NhcGU6cm91bmRlZD0iMCINCiAgICAgaW5rc2NhcGU6cmFuZG9taXplZD0iMCINCiAgICAgZD0ibSAzNDkuOTA4NzIsMjQ1LjI5NjA5IC05LjA4NywtMTAuMTc4OTEgLTEzLjUzNjcxLDEuNzE1MDcgNi44NzI2OCwtMTEuNzg3NzEgLTUuODE0MjEsLTEyLjM0NDE5IDEzLjMzNDU2LDIuODkzNzEgOS45NDMzMywtOS4zNDQyMSAxLjM2ODUzLDEzLjU3NjEzIDExLjk1OTUyLDYuNTY5MTUgLTEyLjQ4ODc2LDUuNDk2OCB6Ig0KICAgICBpbmtzY2FwZTp0cmFuc2Zvcm0tY2VudGVyLXg9Ii0xLjY5NTYxMDIiDQogICAgIGlua3NjYXBlOnRyYW5zZm9ybS1jZW50ZXIteT0iMC4yNzgyMjQwMyIgLz48L2c+DQo8dGl0bGUNCiAgIGlkPSJ0aXRsZTYiPmZlYXRoZXI8L3RpdGxlPg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KPC9zdmc+DQo=" align="right" width="120" />
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Learning algorithms and hyperparameter
+optimisation</h1>
+<h4 class="author">Alex Zwanenburg</h4>
+<h4 class="date">2022-12-16</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#configuration-options" id="toc-configuration-options">Configuration options</a></li>
+<li><a href="#generalised-linear-models" id="toc-generalised-linear-models">Generalised linear models</a>
+<ul>
+<li><a href="#linear-models-for-binomial-outcomes" id="toc-linear-models-for-binomial-outcomes">Linear models for binomial
+outcomes</a></li>
+<li><a href="#linear-models-for-multinomial-outcomes" id="toc-linear-models-for-multinomial-outcomes">Linear models for
+multinomial outcomes</a></li>
+<li><a href="#linear-models-for-continuous-and-count-type-outcomes" id="toc-linear-models-for-continuous-and-count-type-outcomes">Linear
+models for continuous and count-type outcomes</a></li>
+<li><a href="#linear-models-for-survival-outcomes" id="toc-linear-models-for-survival-outcomes">Linear models for survival
+outcomes</a></li>
+</ul></li>
+<li><a href="#lasso-ridge-and-elastic-net-regression" id="toc-lasso-ridge-and-elastic-net-regression">Lasso, ridge and elastic
+net regression</a></li>
+<li><a href="#boosted-generalised-linear-models-and-regression-trees" id="toc-boosted-generalised-linear-models-and-regression-trees">Boosted
+generalised linear models and regression trees</a></li>
+<li><a href="#extreme-gradient-boosted-linear-models-and-trees" id="toc-extreme-gradient-boosted-linear-models-and-trees">Extreme
+gradient boosted linear models and trees</a></li>
+<li><a href="#random-forest-rfsrc" id="toc-random-forest-rfsrc">Random
+forest (RFSRC)</a></li>
+<li><a href="#random-forest-ranger" id="toc-random-forest-ranger">Random
+forest (ranger)</a></li>
+<li><a href="#naive-bayes" id="toc-naive-bayes">Naive Bayes</a></li>
+<li><a href="#k-nearest-neighbours" id="toc-k-nearest-neighbours"><em>k</em>-nearest neighbours</a></li>
+<li><a href="#support-vector-machines" id="toc-support-vector-machines">Support vector machines</a></li>
+<li><a href="#hyperparameter-optimization" id="toc-hyperparameter-optimization">Hyperparameter optimization</a>
+<ul>
+<li><a href="#predicting-run-time-of-model" id="toc-predicting-run-time-of-model">Predicting run time of
+model</a></li>
+<li><a href="#assessing-goodness-of-hyperparameter-sets" id="toc-assessing-goodness-of-hyperparameter-sets">Assessing goodness of
+hyperparameter sets</a></li>
+<li><a href="#predicting-optimisation-score-for-new-hyperparameter-sets" id="toc-predicting-optimisation-score-for-new-hyperparameter-sets">Predicting
+optimisation score for new hyperparameter sets</a></li>
+<li><a href="#acquisition-functions-for-utility-of-hyperparameter-sets" id="toc-acquisition-functions-for-utility-of-hyperparameter-sets">Acquisition
+functions for utility of hyperparameter sets</a></li>
+<li><a href="#exploring-challenger-sets" id="toc-exploring-challenger-sets">Exploring challenger sets</a></li>
+<li><a href="#providing-hyperparameters-manually" id="toc-providing-hyperparameters-manually">Providing hyperparameters
+manually</a></li>
+<li><a href="#configuration-options-for-hyperparameter-optimisation" id="toc-configuration-options-for-hyperparameter-optimisation">Configuration
+options for hyperparameter optimisation</a></li>
+</ul></li>
+<li><a href="#model-recalibration" id="toc-model-recalibration">Model
+recalibration</a></li>
+<li><a href="#references" id="toc-references">References</a></li>
+</ul>
+</div>
+
+<p>Learning algorithms create models that relate input data to the
+outcome. Development data is used to train models, after which they can
+be used to predict outcomes for new data. Familiar implements several
+commonly used algorithms. This vignette first describes the learners and
+their hyperparameters. Then, hyperparameter optimisation is described in
+more detail.</p>
+<table>
+<caption>Overview of learners implemented in familiar. <sup>a</sup>
+These learners test multiple distributions or linking families and
+attempt to find the best option. <sup>b</sup> k-nearest neighbours
+learners allow for setting the distance metric using <code>*</code>. If
+omitted (e.g. <code>knn</code>), the kernel is either
+<code>euclidean</code> (numeric features) or <code>gower</code> (mixed
+features). <sup>c</sup> The SVM kernel is indicated by <code>*</code>.
+If omitted (e.g. <code>svm_c</code>), the radial basis function is used
+as kernel. <sup>d</sup> SVM type is indicated by <code>*</code>, and
+must be one of <code>c</code>, <code>nu</code>, or
+<code>epsilon</code>.</caption>
+<colgroup>
+<col width="21%" />
+<col width="21%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>learner</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>binomial</strong></th>
+<th align="center"><strong>multinomial</strong></th>
+<th align="center"><strong>continuous</strong></th>
+<th align="center"><strong>count</strong></th>
+<th align="center"><strong>survival</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>generalised linear models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>glm</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">logistic</td>
+<td align="left"><code>glm_logistic</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">cauchy</td>
+<td align="left"><code>glm_cauchy</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">complementary log-log</td>
+<td align="left"><code>glm_loglog</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">normal</td>
+<td align="left"><code>glm_probit</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">multinomial</td>
+<td align="left"><code>glm_multinomial</code></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">log-normal</td>
+<td align="left"><code>glm_log</code>,
+<code>glm_log_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">normal (gaussian)</td>
+<td align="left"><code>glm_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">inverse gaussian</td>
+<td align="left"><code>glm_inv_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">log-poisson</td>
+<td align="left"><code>glm_log_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">poisson</td>
+<td align="left"><code>glm_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">x</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">cox</td>
+<td align="left"><code>cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">exponential</td>
+<td align="left"><code>survival_regr_exponential</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">gaussian</td>
+<td align="left"><code>survival_regr_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">logistic</td>
+<td align="left"><code>survival_regr_logistic</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">log-logistic</td>
+<td align="left"><code>survival_regr_loglogistic</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">log-normal</td>
+<td align="left"><code>survival_regr_lognormal</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">survival regression<sup>a</sup></td>
+<td align="left"><code>survival_regr</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">weibull</td>
+<td align="left"><code>survival_regr_weibull</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>lasso regression models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>lasso</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">logistic</td>
+<td align="left"><code>lasso_binomial</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">multi-logistic</td>
+<td align="left"><code>lasso_multinomial</code></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">normal (gaussian)</td>
+<td align="left"><code>lasso_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">poisson</td>
+<td align="left"><code>lasso_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">cox</td>
+<td align="left"><code>lasso_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>ridge regression models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>ridge</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">logistic</td>
+<td align="left"><code>ridge_binomial</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">multi-logistic</td>
+<td align="left"><code>ridge_multinomial</code></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">normal (gaussian)</td>
+<td align="left"><code>ridge_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">poisson</td>
+<td align="left"><code>ridge_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">cox</td>
+<td align="left"><code>ridge_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>elastic net regression models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>elastic_net</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">logistic</td>
+<td align="left"><code>elastic_net_binomial</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">multi-logistic</td>
+<td align="left"><code>elastic_net_multinomial</code></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">normal (gaussian)</td>
+<td align="left"><code>elastic_net_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">poisson</td>
+<td align="left"><code>elastic_net_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">cox</td>
+<td align="left"><code>elastic_net_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>boosted linear models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>boosted_glm</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">area under the curve</td>
+<td align="left"><code>boosted_glm_auc</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">cauchy</td>
+<td align="left"><code>boosted_glm_cauchy</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">complementary log-log</td>
+<td align="left"><code>boosted_glm_loglog</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">logistic</td>
+<td align="left"><code>boosted_glm_logistic</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">log-logistic</td>
+<td align="left"><code>boosted_glm_log</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">normal</td>
+<td align="left"><code>boosted_glm_probit</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">gaussian</td>
+<td align="left"><code>boosted_glm_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">huber loss</td>
+<td align="left"><code>boosted_glm_huber</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">laplace</td>
+<td align="left"><code>boosted_glm_laplace</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">poisson</td>
+<td align="left"><code>boosted_glm_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">concordance index</td>
+<td align="left"><code>boosted_glm_cindex</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">cox</td>
+<td align="left"><code>boosted_glm_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">log-logistic</td>
+<td align="left"><code>boosted_glm_loglog</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">log-normal</td>
+<td align="left"><code>boosted_glm_lognormal</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">rank-based estimation</td>
+<td align="left"><code>boosted_glm_gehan</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">survival regression<sup>a</sup></td>
+<td align="left"><code>boosted_glm_surv</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">weibull</td>
+<td align="left"><code>boosted_glm_weibull</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>extreme gradient boosted linear
+models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>xgboost_lm</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">logistic</td>
+<td align="left"><code>xgboost_lm_logistic</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">gamma</td>
+<td align="left"><code>xgboost_lm_gamma</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">gaussian</td>
+<td align="left"><code>xgboost_lm_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">x</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">poisson</td>
+<td align="left"><code>xgboost_lm_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">cox</td>
+<td align="left"><code>xgboost_lm_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>random forests</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">random forest (RFSRC)</td>
+<td align="left"><code>random_forest_rfsrc</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">random forest (ranger)</td>
+<td align="left"><code>random_forest_ranger</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>boosted regression trees</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>boosted_tree</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">area under the curve</td>
+<td align="left"><code>boosted_tree_auc</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">cauchy</td>
+<td align="left"><code>boosted_tree_cauchy</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">complementary log-log</td>
+<td align="left"><code>boosted_tree_loglog</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">logistic</td>
+<td align="left"><code>boosted_tree_logistic</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">log-logistic</td>
+<td align="left"><code>boosted_tree_log</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">normal</td>
+<td align="left"><code>boosted_tree_probit</code></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">gaussian</td>
+<td align="left"><code>boosted_tree_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">huber loss</td>
+<td align="left"><code>boosted_tree_huber</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">laplace</td>
+<td align="left"><code>boosted_tree_laplace</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">poisson</td>
+<td align="left"><code>boosted_tree_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">concordance index</td>
+<td align="left"><code>boosted_tree_cindex</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">cox</td>
+<td align="left"><code>boosted_tree_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">log-logistic</td>
+<td align="left"><code>boosted_tree_loglog</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">log-normal</td>
+<td align="left"><code>boosted_tree_lognormal</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">rank-based estimation</td>
+<td align="left"><code>boosted_tree_gehan</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">survival regression<sup>a</sup></td>
+<td align="left"><code>boosted_tree_surv</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">weibull</td>
+<td align="left"><code>boosted_tree_weibull</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>extreme gradient boosted trees</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>xgboost_tree</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left">logistic</td>
+<td align="left"><code>xgboost_tree_logistic</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">gamma</td>
+<td align="left"><code>xgboost_tree_gamma</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">gaussian</td>
+<td align="left"><code>xgboost_tree_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">x</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">poisson</td>
+<td align="left"><code>xgboost_tree_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">cox</td>
+<td align="left"><code>xgboost_tree_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>extreme gradient boosted DART
+trees</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">general<sup>a</sup></td>
+<td align="left"><code>xgboost_dart</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+</tr>
+<tr class="odd">
+<td align="left">logistic</td>
+<td align="left"><code>xgboost_dart_logistic</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">gamma</td>
+<td align="left"><code>xgboost_dart_gamma</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">gaussian</td>
+<td align="left"><code>xgboost_dart_gaussian</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">x</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">poisson</td>
+<td align="left"><code>xgboost_dart_poisson</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">cox</td>
+<td align="left"><code>xgboost_dart_cox</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>bayesian models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">naive bayes</td>
+<td align="left"><code>naive_bayes</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"><strong>nearest neighbour models</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">k-nearest neighbours<sup>b</sup></td>
+<td align="left"><code>k_nearest_neighbours_*</code>,
+<code>knn_*</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">x</td>
+<td align="center">x</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"><strong>support vector machines</strong></td>
+<td align="left"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left"><span class="math inline">\(C\)</span>-classification<sup>c</sup></td>
+<td align="left"><code>svm_c_*</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left"><span class="math inline">\(\nu\)</span>-classification/
+regression<sup>c</sup></td>
+<td align="left"><code>svm_nu_*</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left"><span class="math inline">\(\epsilon\)</span>-regression<sup>c</sup></td>
+<td align="left"><code>svm_eps_*</code></td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">linear kernel<sup>d</sup></td>
+<td align="left"><code>svm_*_linear</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">polynomial kernel<sup>d</sup></td>
+<td align="left"><code>svm_*_polynomial</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="even">
+<td align="left">radial kernel<sup>d</sup></td>
+<td align="left"><code>svm_*_radial</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+<tr class="odd">
+<td align="left">sigmoid kernel<sup>d</sup></td>
+<td align="left"><code>svm_*_sigmoid</code></td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center">×</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<div id="configuration-options" class="section level2">
+<h2>Configuration options</h2>
+<p>Learners, their hyperparameters, and parallelisation options can be
+specified using the tags or arguments below:</p>
+<table>
+<caption>Configuration options for model development.</caption>
+<colgroup>
+<col width="23%" />
+<col width="50%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center"><strong>tag</strong> / <strong>argument</strong></th>
+<th align="left"><strong>description</strong></th>
+<th align="center"><strong>default</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><code>learner</code></td>
+<td align="left">The desired learner. Multiple learners may be provided
+at the same time. This setting has no default and must be provided.</td>
+<td align="center">– (required)</td>
+</tr>
+<tr class="even">
+<td align="center"><code>hyperparameter</code></td>
+<td align="left">Each learner has one or more hyperparameters which can
+be specified. Sequential model-based optimisation is used to identify
+hyperparameter values from the data unless these are specifically
+specified here. See the section on hyperparameter optimisation for more
+details.</td>
+<td align="center">– (optional)</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>parallel_model_development</code></td>
+<td align="left">Enables parallel processing for model development.
+Ignored if <code>parallel=FALSE</code>.</td>
+<td align="center"><code>TRUE</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="generalised-linear-models" class="section level2">
+<h2>Generalised linear models</h2>
+<p>Generalised linear models (GLM) are easy to understand, use and
+share. In many situations, GLM may be preferred over more complex models
+as they are easier to report and validate. The most basic GLM is the
+linear model. The linear model for an outcome variable <span class="math inline">\(y_j\)</span> and a single predictor variable <span class="math inline">\(x_j\)</span> for sample <span class="math inline">\(j\)</span> is:</p>
+<p><span class="math display">\[y_j=\beta_0 + \beta_1 x_j +
+\epsilon_j\]</span> Here, <span class="math inline">\(\beta_0\)</span>
+and <span class="math inline">\(\beta_1\)</span> are both model
+coefficients. <span class="math inline">\(\beta_0\)</span> is also
+called the model intercept. <span class="math inline">\(\epsilon_j\)</span> is an error term that
+describes the difference between the predicted and the actual response
+for sample <span class="math inline">\(j\)</span>. When a linear model
+is developed, the <span class="math inline">\(\beta\)</span>-coefficients are set in such manner
+that the mean-squared error over the sample population is minimised.</p>
+<p>The above model is a univariate model as it includes only a single
+predictor. A multivariate linear model includes multiple predictors
+<span class="math inline">\(\mathbf{X_j}\)</span> and is denoted as:</p>
+<p><span class="math display">\[y_j= \mathbf{\beta}\mathbf{X_j}
++  \epsilon_j\]</span></p>
+<p><span class="math inline">\(\mathbf{\beta}\mathbf{X_j}\)</span> is
+the linear predictor. The GLM generalises this linear predictor through
+a linking function <span class="math inline">\(g\)</span> <span class="citation">(Nelder and Wedderburn 1972)</span>:</p>
+<p><span class="math display">\[y_j=g\left(\mathbf{\beta}\mathbf{X}\right) +
+\epsilon_j\]</span></p>
+<p>For example, binomial outcomes are commonly modelled using logistic
+regression with the <code>logit</code> linking function. Multiple
+linking functions are available in familiar and are detailed below.</p>
+<div id="linear-models-for-binomial-outcomes" class="section level3">
+<h3>Linear models for binomial outcomes</h3>
+<p>Linear models for binomial outcomes derive from the
+<code>stats</code> package which is part of the R core distribution
+<span class="citation">(R Core Team 2019)</span>. Hyperparameters for
+these models include linkage functions and are shown in the table
+below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">linking function</td>
+<td align="left"><code>family</code></td>
+<td align="center"><code>logistic</code>, <code>probit</code>,
+<code>loglog</code>, <code>cauchy</code></td>
+<td align="center"><code>glm</code> only</td>
+<td align="left">The linking function is not optimised when it is
+specified, e.g. <code>glm_logistic</code>.</td>
+</tr>
+<tr class="odd">
+<td align="left">sample weighting</td>
+<td align="left"><code>sample_weighting</code></td>
+<td align="center"><code>inverse_number_of_samples</code>,
+<code>effective_number_of_samples</code>, <code>none</code></td>
+<td align="center">no</td>
+<td align="left">Sample weighting allows for mitigating class
+imbalances. The default is <code>inverse_number_of_samples</code>.
+Instances with the majority class receive less weight.</td>
+</tr>
+<tr class="even">
+<td align="left">beta</td>
+<td align="left"><code>sample_weighting_beta</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[-6,-1\right]\)</span></td>
+<td align="center"><code>effective_number_of_samples</code> only</td>
+<td align="left">Specifies the <span class="math inline">\(\beta\)</span> parameter for effective number of
+samples weighting <span class="citation">(Cui et al. 2019)</span>. It is
+expressed on the <span class="math inline">\(\log_{10}\)</span> scale:
+<span class="math inline">\(\beta=1-10^\texttt{beta}\)</span>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="linear-models-for-multinomial-outcomes" class="section level3">
+<h3>Linear models for multinomial outcomes</h3>
+<p>Prior to version 1.3.0 the linear model for multinomial outcomes was
+implemented using the <code>VGAM::vglm</code> function <span class="citation">(T. W. Yee and Wild 1996; T. Yee 2010; Thomas W. Yee
+2015)</span>. For better scalability, this has been replaced by the
+<code>nnet::multinom</code> function <span class="citation">(Venables
+and Ripley 2002)</span>. Hyperparameters for this model are shown in the
+table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">linking function</td>
+<td align="left"><code>family</code></td>
+<td align="center"><code>multinomial</code></td>
+<td align="center">no</td>
+<td align="left">There is only one linking function available.</td>
+</tr>
+<tr class="odd">
+<td align="left">sample weighting</td>
+<td align="left"><code>sample_weighting</code></td>
+<td align="center"><code>inverse_number_of_samples</code>,
+<code>effective_number_of_samples</code>, <code>none</code></td>
+<td align="center">no</td>
+<td align="left">Sample weighting allows for mitigating class
+imbalances. The default is <code>inverse_number_of_samples</code>.
+Instances with the majority class receive less weight.</td>
+</tr>
+<tr class="even">
+<td align="left">beta</td>
+<td align="left"><code>sample_weighting_beta</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[-6,-1\right]\)</span></td>
+<td align="center"><code>effective_number_of_samples</code> only</td>
+<td align="left">Specifies the <span class="math inline">\(\beta\)</span> parameter for effective number of
+samples weighting <span class="citation">(Cui et al. 2019)</span>. It is
+expressed on the <span class="math inline">\(\log_{10}\)</span> scale:
+<span class="math inline">\(\beta=1-10^\texttt{beta}\)</span>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="linear-models-for-continuous-and-count-type-outcomes" class="section level3">
+<h3>Linear models for continuous and count-type outcomes</h3>
+<p>Linear models for continuous and count-type outcomes derive from the
+<code>stats</code> package of the R core distribution <span class="citation">(R Core Team 2019)</span>. Hyperparameters for these
+models include linkage functions and are shown in the table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">linking function</td>
+<td align="left"><code>family</code></td>
+<td align="center"><code>gaussian</code>, <code>log_gaussian</code>,
+<code>inv_gaussian</code>, <code>poisson</code>,
+<code>log_poisson</code></td>
+<td align="center"><code>glm</code> only</td>
+<td align="left">The linking function is not optimised when it is
+specified, e.g. <code>glm_poisson</code>. <code>gaussian</code>,
+<code>log_gaussian</code>, <code>inv_gaussian</code> linking functions
+are not available for count-type outcomes.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="linear-models-for-survival-outcomes" class="section level3">
+<h3>Linear models for survival outcomes</h3>
+<p>Linear models for survival outcomes are divided into semi-parametric
+and parametric models. The semi-parametric Cox proportional hazards
+model <span class="citation">(Cox 1972)</span> is based on the
+<code>survival::coxph</code> function <span class="citation">(Therneau
+and Grambsch 2000)</span>. Tied survival times are resolved using the
+default method by <span class="citation">Efron (1977)</span>.</p>
+<p>Various fully parametric models are also available, which differ in
+the assumed distribution of the outcome, i.e. the linking function. The
+parametric models are all based on <code>survival::survreg</code> <span class="citation">(Therneau and Grambsch 2000)</span>.</p>
+<p>Hyperparameters for semi-parametric and parametric survival models
+are shown in the table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">linking function</td>
+<td align="left"><code>family</code></td>
+<td align="center"><code>weibull</code>, <code>exponential</code>,
+<code>gaussian</code>, <code>logistic</code>, <code>lognormal</code>,
+<code>loglogistic</code></td>
+<td align="center"><code>survival_regr</code> only</td>
+<td align="left">The linking function is not optimised when it is
+specified, e.g. <code>survival_regr_weibull</code>. The non-parametric
+<code>cox</code> learner does not have a linking function.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="lasso-ridge-and-elastic-net-regression" class="section level2">
+<h2>Lasso, ridge and elastic net regression</h2>
+<p>Generalised linear models can be problematic as there is no inherent
+limit to model complexity, which can easily lead to overfitting.
+Penalised regression, or shrinkage, methods address this issue by
+penalising model complexity.</p>
+<p>Three shrinkage methods are implemented in <code>familiar</code>,
+namely ridge regression, lasso and elastic net, which are all
+implemented using the <code>glmnet</code> package <span class="citation">(Hastie, Tibshirani, and Friedman 2009; Simon et al.
+2011)</span>. The set of hyperparameters is shown in the table below.
+The optimal <code>lambda</code> parameter is determined by
+cross-validation as part of the <code>glmnet::cv.glmnet</code> function,
+and is not directly determined using hyperparameter optimisation.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">elastic net penalty</td>
+<td align="left"><code>alpha</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[0,1\right]\)</span></td>
+<td align="center">elastic net</td>
+<td align="left">This penalty is fixed for ridge regression
+(<code>alpha = 0</code>) and lasso (<code>alpha = 1</code>).</td>
+</tr>
+<tr class="odd">
+<td align="left">optimal lambda</td>
+<td align="left"><code>lambda_min</code></td>
+<td align="center"><code>lambda.1se</code>, <code>lambda.min</code></td>
+<td align="center">no</td>
+<td align="left">Default is <code>lambda.min</code>.</td>
+</tr>
+<tr class="even">
+<td align="left">number of CV folds</td>
+<td align="left"><code>n_folds</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[3,n\right]\)</span></td>
+<td align="center">no</td>
+<td align="left">Default is <span class="math inline">\(3\)</span> if
+<span class="math inline">\(n&lt;30\)</span>, <span class="math inline">\(\lfloor n/10\rfloor\)</span> if <span class="math inline">\(30\leq n \leq 200\)</span> and <span class="math inline">\(20\)</span> if <span class="math inline">\(n&gt;200\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">sample weighting</td>
+<td align="left"><code>sample_weighting</code></td>
+<td align="center"><code>inverse_number_of_samples</code>,
+<code>effective_number_of_samples</code>, <code>none</code></td>
+<td align="center">no</td>
+<td align="left">Sample weighting allows for mitigating class
+imbalances. The default is <code>inverse_number_of_samples</code> for
+<code>binomial</code> and <code>multinomial</code> outcomes, and
+<code>none</code> otherwise. Instances with the majority class receive
+less weight.</td>
+</tr>
+<tr class="even">
+<td align="left">beta</td>
+<td align="left"><code>sample_weighting_beta</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[-6,-1\right]\)</span></td>
+<td align="center"><code>effective_number_of_samples</code> only</td>
+<td align="left">Specifies the <span class="math inline">\(\beta\)</span> parameter for effective number of
+samples weighting <span class="citation">(Cui et al. 2019)</span>. It is
+expressed on the <span class="math inline">\(\log_{10}\)</span> scale:
+<span class="math inline">\(\beta=1-10^\texttt{beta}\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">normalisation</td>
+<td align="left"><code>normalise</code></td>
+<td align="center"><code>FALSE</code>, <code>TRUE</code></td>
+<td align="center">no</td>
+<td align="left">Default is <code>FALSE</code>, as normalisation is part
+of pre-processing in familiar.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="boosted-generalised-linear-models-and-regression-trees" class="section level2">
+<h2>Boosted generalised linear models and regression trees</h2>
+<p>Boosting is a procedure which combines many weak learners to form a
+more powerful panel <span class="citation">(Schapire 1990; Hastie,
+Tibshirani, and Friedman 2009)</span>. Boosting learners are implemented
+using the <code>mboost</code> package <span class="citation">(Bühlmann
+and Hothorn 2007; Hothorn et al. 2010; Hofner, Boccuto, and Göker
+2015)</span>. Both linear regression (<code>mboost::glmboost</code>) and
+regression trees (<code>mboost::blackboost</code>) are implemented. The
+hyperparameters are shown in the table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">family</td>
+<td align="left"><code>family</code></td>
+<td align="center"><code>logistic</code>, <code>probit</code>,
+<code>bin_loglog</code>, <code>cauchy</code>, <code>log</code>,
+<code>auc</code>, <code>gaussian</code>, <code>huber</code>,
+<code>laplace</code>, <code>poisson</code>, <code>cox</code>,
+<code>weibull</code>, <code>lognormal</code>, <code>surv_loglog</code>,
+<code>gehan</code>, <code>cindex</code></td>
+<td align="center">general tags</td>
+<td align="left">The family is not optimised when it is specified,
+e.g. <code>boosted_tree_gaussian</code>.</td>
+</tr>
+<tr class="odd">
+<td align="left">boosting iterations</td>
+<td align="left"><code>n_boost</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[0,\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale, i.e. the actual input
+value will be <span class="math inline">\(10^\texttt{n_boost}\)</span>.
+The default range is <span class="math inline">\(\left[0,
+3\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">learning rate</td>
+<td align="left"><code>learning_rate</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[-\infty,0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale. The default range is
+<span class="math inline">\(\left[-5,0\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">sample weighting</td>
+<td align="left"><code>sample_weighting</code></td>
+<td align="center"><code>inverse_number_of_samples</code>,
+<code>effective_number_of_samples</code>, <code>none</code></td>
+<td align="center">no</td>
+<td align="left">Sample weighting allows for mitigating class
+imbalances. The default is <code>inverse_number_of_samples</code> for
+<code>binomial</code> and <code>multinomial</code> outcomes, and
+<code>none</code> otherwise. Instances with the majority class receive
+less weight.</td>
+</tr>
+<tr class="even">
+<td align="left">beta</td>
+<td align="left"><code>sample_weighting_beta</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[-6,-1\right]\)</span></td>
+<td align="center"><code>effective_number_of_samples</code> only</td>
+<td align="left">Specifies the <span class="math inline">\(\beta\)</span> parameter for effective number of
+samples weighting <span class="citation">(Cui et al. 2019)</span>. It is
+expressed on the <span class="math inline">\(\log_{10}\)</span> scale:
+<span class="math inline">\(\beta=1-10^\texttt{beta}\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">maximum tree depth</td>
+<td align="left"><code>tree_depth</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">trees only</td>
+<td align="left">Maximum depth to which trees are allowed to grow.</td>
+</tr>
+<tr class="even">
+<td align="left">minimum sum of instance weight</td>
+<td align="left"><code>min_child_weight</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[0,\infty\right)\)</span></td>
+<td align="center">trees only</td>
+<td align="left">Minimal instance weight required for further branch
+partitioning, or the number of instances required in each node. This
+parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale with a <span class="math inline">\(-1\)</span> offset. The default range is <span class="math inline">\(\left[0, 2\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">significance split threshold</td>
+<td align="left"><code>alpha</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left(0.0,
+1.0\right]\)</span></td>
+<td align="center">trees only</td>
+<td align="left">Minimum significance level for further splitting. The
+default range is <span class="math inline">\(\left[10^{-6},
+1.0\right]\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Optimising the number of boosting iterations may be slow as models
+with a large number of boosting iterations take longer to learn and
+assess. If this is an issue, the <code>n_boost</code> parameter should
+be set to a smaller range, or provided with a fixed value.</p>
+<p>Low learning rates may require an increased number of boosting
+iterations.</p>
+<p>Also note that hyperparameter optimisation time depends on the type
+of family chosen, e.g. <code>cindex</code> is considerably slower than
+<code>cox</code>.</p>
+</div>
+<div id="extreme-gradient-boosted-linear-models-and-trees" class="section level2">
+<h2>Extreme gradient boosted linear models and trees</h2>
+<p>Boosting is a procedure which combines many weak learners to form a
+more powerful panel <span class="citation">(Schapire 1990; Hastie,
+Tibshirani, and Friedman 2009)</span>. Extreme gradient boosting is a
+gradient boosting implementation that was highly successful in several
+machine learning competitions. Learners are implemented using the
+<code>xgboost</code> package <span class="citation">(Chen and Guestrin
+2016)</span>. Three types are implemented: regression based boosting
+(<code>xgboost_lm</code>), regression-tree based boosting
+(<code>xgboost_tree</code>) and regression-tree based boosting with
+drop-outs (<code>xgboost_dart</code>).</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">family</td>
+<td align="left"><code>learn_objective</code></td>
+<td align="center"><code>gaussian,</code>
+<code>continuous_logistic</code>, <code>multinomial_logistic</code>,
+<code>binomial_logistic</code>, <code>poisson</code>,
+<code>gamma</code>, <code>cox</code></td>
+<td align="center">general tags</td>
+<td align="left">The family is not optimised when it is specified,
+e.g. <code>xgboost_lm_linear</code>.</td>
+</tr>
+<tr class="odd">
+<td align="left">boosting iterations</td>
+<td align="left"><code>n_boost</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[0,\infty \right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale, i.e. the actual value
+will be <span class="math inline">\(10^\texttt{n_boost}\)</span>. The
+default range is <span class="math inline">\(\left[0, 3
+\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">learning rate</td>
+<td align="left"><code>learning_rate</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left(-\infty,0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale. The default range is
+<span class="math inline">\(\left[-5, 0 \right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">L1 regularisation</td>
+<td align="left"><code>alpha</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[-6,
+\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale with a <span class="math inline">\(10^{-6}\)</span> offset. The default range is
+<span class="math inline">\(\left[-6, 3\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">L2 regularisation</td>
+<td align="left"><code>lambda</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[-6,
+\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale with a <span class="math inline">\(10^{-6}\)</span> offset. The default range is
+<span class="math inline">\(\left[-6, 3\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">sample weighting</td>
+<td align="left"><code>sample_weighting</code></td>
+<td align="center"><code>inverse_number_of_samples</code>,
+<code>effective_number_of_samples</code>, <code>none</code></td>
+<td align="center">no</td>
+<td align="left">Sample weighting allows for mitigating class
+imbalances. The default is <code>inverse_number_of_samples</code> for
+<code>binomial</code> and <code>multinomial</code> outcomes, and
+<code>none</code> otherwise. Instances with the majority class receive
+less weight.</td>
+</tr>
+<tr class="even">
+<td align="left">beta</td>
+<td align="left"><code>sample_weighting_beta</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[-6,-1\right]\)</span></td>
+<td align="center"><code>effective_number_of_samples</code> only</td>
+<td align="left">Specifies the <span class="math inline">\(\beta\)</span> parameter for effective number of
+samples weighting <span class="citation">(Cui et al. 2019)</span>. It is
+expressed on the <span class="math inline">\(\log_{10}\)</span> scale:
+<span class="math inline">\(\beta=1-10^\texttt{beta}\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">maximum tree depth</td>
+<td align="left"><code>tree_depth</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,\infty\right)\)</span></td>
+<td align="center"><code>gbtree</code>, <code>dart</code></td>
+<td align="left">Maximum depth to which trees are allowed to grow. The
+default range is <span class="math inline">\(\left[1,
+10\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">subsampling fraction</td>
+<td align="left"><code>sample_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left(0,
+1.0\right]\)</span></td>
+<td align="center"><code>gbtree</code>, <code>dart</code></td>
+<td align="left">Fraction of available data that is used for to create a
+single tree. The default range is <span class="math inline">\(\left[2 /
+m, 1.0\right]\)</span>, with <span class="math inline">\(m\)</span> the
+number of samples.</td>
+</tr>
+<tr class="odd">
+<td align="left">minimum sum of instance weight</td>
+<td align="left"><code>min_child_weight</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[0,\infty\right)\)</span></td>
+<td align="center"><code>gbtree</code>, <code>dart</code></td>
+<td align="left">Minimal instance weight required for further branch
+partitioning, or the number of instances required in each node. This
+parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale with a <span class="math inline">\(-1\)</span> offset. The default range is <span class="math inline">\(\left[0, 2\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">min. splitting error reduction</td>
+<td align="left"><code>gamma</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[-6,
+\infty\right)\)</span></td>
+<td align="center"><code>gbtree</code>, <code>dart</code></td>
+<td align="left">Minimum error reduction required to allow splitting.
+This parameter is expressed on the <span class="math inline">\(\log_{10}\)</span> scale with a <span class="math inline">\(10^{-6}\)</span> offset. The default range is
+<span class="math inline">\(\left[-6, 3\right]\)</span>.
+<code>continuous</code> and <code>count</code>-type outcomes are
+normalised to the <span class="math inline">\(\left[0, 1\right]\)</span>
+range prior to model fitting to deal with scaling issues. Values are
+converted back to the original scale after prediction.</td>
+</tr>
+<tr class="odd">
+<td align="left">DART sampling algorithm</td>
+<td align="left"><code>sample_type</code></td>
+<td align="center"><code>uniform</code>, <code>weighted</code></td>
+<td align="center"><code>dart</code></td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">drop-out rate</td>
+<td align="left"><code>rate_drop</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in
+\left[0,1\right)\)</span></td>
+<td align="center"><code>dart</code></td>
+<td align="left">–</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="random-forest-rfsrc" class="section level2">
+<h2>Random forest (RFSRC)</h2>
+<p>Random forests (explain) <span class="citation">(Breiman
+2001)</span>. The random forest learner is implemented through the
+<code>randomForestSRC</code> package, which provides a unified interface
+for different types of forests <span class="citation">(Ishwaran et al.
+2008, 2011)</span>.</p>
+<p>An outcome variable that represents count-type data is first
+transformed using a <span class="math inline">\(\log(x+1)\)</span>
+transformation. Predicted responses are then transformed to the original
+scale using the inverse <span class="math inline">\(\exp(x)-1\)</span>
+transformation.</p>
+<p>Hyperparameters for random forest learners are shown in the table
+below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">number of trees</td>
+<td align="left"><code>n_tree</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[0,\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{2}\)</span> scale, i.e. the actual input
+value will be <span class="math inline">\(2^\texttt{n_tree}\)</span>
+<span class="citation">(Oshiro, Perez, and Baranauskas 2012)</span>. The
+default range is <span class="math inline">\(\left[4,
+10\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">subsampling fraction</td>
+<td align="left"><code>sample_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left(0,
+1.0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">Fraction of available data that is used for to create a
+single tree. The default range is <span class="math inline">\(\left[2 /
+m, 1.0\right]\)</span>, with <span class="math inline">\(m\)</span> the
+number of samples.</td>
+</tr>
+<tr class="even">
+<td align="left">number of features at each node</td>
+<td align="left"><code>m_try</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[0.0,
+1.0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">Familiar ensures that there is always at least one
+candidate feature.</td>
+</tr>
+<tr class="odd">
+<td align="left">node size</td>
+<td align="left"><code>node_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[1,
+\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">Minimum number of unique samples in terminal nodes. The
+default range is <span class="math inline">\(\left[5, \lfloor m /
+3\rfloor\right]\)</span>, with <span class="math inline">\(m\)</span>
+the number of samples.</td>
+</tr>
+<tr class="even">
+<td align="left">maximum tree depth</td>
+<td align="left"><code>tree_depth</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">Maximum depth to which trees are allowed to grow. The
+default range is <span class="math inline">\(\left[1,
+10\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">number of split points</td>
+<td align="left"><code>n_split</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[0,
+\infty\right)\)</span></td>
+<td align="center">no</td>
+<td align="left">By default, splitting is deterministic and has one
+split point (<span class="math inline">\(0\)</span>).</td>
+</tr>
+<tr class="even">
+<td align="left">splitting rule</td>
+<td align="left"><code>split_rule</code></td>
+<td align="center"><code>gini</code>, <code>auc</code>,
+<code>entropy</code>, <code>mse</code>, <code>quantile.regr</code>,
+<code>la.quantile.regr</code>, <code>logrank</code>,
+<code>logrankscore</code>, <code>bs.gradient</code></td>
+<td align="center">no</td>
+<td align="left">Default splitting rules are <code>gini</code> for
+<code>binomial</code> and <code>multinonial</code> outcomes,
+<code>mse</code> for <code>continuous</code> and <code>count</code>
+outcomes and <code>logrank</code> for <code>survival</code>
+outcomes.</td>
+</tr>
+<tr class="odd">
+<td align="left">sample weighting</td>
+<td align="left"><code>sample_weighting</code></td>
+<td align="center"><code>inverse_number_of_samples</code>,
+<code>effective_number_of_samples</code>, <code>none</code></td>
+<td align="center">no</td>
+<td align="left">Sample weighting allows for mitigating class
+imbalances. The default is <code>inverse_number_of_samples</code> for
+<code>binomial</code> and <code>multinomial</code> outcomes, and
+<code>none</code> otherwise. Instances with the majority class receive
+less weight.</td>
+</tr>
+<tr class="even">
+<td align="left">beta</td>
+<td align="left"><code>sample_weighting_beta</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[-6,-1\right]\)</span></td>
+<td align="center"><code>effective_number_of_samples</code> only</td>
+<td align="left">Specifies the <span class="math inline">\(\beta\)</span> parameter for effective number of
+samples weighting <span class="citation">(Cui et al. 2019)</span>. It is
+expressed on the <span class="math inline">\(\log_{10}\)</span> scale:
+<span class="math inline">\(\beta=1-10^\texttt{beta}\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<p>Note that optimising that optimising the number of trees can be slow,
+as big forests take longer to construct and perform more computations
+for predictions. Hence hyperparameter optimisation may be sped up by
+limiting the range of the <code>n_tree</code> parameter, or setting a
+single value.</p>
+</div>
+<div id="random-forest-ranger" class="section level2">
+<h2>Random forest (ranger)</h2>
+<p>The second implementation of random forests comes from the
+<code>ranger</code> package <span class="citation">(Wright and Ziegler
+2017)</span>. It is generally faster than the implementation in
+<code>randomForestSRC</code> and allows for different splitting rules,
+such as maximally selected rank statistics <span class="citation">(Lausen and Schumacher 1992; Wright, Dankowski, and
+Ziegler 2017)</span> and concordance index-based splitting <span class="citation">(Schmid, Wright, and Ziegler 2016)</span>.
+Hyperparameters for the random forest are shown in the table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">number of trees</td>
+<td align="left"><code>n_tree</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[0,\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">This parameter is expressed on the <span class="math inline">\(\log_{2}\)</span> scale, i.e. the actual input
+value will be <span class="math inline">\(2^\texttt{n_tree}\)</span>
+<span class="citation">(Oshiro, Perez, and Baranauskas 2012)</span>. The
+default range is <span class="math inline">\(\left[4,
+10\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">subsampling fraction</td>
+<td align="left"><code>sample_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left(0,
+1.0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">Fraction of available data that is used for to create a
+single tree. The default range is <span class="math inline">\(\left[2 /
+m, 1.0\right]\)</span>, with <span class="math inline">\(m\)</span> the
+number of samples.</td>
+</tr>
+<tr class="even">
+<td align="left">number of features at each node</td>
+<td align="left"><code>m_try</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[0.0,
+1.0\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">Familiar ensures that there is always at least one
+candidate feature.</td>
+</tr>
+<tr class="odd">
+<td align="left">node size</td>
+<td align="left"><code>node_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[1,
+\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">Minimum number of unique samples in terminal nodes. The
+default range is <span class="math inline">\(\left[5, \lfloor m /
+3\rfloor\right]\)</span>, with <span class="math inline">\(m\)</span>
+the number of samples.</td>
+</tr>
+<tr class="even">
+<td align="left">maximum tree depth</td>
+<td align="left"><code>tree_depth</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,\infty\right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">Maximum depth to which trees are allowed to grow. The
+default range is <span class="math inline">\(\left[1,
+10\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">splitting rule</td>
+<td align="left"><code>split_rule</code></td>
+<td align="center"><code>gini</code>, <code>extratrees</code>,
+<code>variance</code>, <code>logrank</code>, <code>C</code>,
+<code>maxstat</code></td>
+<td align="center">no</td>
+<td align="left">Default splitting rules are <code>gini</code> for
+<code>binomial</code> and <code>multinomial</code> outcomes and
+<code>maxstat</code> for <code>continuous</code>, <code>count</code> and
+<code>survival</code> outcomes.</td>
+</tr>
+<tr class="even">
+<td align="left">significance split threshold</td>
+<td align="left"><code>alpha</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left(0.0,
+1.0\right]\)</span></td>
+<td align="center"><code>maxstat</code></td>
+<td align="left">Minimum significance level for further splitting. The
+default range is <span class="math inline">\(\left[10^{-6},
+1.0\right]\)</span></td>
+</tr>
+<tr class="odd">
+<td align="left">sample weighting</td>
+<td align="left"><code>sample_weighting</code></td>
+<td align="center"><code>inverse_number_of_samples</code>,
+<code>effective_number_of_samples</code>, <code>none</code></td>
+<td align="center">no</td>
+<td align="left">Sample weighting allows for mitigating class
+imbalances. The default is <code>inverse_number_of_samples</code> for
+<code>binomial</code> and <code>multinomial</code> outcomes, and
+<code>none</code> otherwise. Instances with the majority class receive
+less weight.</td>
+</tr>
+<tr class="even">
+<td align="left">beta</td>
+<td align="left"><code>sample_weighting_beta</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[-6,-1\right]\)</span></td>
+<td align="center"><code>effective_number_of_samples</code> only</td>
+<td align="left">Specifies the <span class="math inline">\(\beta\)</span> parameter for effective number of
+samples weighting <span class="citation">(Cui et al. 2019)</span>. It is
+expressed on the <span class="math inline">\(\log_{10}\)</span> scale:
+<span class="math inline">\(\beta=1-10^\texttt{beta}\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<p>Note that optimising the number of trees can be slow, as big forests
+take longer to construct and perform more computations for predictions.
+Hence hyperparameter optimisation may be sped up by limiting the range
+of the <code>n_tree</code> parameter or setting a single value.</p>
+</div>
+<div id="naive-bayes" class="section level2">
+<h2>Naive Bayes</h2>
+<p>The naive Bayes classifier uses Bayes rule to predict posterior
+probabilities. The naive Bayes classifier uses the
+<code>e1071::naiveBayes</code> function <span class="citation">(Meyer et
+al. 2021)</span>. The hyperparameters of the classifier are shown in the
+table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">laplace smoothing</td>
+<td align="left"><code>laplace</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[0.0,
+\infty \right)\)</span></td>
+<td align="center">yes</td>
+<td align="left">The default range is <span class="math inline">\(\left[0, 10\right]\)</span>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="k-nearest-neighbours" class="section level2">
+<h2><em>k</em>-nearest neighbours</h2>
+<p><em>k</em>-nearest neighbours is a simple clustering algorithm that
+classifies samples based on the classes of their <em>k</em> nearest
+neighbours in feature space. The <code>e1071::gknn</code> function is
+used to implement <em>k</em>-nearest neighbours <span class="citation">(Meyer et al. 2021)</span>. The hyperparameters are
+shown in the table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">number of nearest neighbours</td>
+<td align="left"><code>k</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,m\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">The default range is <span class="math inline">\(\left[1, \lceil 2 m^{1/3} \rceil \right]\)</span>,
+with <span class="math inline">\(m\)</span> the number of samples.</td>
+</tr>
+<tr class="odd">
+<td align="left">distance metric</td>
+<td align="left"><code>distance_metric</code></td>
+<td align="center">all metrics supported by
+<code>proxy::dist</code></td>
+<td align="center">yes</td>
+<td align="left">The default set of metrics is <code>gower</code>,
+<code>euclidean</code> and <code>manhattan</code>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="support-vector-machines" class="section level2">
+<h2>Support vector machines</h2>
+<p>Support vector machines were originally defined to find optimal
+margins between classes for classification problems. Support vector
+machines were popularized after the use of the kernel trick was
+described. Using the kernel trick the calculations are performed in an
+implicit high-dimensional feature space, which is considerably more
+efficient than explicit calculations <span class="citation">(Boser,
+Guyon, and Vapnik 1992)</span>.</p>
+<p>Familiar implements SVM using <code>e1071::svm</code>. We tried
+<code>kernlab::ksvm</code>, but this function would reproducibly freeze
+during unit testing. By default, both features and outcome data are
+scaled internally. This was used to derive the default hyperparameter
+ranges specified in the table below.</p>
+<table>
+<colgroup>
+<col width="24%" />
+<col width="14%" />
+<col width="19%" />
+<col width="19%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>parameter</strong></th>
+<th align="left"><strong>tag</strong></th>
+<th align="center"><strong>values</strong></th>
+<th align="center"><strong>optimised</strong></th>
+<th align="left"><strong>comments</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">signature size</td>
+<td align="left"><code>sign_size</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in
+\left[1,n\right]\)</span></td>
+<td align="center">yes</td>
+<td align="left">–</td>
+</tr>
+<tr class="even">
+<td align="left">SVM kernel</td>
+<td align="left"><code>kernel</code></td>
+<td align="center"><code>linear</code>, <code>polynomial</code>,
+<code>radial</code>, <code>sigmoid</code></td>
+<td align="center">no</td>
+<td align="left">Default is <code>radial</code>, unless specified as
+part of the learner’s name.</td>
+</tr>
+<tr class="odd">
+<td align="left"><span class="math inline">\(C\)</span></td>
+<td align="left"><code>c</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R}\)</span></td>
+<td align="center">yes</td>
+<td align="left">The cost for violation of constraints is expressed on a
+<span class="math inline">\(\log_{10}\)</span> scale, i.e. the actual
+value is <span class="math inline">\(10^\texttt{c}\)</span>. The default
+range is <span class="math inline">\(\left[-5, 3\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left"><span class="math inline">\(\epsilon\)</span></td>
+<td align="left"><code>epsilon</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R}\)</span></td>
+<td align="center"><code>continuous</code> and <code>count</code>
+outcomes</td>
+<td align="left">The error tolerance <span class="math inline">\(\epsilon\)</span> is only used for regression SVM.
+<span class="math inline">\(\epsilon\)</span> is expressed on a <span class="math inline">\(\log_{10}\)</span> scale. The default range is
+<span class="math inline">\(\left[-5, 1\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left"><span class="math inline">\(\nu\)</span></td>
+<td align="left"><code>nu</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R}\)</span></td>
+<td align="center"><code>nu</code> SVM type</td>
+<td align="left"><code>nu</code> provides upper bounds for the fraction
+of training errors and lower bounds for the fraction of support vectors
+<span class="citation">(Chang and Lin 2011)</span>. It is expressed on a
+<span class="math inline">\(\log_{10}\)</span> scale. The default range
+is <span class="math inline">\(\left[-5, 1\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">inverse kernel width</td>
+<td align="left"><code>gamma</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R}\)</span></td>
+<td align="center">non-linear kernels</td>
+<td align="left">This parameter specifies the inverse of the kernel
+width. It is expressed on the <span class="math inline">\(\log_{10}\)</span> scale. The default range is
+<span class="math inline">\(\left[-9, 3\right]\)</span>.</td>
+</tr>
+<tr class="odd">
+<td align="left">polynomial degree</td>
+<td align="left"><code>degree</code></td>
+<td align="center"><span class="math inline">\(\mathbb{Z} \in \left[1,
+\infty\right)\)</span></td>
+<td align="center">polynomial kernel</td>
+<td align="left">The default range is <span class="math inline">\(\left[1, 5\right]\)</span>.</td>
+</tr>
+<tr class="even">
+<td align="left">kernel offset</td>
+<td align="left"><code>offset</code></td>
+<td align="center"><span class="math inline">\(\mathbb{R} \in \left[0,
+\infty\right)\)</span></td>
+<td align="center">polynomial and sigmoid kernels</td>
+<td align="left">Negative values are not allowed. The default range is
+<span class="math inline">\(\left[0, 1 \right]\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<p>Several types of SVM algorithms exist for classification and
+regression. The following SVM types are implemented:</p>
+<ul>
+<li><span class="math inline">\(C\)</span>-classification:
+<code>c</code></li>
+<li><span class="math inline">\(\nu\)</span>-classification:
+<code>nu</code></li>
+<li><span class="math inline">\(\nu\)</span>-regression:
+<code>nu</code></li>
+<li><span class="math inline">\(\epsilon\)</span>-regression:
+<code>eps</code></li>
+</ul>
+<p>The following kernels are implemented:</p>
+<ul>
+<li>Linear kernel: <code>linear</code></li>
+<li>Polynomial kernel: <code>polynomial</code></li>
+<li>Radial basis function kernel: <code>radial</code></li>
+<li>Hyperbolic tangent (sigmoid) kernel: <code>sigmoid</code></li>
+</ul>
+</div>
+<div id="hyperparameter-optimization" class="section level1">
+<h1>Hyperparameter optimization</h1>
+<p>Hyperparameter optimisation is conducted to select model parameters
+that are more likely to lead to generalisable results. The main
+hyperparameter optimisation framework used by familiar is based on
+sequential model-based optimisation (SMBO) <span class="citation">(Hutter, Hoos, and Leyton-Brown 2011)</span>, but with
+significant updates and extensions.</p>
+<p>Overall, the following steps are conducted to optimise
+hyperparameters for a given learner and dataset:</p>
+<ul>
+<li><p>A set of bootstraps of the development dataset is made. This
+allows for training the models using the in-bag data and assessing
+performance using out-of-bag data. This is independent of any bootstraps
+that may have been defined as part of the experimental design. In case a
+subsampling method is specified in the experimental design, the
+corresponding internal development dataset is bootstrapped.</p></li>
+<li><p>Variable importance is determined for each of the in-bag datasets
+to avoid positively biasing the optimisation process through information
+leakage.</p></li>
+<li><p>An initial exploration of the hyperparameter space is conducted.
+A model is trained using each hyperparameter set and a bootstrap
+subsample. It is then assessed by computing an optimisation score based
+on model performance in the out-of-bag, and optionally, in-bag
+data.</p></li>
+<li><p>Exploration of the hyperparameter space then continues by
+iteratively comparing the best known hyperparameter set against
+challenger hyperparameter sets in so-called intensify steps. The
+challengers are selected by predicting the expected model performance
+for a new hyperparameter set and computing its utility <span class="citation">(Shahriari et al. 2016)</span>. In addition, we predict
+model run times, and actively prune potential slow challengers. Utility
+is computed using an acquisition function, of which several are
+available in familiar. The set of challenger hyperparameter sets may
+moreover be iteratively pruned, dependent on the exploration
+method.</p></li>
+<li><p>Exploration stops if no significant improvement to model
+performance could be established by further exploring the hyperparameter
+space, the total number of iterations has been reached, or bootstraps
+samples have been exhausted.</p></li>
+<li><p>If the best set of hyperparameters does not lead to a model that
+exceeds performance of a naive model, e.g. one that always predicts the
+majority class or median value, a naive model is trained
+instead.</p></li>
+</ul>
+<div id="predicting-run-time-of-model" class="section level2">
+<h2>Predicting run time of model</h2>
+<p>Models take a certain time to train. Familiar is actively measuring
+this time during hyperparameter optimisation for two reasons: first, to
+optimise assignment of jobs to parallel nodes; and secondly, to prune
+potential challenger sets that produce models that tend to run longer
+than the best-known model. The strictness increases with increased
+exploration.</p>
+<p>Let <span class="math inline">\(m\)</span> be the number of
+bootstraps used to quantify the most visited hyperparameter sets, and
+<span class="math inline">\(M\)</span> the total number of bootstrap
+samples that can be visited. Then let <span class="math inline">\(t_{\texttt{opt}}\)</span> be the runtime of the
+best known model. The maximum time that a challenger hyperparameter set
+is allowed for training is then empirically set to:</p>
+<p><span class="math display">\[t_{\texttt{max}} = \left(5 - 4
+\frac{m}{M} \right) t_{\texttt{opt}} \]</span></p>
+<p>Hence, <span class="math inline">\(t_{\texttt{max}}\)</span>
+converges to <span class="math inline">\(t_{\texttt{opt}}\)</span> for
+<span class="math inline">\(m \rightarrow M\)</span>.</p>
+<p>If maximum runtime is relatively insignificant, i.e. <span class="math inline">\(t_{\texttt{max}} &lt; 10.0\)</span> seconds, a
+threshold of <span class="math inline">\(t_{\texttt{max}}= 10.0\)</span>
+is used.</p>
+<p>If the maximum runtime is not known, i.e. none of the hyperparameter
+sets evaluated so far produced a valid model, the maximum time threshold
+is set to infinite. In effect, no hyperparameter sets are pruned based
+on expected run time.</p>
+<p>A random forest is trained to infer runtimes for (new) hyperparameter
+sets, based on the runtimes observed for visited hyperparameter sets.
+The random forest subsequently infers runtime for a challenger
+hyperparameter set. The runtime estimate is compared against <span class="math inline">\(t_{\texttt{max}}\)</span>, and if it exceeds the
+threshold, it is rejected and not evaluated.</p>
+</div>
+<div id="assessing-goodness-of-hyperparameter-sets" class="section level2">
+<h2>Assessing goodness of hyperparameter sets</h2>
+<p>A summary score <span class="math inline">\(s\)</span> determines how
+good a set of hyperparameters <span class="math inline">\(\mathbf{x}\)</span> is. This score is computed in
+two steps. First an objective score is computed to assess model
+performance for a hyperparameter set in a bootstrap subsample.
+Subsequently an optimisation score is computed within the subsample.
+Finally a summary score is determined from the optimisation score over
+all subsamples.</p>
+<p>An objective score <span class="math inline">\(s&#39;&#39;\)</span>
+is computed from the performance metric value for a specific
+hyperparameter set for in-bag (IB; <span class="math inline">\(s&#39;&#39;_{\textrm{IB}}\)</span>) and out-of-bag
+data (OOB; <span class="math inline">\(s&#39;&#39;_{\textrm{OOB}}\)</span>). The
+objective score always lies in the interval <span class="math inline">\([-1.0, 1.0]\)</span>. An objective score of <span class="math inline">\(1.0\)</span> always indicates the best possible
+score. A score of <span class="math inline">\(0.0\)</span> indicates
+that the hyperparameter set leads to the same degree of performance as
+the best educated guess, i.e. the majority class (for binomial and
+multinomial outcomes), the median value (for continuous and count
+outcomes), or tied risk or survival times (for survival outcomes).
+Objective scores that are either missing or below <span class="math inline">\(-1.0\)</span> are truncated to the value of <span class="math inline">\(-1.0\)</span>. In case multiple metrics are used
+to assess model performance, the mean of the respective objective scores
+is used.</p>
+<p>The optimisation scores <span class="math inline">\(s&#39;\)</span>
+and summary score <span class="math inline">\(s\)</span> of each
+hyperparameter set are subsequently computed using one of the following
+functions, which can be set using the <code>optimisation_function</code>
+parameter:</p>
+<ol style="list-style-type: decimal">
+<li><p><code>validation</code>, <code>max_validation</code> (default):
+The optimisation score for each bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}}\)</span>. The
+summary score <span class="math inline">\(s\)</span> is then the average
+of optimisation scores <span class="math inline">\(s&#39;\)</span>. This
+is a commonly used criterion that tries to maximise the score on the OOB
+validation data.</p></li>
+<li><p><code>balanced</code>: The optimisation score for each bootstrap
+subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}} - \left|
+s&#39;&#39;_{\textrm{OOB}} - s&#39;&#39;_{\textrm{IB}} \right|\)</span>.
+The summary score <span class="math inline">\(s\)</span> is then the
+average of optimisation scores <span class="math inline">\(s&#39;\)</span>. A variation on
+<code>max_validation</code> with a penalty for differences in
+performance between the IB and OOB data. The underlying idea is that a
+good set of hyperparameters should lead to models that perform well on
+both development and validation data.</p></li>
+<li><p><code>strong_balance</code>: The optimisation score for each
+bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}} - 2\left|
+s&#39;&#39;_{\textrm{OOB}}-s&#39;&#39;_{\textrm{IB}} \right|\)</span>.
+The summary score <span class="math inline">\(s\)</span> is then the
+average of optimisation scores <span class="math inline">\(s&#39;\)</span>. A variant of
+<code>balanced</code> with a stronger penalty term.</p></li>
+<li><p><code>validation_minus_sd</code>: The optimisation score for each
+bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}}\)</span>. The
+summary score <span class="math inline">\(s\)</span> is then the average
+of optimisation scores <span class="math inline">\(s&#39;\)</span> minus
+the standard deviation of <span class="math inline">\(s&#39;\)</span>.
+This penalises hyperparameter sets that lead to wide variance on OOB
+data.</p></li>
+<li><p><code>validation_25th_percentile</code>: The optimisation score
+for each bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}}\)</span>. The
+summary score <span class="math inline">\(s\)</span> is the 25th
+percentile of optimisation scores <span class="math inline">\(s&#39;\)</span>. Like
+<code>validation_minus_sd</code> this penalises hyperparameter sets that
+lead to wide variance on OOB data.</p></li>
+<li><p><code>model_estimate</code>: The optimisation score for each
+bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}}\)</span>. The
+model used to infer utility of new hyperparameter sets (see the next
+section <a href="#predicting-optimisation-score-for-new-hyperparameter-sets">Predicting
+optimisation score for new hyperparameter sets</a>) is used to predict
+the expected optimisation score <span class="math inline">\(\mu(\mathbf{x})\)</span>. This score is used as
+summary score <span class="math inline">\(s\)</span>. Not available for
+random search.</p></li>
+<li><p><code>model_estimate_minus_sd</code>: The optimisation score for
+each bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}}\)</span>. The
+model used to infer utility of new hyperparameter sets (see the next
+section <a href="#predicting-optimisation-score-for-new-hyperparameter-sets">Predicting
+optimisation score for new hyperparameter sets</a>) is used to predict
+the expected optimisation score <span class="math inline">\(\mu(\mathbf{x})\)</span> and its standard
+deviation <span class="math inline">\(\sigma(\mathbf{x})\)</span>. Then
+<span class="math inline">\(s = \mu(\mathbf{x}) -
+\sigma(\mathbf{x})\)</span>. This penalises hyperparameter sets for
+which a large variance is expected. Not available for random
+search.</p></li>
+<li><p><code>model_balanced_estimate</code>: The optimisation score for
+each bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}} - \left|
+s&#39;&#39;_{\textrm{OOB}} - s&#39;&#39;_{\textrm{IB}} \right|\)</span>.
+The model used to infer utility of new hyperparameter sets (see the next
+section <a href="#predicting-optimisation-score-for-new-hyperparameter-sets">Predicting
+optimisation score for new hyperparameter sets</a>) is used to predict
+the expected optimisation score <span class="math inline">\(\mu(\mathbf{x})\)</span>. This score is used as
+summary score <span class="math inline">\(s\)</span>. The method is
+similar to <code>model_estimate</code>, but predicts the balanced score
+instead of the validation score. Not available for random
+search.</p></li>
+<li><p><code>model_balanced_estimate_minus_sd</code>: The optimisation
+score for each bootstrap subsample is <span class="math inline">\(s&#39;=s&#39;&#39;_{\textrm{OOB}} - \left|
+s&#39;&#39;_{\textrm{OOB}} - s&#39;&#39;_{\textrm{IB}} \right|\)</span>.
+The model used to infer utility of new hyperparameter sets (see the next
+section <a href="#predicting-optimisation-score-for-new-hyperparameter-sets">Predicting
+optimisation score for new hyperparameter sets</a>) is used to predict
+the expected optimisation score <span class="math inline">\(\mu(\mathbf{x})\)</span> and its standard
+deviation <span class="math inline">\(\sigma(\mathbf{x})\)</span>. Then
+<span class="math inline">\(s = \mu(\mathbf{x}) -
+\sigma(\mathbf{x})\)</span>. This penalises hyperparameter sets for
+which a large variance is expected. The method is similar to
+<code>model_estimate_minus_sd</code>, but predicts the balanced score
+and its variance instead. Not available for random search.</p></li>
+</ol>
+<p>The summary score is then used to select the best known
+hyperparameter set, i.e. the set that maximises the summary score.
+Moreover, the optimisation scores are used to identify candidate
+hyperparameter sets as described in the following section. The
+optimisation function is set using the
+<code>optimisation_function</code> argument.</p>
+</div>
+<div id="predicting-optimisation-score-for-new-hyperparameter-sets" class="section level2">
+<h2>Predicting optimisation score for new hyperparameter sets</h2>
+<p>Any point in the hyperparameter space has a single, scalar,
+optimisation score value that is <em>a priori</em> unknown. During the
+optimisation process, the algorithm samples from the hyperparameter
+space by selecting hyperparameter sets and computing the optimisation
+score for one or more bootstraps. For each hyperparameter set the
+resulting scores are distributed around the actual value.</p>
+<p>A key point of Bayesian optimisation is the ability to estimate the
+usefulness or utility of new hyperparameter sets. This ability is
+facilitated by modelling the optimisation score of new hyperparameter
+sets using the optimisation scores of observed hyperparameter sets.</p>
+<p>The following models can be used for this purpose:</p>
+<ul>
+<li><p><code>gaussian_process</code> (default): Creates a localised
+approximate Gaussian deterministic Gaussian Process. This is implemented
+using the <code>laGP</code> package <span class="citation">(Gramacy
+2016)</span>.</p></li>
+<li><p><code>bayesian_additive_regression_trees</code> or
+<code>bart</code>: Uses Bayesian Additive Regression Trees for
+inference. Unlike standard random forests, BART allows for estimating
+posterior distributions directly and can extrapolate. BART is
+implemented using the <code>BART</code> package <span class="citation">(Sparapani, Spanbauer, and McCulloch
+2021)</span>.</p></li>
+<li><p><code>random_forest</code>: Creates a random forest for
+inference. A random forest was originally used in the SMBO algorithm by
+Hutter et al. <span class="citation">(Hutter, Hoos, and Leyton-Brown
+2011)</span>. A weakness of random forests is their lack of
+extrapolation beyond observed values, which limits their usefulness in
+exploiting promising areas of hyperparameter space somewhat.</p></li>
+</ul>
+<p>In addition, familiar can perform random search (<code>random</code>
+or <code>random_search</code>). This forgoes the use of models to steer
+optimisation. Instead, the hyperparameter space is sampled at
+random.</p>
+<p>The learner used to predict optimisation scores can be specified
+using the <code>hyperparameter_learner</code> parameter.</p>
+</div>
+<div id="acquisition-functions-for-utility-of-hyperparameter-sets" class="section level2">
+<h2>Acquisition functions for utility of hyperparameter sets</h2>
+<p>The expected values and the posterior values of optimisation scores
+from the models are used to compute utility of new hyperparameter sets
+using an acquisition function. The following acquisition functions are
+available in familiar <span class="citation">(Shahriari et al.
+2016)</span>. Let <span class="math inline">\(\nu=f(\mathbf{x})\)</span>
+be the posterior distribution of hyperparameter set <span class="math inline">\(\mathbf{x}\)</span>, and <span class="math inline">\(\tau\)</span> the best observed optimisation
+score. Let also <span class="math inline">\(\mu(\mathbf{x})\)</span> and
+<span class="math inline">\(\sigma(\mathbf{x})\)</span> be the sample
+mean and sample standard deviation for set <span class="math inline">\(\mathbf{x}\)</span> (implicitly for round <span class="math inline">\(m\)</span>):</p>
+<ul>
+<li><p><code>improvement_probability</code>: The probability of
+improvement quantifies the probability that the expected optimisation
+score for a set <span class="math inline">\(\mathbf{x}\)</span> is
+better than the best observed optimisation score <span class="math inline">\(\tau\)</span>:</p>
+<p><span class="math display">\[\alpha(\mathbf{x}) = P(\nu &gt; \tau) =
+\Phi \left(\frac{\mu(\mathbf{x}) - \tau}
+{\sigma(\mathbf{x})}\right)\]</span></p>
+<p>Here <span class="math inline">\(\Phi\)</span> is the cumulative
+distribution function of a normal distribution. Note that this
+acquisition function is typically prone to convergence to local minima,
+although in our algorithm this may be mitigated by the alternating
+random search strategy.</p></li>
+<li><p><code>improvement_empirical_probability</code>: Similar to
+<code>improvement_probability</code>, but based directly on optimisation
+scores predicted by the individual decision trees:</p>
+<p><span class="math display">\[\alpha(\mathbf{x}) = P(\nu &gt; \tau) =
+\frac{1}{N} \sum_{i=1}^N \left[\nu_i &gt; \tau\right]\]</span></p>
+<p>with <span class="math inline">\(\left[\ldots\right]\)</span>
+denoting an Iverson bracket, which takes the value 1 if the condition
+specified by <span class="math inline">\(\ldots\)</span> is true, and 0
+otherwise.</p></li>
+<li><p><code>expected_improvement</code> (default): Expected improvement
+is based on an improvement function, and is be computed as follows:</p>
+<p><span class="math display">\[\alpha(\mathbf{x})=(\mu(\mathbf{x})-\tau) \Phi
+\left(\frac{\mu(\mathbf{x}) - \tau}{\sigma(\mathbf{x})}\right) +
+\sigma(\mathbf{x}) \phi\left(\frac{\mu(\mathbf{x}) -
+\tau}{\sigma(\mathbf{x})}\right)\]</span></p>
+<p>with <span class="math inline">\(\phi\)</span> denoting the normal
+probability density function. If <span class="math inline">\(\sigma(\mathbf{x}) = 0\)</span>, <span class="math inline">\(\alpha(\mathbf{x})=0\)</span>.</p></li>
+<li><p><code>upper_confidence_bound</code>: This acquisition function is
+based on the upper confidence bound of the distribution, and is defined
+as <span class="citation">(Srinivas et al. 2012)</span>:</p>
+<p><span class="math display">\[\alpha(\mathbf{x}, t)=\mu(\mathbf{x}) +
+\beta_t \sigma(\mathbf{x})\]</span></p>
+<p>Here the parameter <span class="math inline">\(\beta_t\)</span>
+depends on the current round <span class="math inline">\(t\)</span>,
+which in our implementation would be roughly equivalent to the maximum
+number of bootstraps performed for any of the hyperparameter sets, minus
+<span class="math inline">\(1\)</span>. The <span class="math inline">\(\beta_t\)</span> parameter is then defined as
+<span class="math inline">\(\beta_t= 2
+\log(|D|(t+1)^2\pi^2/6\delta)\)</span> <span class="citation">(Srinivas
+et al. 2012)</span>. Here, <span class="math inline">\(\delta \in
+[0,1]\)</span> and <span class="math inline">\(|D|\)</span> the
+dimensionality of the hyperparameter space. For their experiments
+Srinivas et al. used <span class="math inline">\(\delta=0.1\)</span>,
+and noted that scaling down <span class="math inline">\(\beta_t\)</span>
+by a factor <span class="math inline">\(5\)</span> improves the
+algorithm. Hence, we use <span class="math inline">\(\beta_t=
+\frac{2}{5} \log\left(\frac{5}{3}
+|D|(t+1)^2\pi^2\right)\)</span>.</p></li>
+<li><p><code>bayes_upper_confidence_bound</code>: Proposed by Kaufmann
+et al. <span class="citation">(Kaufmann, Cappé, and Garivier
+2012)</span>, the Bayesian upper confidence bound is defined as:</p>
+<p><span class="math display">\[\alpha(\mathbf{x}, t)=Q
+\left(1-\frac{1}{(t + 1) \log(n)^c}, \nu_t\right)\]</span></p>
+<p>with <span class="math inline">\(Q\)</span> being a quantile
+function. Note that we here deviate from the original definition by
+substituting the original <span class="math inline">\(t\)</span> by
+<span class="math inline">\(t+1\)</span>, and not constraining the
+posterior distribution <span class="math inline">\(\nu\)</span> to a
+known function. In the original, <span class="math inline">\(n\)</span>
+defines the number of rounds, with <span class="math inline">\(t\)</span> the current round. In our algorithm,
+this is interpreted as <span class="math inline">\(n\)</span> being the
+total number of bootstraps, and <span class="math inline">\(t\)</span>
+the maximum number of bootstraps already performed for any of the
+hyperparameter sets. Hence our implementation is the same, aside from
+the lack of constraint on the posterior distribution. Based on the
+simulations and recommendations by Kaufmann et al. we choose parameter
+<span class="math inline">\(c=0\)</span>.</p></li>
+</ul>
+<p>The acquisition function can be specified using the
+<code>acquisition_function</code> parameter.</p>
+</div>
+<div id="exploring-challenger-sets" class="section level2">
+<h2>Exploring challenger sets</h2>
+<p>After selecting challenger hyperparameter sets, the optimisation
+score of models trained using these hyperparameter sets are compared
+against the best-known score in a run-off intensify step. During this
+step, models will be trained on new bootstrap data, compared, and then
+trained on another set of bootstraps, and so on. Pruning the set of
+challenger hyperparameters after each iteration reduces computational
+load. Familiar implements the following methods:</p>
+<ul>
+<li><p><code>single_shot</code> (default): The set of alternative
+parameter sets is not pruned, and each intensify iteration contains only
+a single (initial) intensification step that only uses a single
+bootstrap. This is the exploration method that under default settings
+does the least in-depth exploration, with the advantage of being fast.
+Extensive internal tests show that this exploration method yields
+similarly performant models as more extensive exploration
+methods.</p></li>
+<li><p><code>successive_halving</code>: The set of alternative parameter
+sets is pruned by removing the worst performing half of the sets after
+each step <span class="citation">(Jamieson and Talwalkar 2016)</span>.
+The set of investigated parameter sets gets progressively
+smaller.</p></li>
+<li><p><code>stochastic_reject</code>: The set of alternative parameter
+sets is pruned by comparing the performance of each parameter set with
+that of the incumbent best parameter set using a paired Wilcoxon
+test.</p></li>
+<li><p><code>none</code>: The set of alternative parameter sets is not
+pruned. Compared to <code>single_shot</code>, hyperparameter sets are
+assessed using multiple bootstraps (<code>smbo_step_bootstraps</code> *
+<code>smbo_intensify_steps</code>).</p></li>
+</ul>
+<p>The method used to steer exploration can be set using the
+<code>exploration_method</code> parameter.</p>
+</div>
+<div id="providing-hyperparameters-manually" class="section level2">
+<h2>Providing hyperparameters manually</h2>
+<p>It is possible to set hyperparameters manually. This can be used to
+change hyperparameters that are fixed by default, to set a fixed value
+for randomised hyperparameters, or to provide a different search range
+for randomised hyperparameters.</p>
+<p>Hyperparameters can be provided using the <code>hyperparameter</code>
+tag. For the <code>glm_logistic</code> learner an example tag may for
+example look as follows:</p>
+<pre><code>&lt;hyperparameter&gt;
+  &lt;glm_logistic&gt;
+    &lt;sign_size&gt;5&lt;/sign_size&gt;
+  &lt;/glm_logistic&gt;
+&lt;/hyperparameter&gt;</code></pre>
+<p>Or as a nested list passed as the <code>hyperparameter</code>
+argument to <code>summon_familiar</code>:</p>
+<pre><code>hyperparameter = list(&quot;glm_logistic&quot;=list(&quot;sign_size&quot;=5))</code></pre>
+<p>More than one value can be provided. The behaviour changes depending
+on whether the hyperparameter is categorical or numeric variable. In
+case of categorical hyperparameters, the provided values define the
+search range. For numerical hyperparameters, providing two values sets
+the bounds of the search range, whereas providing more than two values
+will define the search range itself.</p>
+</div>
+<div id="configuration-options-for-hyperparameter-optimisation" class="section level2">
+<h2>Configuration options for hyperparameter optimisation</h2>
+<p>Hyperparameter optimization may be configured using the
+tags/arguments in the table below.</p>
+<table>
+<caption>Configuration options for hyperparameter
+optimisation.</caption>
+<colgroup>
+<col width="23%" />
+<col width="50%" />
+<col width="25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center"><strong>tag</strong> / <strong>argument</strong></th>
+<th align="left"><strong>description</strong></th>
+<th align="center"><strong>default</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><code>optimisation_bootstraps</code></td>
+<td align="left">Maximum number of bootstraps created for
+optimisation.</td>
+<td align="center"><code>20</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>optimisation_determine_vimp</code></td>
+<td align="left">If <code>TRUE</code>, compute variable importance for
+each bootstrap. If <code>FALSE</code> use variable importance computed
+during the feature selection step.</td>
+<td align="center"><code>TRUE</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>smbo_random_initialisation</code></td>
+<td align="left">If <code>random</code> initial parameter sets are
+generated randomly from default ranges. If <code>fixed</code> or
+<code>fixed_subsample</code>, the initial parameter sets are based on a
+grid in parameter space.</td>
+<td align="center"><code>fixed_subsample</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>smbo_n_random_sets</code></td>
+<td align="left">Sets the number of hyperparameter sets drawn for
+initialisation. Ignored if <code>smbo_random_initialisation</code> is
+<code>fixed</code>. If <code>smbo_random_initialisation</code> is
+<code>fixed_subsample</code>, the number of selected hyperparameters may
+be lower.</td>
+<td align="center"><code>100</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>max_smbo_iterations</code></td>
+<td align="left">Maximum number of intensify iterations of the SMBO
+algorithm.</td>
+<td align="center"><code>20</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>smbo_stop_convergent_iterations</code></td>
+<td align="left">Number of subsequent convergent SMBO iterations
+required to stop hyperparameter optimisation early.</td>
+<td align="center"><code>3</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>smbo_stop_tolerance</code></td>
+<td align="left">Tolerance for recent optimisation scores to determine
+convergence.</td>
+<td align="center"><code>0.1 * 1 / sqrt(n_samples)</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>smbo_time_limit</code></td>
+<td align="left">Time limit (in minutes) for the optimisation
+process.</td>
+<td align="center"><code>NULL</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>smbo_initial_bootstraps</code></td>
+<td align="left">Number of bootstraps assessed initially.</td>
+<td align="center"><code>1</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>smbo_step_bootstraps</code></td>
+<td align="left">Number of bootstraps used within each step of an
+intensify iteration.</td>
+<td align="center"><code>3</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>smbo_intensify_steps</code></td>
+<td align="left">Number of intensify steps within each intensify
+iteration.</td>
+<td align="center"><code>5</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>optimisation_metric</code></td>
+<td align="left">The metric used for optimisation,
+e.g. <code>auc</code>. See the vignette on performance metrics for
+available options. More than one metric may be specified.</td>
+<td align="center"><code>auc_roc</code> (<code>binomial</code>,
+<code>multinomial</code>); <code>mse</code> (<code>continuous</code>);
+<code>msle</code> (<code>count</code>); and
+<code>concordance_index</code> (<code>survival</code>)</td>
+</tr>
+<tr class="odd">
+<td align="center"><code>optimisation_function</code></td>
+<td align="left">The optimisation function used (see <a href="#assessing-goodness-of-hyperparameter-sets">Assessing goodness of
+hyperparameter sets</a>).</td>
+<td align="center"><code>balanced</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>hyperparameter_learner</code></td>
+<td align="left">Learner used to predict optimisation scores for new
+hyperparameter sets (see <a href="#predicting-optimisation-score-for-new-hyperparameter-sets">Predicting
+optimisation score for new hyperparameter sets</a>).</td>
+<td align="center"><code>gaussian_process</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>acquisition_function</code></td>
+<td align="left">The function used to quantify utility of hyperparameter
+sets (see <a href="#acquisition-functions-for-utility-of-hyperparameter-sets">Acquisition
+functions for utility of hyperparameter sets</a>).</td>
+<td align="center"><code>expected_improvement</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>exploration_method</code></td>
+<td align="left">Method used to explore challenger hyperparameter sets
+(see <a href="#exploring-challenger-sets">Exploring challenger
+sets</a>).</td>
+<td align="center"><code>single_shot</code></td>
+</tr>
+<tr class="odd">
+<td align="center"><code>smbo_stochastic_reject_p_value</code></td>
+<td align="left">The p-value level for stochastic pruning.</td>
+<td align="center"><code>0.05</code></td>
+</tr>
+<tr class="even">
+<td align="center"><code>parallel_hyperparameter_optimisation</code></td>
+<td align="left">Enables parallel processing for hyperparameter
+optimisation. Ignored if <code>parallel=FALSE</code>. Can be
+<code>outer</code> to process multiple optimisation processes
+simultaneously.</td>
+<td align="center"><code>TRUE</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="model-recalibration" class="section level1">
+<h1>Model recalibration</h1>
+<p>Even though learners may be good at discrimination, model calibration
+can be lacklustre. Some learners are therefore recalibrated as
+follows:</p>
+<ol style="list-style-type: decimal">
+<li><p>3-fold cross-validation is performed. Responses are predicted
+using a new model trained on each training fold.</p></li>
+<li><p>Three recalibration models are trained using the responses for
+the training folds as input <span class="citation">(Niculescu-Mizil and
+Caruana 2005)</span>.</p></li>
+<li><p>The three recalibration models are then applied to (new)
+responses of the full model, and the resulting values averaged for each
+sample.</p></li>
+</ol>
+<p>The following learners currently undergo recalibration:</p>
+<table>
+<colgroup>
+<col width="32%" />
+<col width="32%" />
+<col width="35%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"><strong>learner</strong></th>
+<th align="center"><strong>outcome</strong></th>
+<th align="left"><strong>recalibration model</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code>xgboost_lm</code>,
+<code>xgboost_lm_logistic</code></td>
+<td align="center">binomial, multinomial</td>
+<td align="left"><code>glm_logistic</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>xgboost_tree</code>,
+<code>xgboost_tree_logistic</code></td>
+<td align="center">binomial, multinomial</td>
+<td align="left"><code>glm_logistic</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>xgboost_lm_cox</code></td>
+<td align="center">survival</td>
+<td align="left"><code>glm_cox</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>xgboost_tree_cox</code></td>
+<td align="center">survival</td>
+<td align="left"><code>glm_cox</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><code>boosted_glm_cindex</code>,
+<code>boosted_glm_gehan</code></td>
+<td align="center">survival</td>
+<td align="left"><code>glm_cox</code></td>
+</tr>
+<tr class="even">
+<td align="left"><code>boosted_tree_cindex</code>,
+<code>boosted_tree_gehan</code></td>
+<td align="center">survival</td>
+<td align="left"><code>glm_cox</code></td>
+</tr>
+</tbody>
+</table>
+<p>Familiar currently does not recalibrate models by inverting the model
+calibration curves, but may do so in the future.</p>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Boser1992-nk" class="csl-entry">
+Boser, Bernhard E, Isabelle M Guyon, and Vladimir N Vapnik. 1992.
+<span>“A Training Algorithm for Optimal Margin Classifiers.”</span> In
+<em>Proceedings of the Fifth Annual Workshop on Computational Learning
+Theory</em>, 144–52. ACM.
+</div>
+<div id="ref-Breiman2001-ao" class="csl-entry">
+Breiman, Leo. 2001. <span>“Random Forests.”</span> <em>Mach. Learn.</em>
+45 (1): 5–32.
+</div>
+<div id="ref-Buhlmann2007-ku" class="csl-entry">
+Bühlmann, Peter, and Torsten Hothorn. 2007. <span>“Boosting Algorithms:
+Regularization, Prediction and Model Fitting.”</span> <em>Stat.
+Sci.</em> 22 (4): 477–505.
+</div>
+<div id="ref-Chang2011-ck" class="csl-entry">
+Chang, Chih-Chung, and Chih-Jen Lin. 2011. <span>“<span>LIBSVM</span>: A
+Library for Support Vector Machines.”</span> <em>ACM Trans. Intell.
+Syst. Technol.</em> 2 (3): 27:1–27.
+</div>
+<div id="ref-Chen2016-lo" class="csl-entry">
+Chen, Tianqi, and Carlos Guestrin. 2016. <span>“<span>XGBoost</span>: A
+Scalable Tree Boosting System.”</span> In <em>Proceedings of the 22nd
+<span>ACM</span> <span>SIGKDD</span> International Conference on
+Knowledge Discovery and Data Mining</em>, 785–94.
+</div>
+<div id="ref-Cox1972-fc" class="csl-entry">
+Cox, D R. 1972. <span>“Regression Models and
+<span>Life-Tables</span>.”</span> <em>J. R. Stat. Soc. Series B Stat.
+Methodol.</em> 34 (2): 187–202.
+</div>
+<div id="ref-Cui2019-ys" class="csl-entry">
+Cui, Yin, Menglin Jia, Tsung-Yi Lin, Yang Song, and Serge Belongie.
+2019. <span>“Class-Balanced Loss Based on Effective Number of
+Samples.”</span> In <em>2019 <span>IEEE/CVF</span> Conference on
+Computer Vision and Pattern Recognition (<span>CVPR</span>)</em>,
+9268–77. Long Beach, CA, USA: IEEE.
+</div>
+<div id="ref-Efron1977-ww" class="csl-entry">
+Efron, Bradley. 1977. <span>“The Efficiency of Cox’s Likelihood Function
+for Censored Data.”</span> <em>J. Am. Stat. Assoc.</em> 72 (359):
+557–65.
+</div>
+<div id="ref-Gramacy2016-aa" class="csl-entry">
+Gramacy, Robert B. 2016. <span>“<span class="nocase">laGP</span>:
+Large-Scale Spatial Modeling via Local Approximate Gaussian Processes in
+<span>R</span>.”</span> <em>Journal of Statistical Software</em> 72 (1):
+1–46.
+</div>
+<div id="ref-Hastie2009-ed" class="csl-entry">
+Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. <em>The
+Elements of Statistical Learning: Data Mining, Inference, and
+Prediction</em>. Second Edition. Springer Series in Statistics. New
+York, NY, United States: Springer Science+Business Media, LLC.
+</div>
+<div id="ref-Hofner2015-tt" class="csl-entry">
+Hofner, Benjamin, Luigi Boccuto, and Markus Göker. 2015.
+<span>“Controlling False Discoveries in High-Dimensional Situations:
+Boosting with Stability Selection.”</span> <em>BMC Bioinformatics</em>
+16 (May): 144.
+</div>
+<div id="ref-Hothorn2010-cu" class="csl-entry">
+Hothorn, Torsten, Peter Bühlmann, Thomas Kneib, Matthias Schmid, and
+Benjamin Hofner. 2010. <span>“Model-Based Boosting 2.0.”</span> <em>J.
+Mach. Learn. Res.</em> 11 (Aug): 2109–13.
+</div>
+<div id="ref-Hutter2011-ea" class="csl-entry">
+Hutter, Frank, Holger H Hoos, and Kevin Leyton-Brown. 2011.
+<span>“Sequential <span>Model-Based</span> Optimization for General
+Algorithm Configuration.”</span> In <em>Learning and Intelligent
+Optimization</em>, edited by Carlos A Coello Coello, 6683:507–23.
+Lecture Notes in Computer Science. Berlin, Heidelberg: Springer Berlin
+Heidelberg.
+</div>
+<div id="ref-Ishwaran2008-hz" class="csl-entry">
+Ishwaran, Hemant, Udaya B Kogalur, Eugene H Blackstone, and Michael S
+Lauer. 2008. <span>“Random Survival Forests.”</span> <em>Ann. Appl.
+Stat.</em> 2 (3): 841–60.
+</div>
+<div id="ref-Ishwaran2011-gu" class="csl-entry">
+Ishwaran, Hemant, Udaya B Kogalur, Xi Chen, and Andy J Minn. 2011.
+<span>“Random Survival Forests for High-Dimensional Data.”</span>
+<em>Stat. Anal. Data Min.</em> 4 (1): 115–32.
+</div>
+<div id="ref-Jamieson2016-fq" class="csl-entry">
+Jamieson, Kevin, and Ameet Talwalkar. 2016. <span>“Non-Stochastic Best
+Arm Identification and Hyperparameter Optimization.”</span> In
+<em>Proceedings of the 19th International Conference on Artificial
+Intelligence and Statistics</em>, edited by Arthur Gretton and Christian
+C Robert, 51:240–48. Proceedings of Machine Learning Research. Cadiz,
+Spain: PMLR.
+</div>
+<div id="ref-Kaufmann2012-kh" class="csl-entry">
+Kaufmann, Emilie, Olivier Cappé, and Aurélien Garivier. 2012. <span>“On
+Bayesian Upper Confidence Bounds for Bandit Problems.”</span> In
+<em>Artificial Intelligence and Statistics</em>, 592–600.
+</div>
+<div id="ref-Lausen1992-qh" class="csl-entry">
+Lausen, Berthold, and Martin Schumacher. 1992. <span>“Maximally Selected
+Rank Statistics.”</span> <em>Biometrics</em> 48 (1): 73.
+</div>
+<div id="ref-Meyer2021-aq" class="csl-entry">
+Meyer, David, Evgenia Dimitriadou, Kurt Hornik, Andreas Weingessel, and
+Friedrich Leisch. 2021. <em>E1071: Misc Functions of the Department of
+Statistics, Probability Theory Group (Formerly: E1071), TU Wien</em>. <a href="https://CRAN.R-project.org/package=e1071">https://CRAN.R-project.org/package=e1071</a>.
+</div>
+<div id="ref-Nelder1972-rs" class="csl-entry">
+Nelder, J A, and R W M Wedderburn. 1972. <span>“Generalized Linear
+Models.”</span> <em>J. R. Stat. Soc. Ser. A</em> 135 (3): 370–84.
+</div>
+<div id="ref-Niculescu-Mizil2005-kj" class="csl-entry">
+Niculescu-Mizil, Alexandru, and Rich Caruana. 2005. <span>“Predicting
+Good Probabilities with Supervised Learning.”</span> In <em>Proceedings
+of the 22nd International Conference on Machine Learning</em>, 625–32.
+ACM.
+</div>
+<div id="ref-Oshiro2012-mq" class="csl-entry">
+Oshiro, Thais Mayumi, Pedro Santoro Perez, and José Augusto Baranauskas.
+2012. <span>“How Many Trees in a Random Forest?”</span> In <em>Machine
+Learning and Data Mining in Pattern Recognition</em>, 154–68. Springer
+Berlin Heidelberg.
+</div>
+<div id="ref-rcore2018" class="csl-entry">
+R Core Team. 2019. <em>R: A Language and Environment for Statistical
+Computing</em>. Vienna, Austria: R Foundation for Statistical Computing.
+<a href="https://www.R-project.org/">https://www.R-project.org/</a>.
+</div>
+<div id="ref-Schapire1990-vn" class="csl-entry">
+Schapire, Robert E. 1990. <span>“The Strength of Weak
+Learnability.”</span> <em>Mach. Learn.</em> 5 (2): 197–227.
+</div>
+<div id="ref-Schmid2016-ie" class="csl-entry">
+Schmid, Matthias, Marvin N Wright, and Andreas Ziegler. 2016. <span>“On
+the Use of Harrell’s <span>C</span> for Clinical Risk Prediction via
+Random Survival Forests.”</span> <em>Expert Syst. Appl.</em> 63
+(November): 450–59.
+</div>
+<div id="ref-Shahriari2016-kx" class="csl-entry">
+Shahriari, B, K Swersky, Z Wang, R P Adams, and N de Freitas. 2016.
+<span>“Taking the Human Out of the Loop: A Review of Bayesian
+Optimization.”</span> <em>Proc. IEEE</em> 104 (1): 148–75.
+</div>
+<div id="ref-Simon2011-ih" class="csl-entry">
+Simon, Noah, Jerome Friedman, Trevor Hastie, and Rob Tibshirani. 2011.
+<span>“Regularization Paths for Cox’s Proportional Hazards Model via
+Coordinate Descent.”</span> <em>J. Stat. Softw.</em> 39 (5): 1–13.
+</div>
+<div id="ref-Sparapani2021-aa" class="csl-entry">
+Sparapani, Rodney, Charles Spanbauer, and Robert McCulloch. 2021.
+<span>“Nonparametric Machine Learning and Efficient Computation with
+<span>B</span>ayesian Additive Regression Trees: The <span>BART</span>
+<span>R</span> Package.”</span> <em>Journal of Statistical Software</em>
+97 (1): 1–66.
+</div>
+<div id="ref-Srinivas2012-hq" class="csl-entry">
+Srinivas, N, A Krause, S M Kakade, and M W Seeger. 2012.
+<span>“<span>Information-Theoretic</span> Regret Bounds for Gaussian
+Process Optimization in the Bandit Setting.”</span> <em>IEEE Trans. Inf.
+Theory</em> 58 (5): 3250–65.
+</div>
+<div id="ref-Therneau2000-jv" class="csl-entry">
+Therneau, Terry M, and Patricia M Grambsch. 2000. <em>Modeling Survival
+Data: Extending the Cox Model</em>. Statistics for Biology and Health.
+New York: Springer Science &amp; Business Media.
+</div>
+<div id="ref-Venables2002-ma" class="csl-entry">
+Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics
+with s</em>. Fourth. New York: Springer. <a href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
+</div>
+<div id="ref-Wright2017-sj" class="csl-entry">
+Wright, Marvin N, Theresa Dankowski, and Andreas Ziegler. 2017.
+<span>“Unbiased Split Variable Selection for Random Survival Forests
+Using Maximally Selected Rank Statistics.”</span> <em>Stat. Med.</em> 36
+(8): 1272–84.
+</div>
+<div id="ref-Wright2017-wc" class="csl-entry">
+Wright, Marvin N, and Andreas Ziegler. 2017. <span>“Ranger : A Fast
+Implementation of Random Forests for High Dimensional Data in c++ and
+<span>R</span>.”</span> <em>J. Stat. Softw.</em> 77 (1).
+</div>
+<div id="ref-Yee1996-ql" class="csl-entry">
+Yee, T W, and C J Wild. 1996. <span>“Vector Generalized Additive
+Models.”</span> <em>J. R. Stat. Soc. Series B Stat. Methodol.</em> 58
+(3): 481–93.
+</div>
+<div id="ref-Yee2010-rg" class="csl-entry">
+Yee, Thomas. 2010. <span>“The <span>VGAM</span> Package for Categorical
+Data Analysis.”</span> <em>Journal of Statistical Software</em> 32 (10):
+1–34.
+</div>
+<div id="ref-Yee2015-bw" class="csl-entry">
+Yee, Thomas W. 2015. <em>Vector Generalized Linear and Additive Models:
+With an Implementation in <span>R</span></em>. Springer.
+</div>
+</div>
+</div>
+
+<div class="footer">
+<br>
+<a rel="license" href="https://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons Licence" style="border-width:0" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAAfCAMAAABUFvrSAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAEZ0FNQQAAsY58+1GTAAAAAXNSR0IB2cksfwAAAW5QTFRF////////////////7+/v39/f1tXV09bS0tXS0tXR0dTR0dTQ0NTQ0NPPz9PPztLOztHNzdHNzdHMz8/PzdDMzNDMzNDLzM/Ly8/Ly8/Ky87Kys3Jyc3Jyc3IyMzIyMzHx8vHxsrGxsrFxcnFxcnExMnExMjDw8jDxMfDw8fCwsfCwcXAwMXAwMW/wMS/v8S+v8O+vsO+vsK9vcK9vcK8v7+/vMG8vMG7vMC8u8C7u8C6ur+6ur+5ub65ub64uL23t7y2tru1tbq0tLqztLmzs7iysrixsrexsbewsbawsLavsLWvr7Wur7SusLOvrrStrrOtr7KvrbOsrLKrr6+vq7Gqn6OenqCdn5+flpmWk5iTkZSRkZORj4+PiYyJhIaEhIWEgoWCgICAfX98fH98eXx5cHJvcHBwYGBgXV5dUFFQUFBQQ0RDQEBAPj8+NTY1MjMxMDAwKSkpKCkoICAgGxsbEBAQDg4ODQ4NAAAAlzoSDQAAAAN0Uk5TAAoO5yEBUwAAAvhJREFUeNq1lutX2kAQxWmXFDVGYy1EIjQ2VZDiu1CsRQQURYvV+qSKj6II8rANYOT+9z0JqIASo9Y5ydkP2f2d2Ts7d2N4jRcJgwEIBwO+SbdTFGw8ZzZz1n5BdLgnfLPBcCT6fW1jY3P78QEYEA76PWMu0W5lGbrNZGrrYNg+u+ga9fgVcmxtY/NJZAOCfs+IY4Bn6eN8RdlEJX9Ed1uFIfdnfzC8uBJbv5tyqqhMLKa0wQHPiEOwMInLW4Eu9xmzfdDtmQ0uLK3cSXmvBBTS6QJQ2tMC+8YcgpnOApAzSa83mZEBZIff2odGfYFQJNqc8s4VchQhhFA5XO1pgCddAxaFKyeNpBpxGSgNmwXXxMxcWE25fkkJGUIIoExESQPsFnkmC0gUuQmjBGQZq+j2BEKR5dUGLVLIvbkGkxxSrcHO92wCkIyENJL3u+2O8Zng/FJsvR5cRF0GFIqtwaKVvoTcSxrCKOOS7hPdXwLhxUYtUFC+Z6AKQgpoDRZ6joEkaYo4cMQKril/KLLcCE4TVYmqFmkNsK0rD9lIiDdXKCSrwwEhREae6Ve0WIiuPg3M0xVlW171BBe21CGjbLbSYR0c/To3H409TQquHTggREKZ8pbjEiRqqxxXtWjjRLdvLrzUAK4Vr5qwZvEsJsCrzExWF9Tk9gIm84e74BRyRN9xeyS4vkHSmg1yK4Wxt5yUIClDayn0t3SteLWq3RQvjQrN31O87e2dEiBl0tJDJmTrykImN8dtq6AOpIw8Y3OMf2s+bvptU+hJqFrc1yCfpmZDkWYX0mv0H9WWpvS2tH6w8z27e58JJVi7c2ImuNBkQvrBOOWZc0CqsyFKtU3+97OuaQBnXGe90RuTMvCHtpziuWCcmDvPm64m+t2vlmuq/YHqqwnGCcfs1l+mCcbSmgtSe8iDGQNnPEsnrq//fZrltXS4tk3oAOPvT2tPF91uMrXTDNv340JrjQ4hbsHAxeE0z1ksHD99eKFdl0dl/P//Cl+9EPcfS+yBAoqk3eUAAAAASUVORK5CYII=" /></a>
+This work is licensed under a <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
+Cite as: Alex Zwanenburg. familiar: Vignettes and Documentation (2021). <a href="https://github.com/alexzwanenburg/familiar">https://github.com/alexzwanenburg/familiar</a>
+</div>
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

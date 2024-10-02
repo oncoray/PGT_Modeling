@@ -1,0 +1,38 @@
+isolation.forest        Create Isolation Forest Model
+isotree.add.tree        Add additional (single) tree to isolation
+                        forest model
+isotree.append.trees    Append isolation trees from one model into
+                        another
+isotree.build.indexer   Build Indexer for Faster Terminal Node
+                        Predictions and/or Distance Calculations
+isotree.deep.copy       Deep-Copy an Isolation Forest Model Object
+isotree.drop.imputer    Drop Imputer Sub-Object from Isolation Forest
+                        Model Object
+isotree.drop.indexer    Drop Indexer Sub-Object from Isolation Forest
+                        Model Object
+isotree.drop.reference.points
+                        Drop Reference Points from Isolation Forest
+                        Model Object
+isotree.export.model    Export Isolation Forest model
+isotree.get.num.nodes   Get Number of Nodes per Tree
+isotree.import.model    Load an Isolation Forest model exported from
+                        Python
+isotree.restore.handle
+                        Unpack isolation forest model after
+                        de-serializing
+isotree.set.nthreads    Set Number of Threads for Isolation Forest
+                        Model Object
+isotree.set.reference.points
+                        Set Reference Points to Calculate Distances or
+                        Kernels With
+isotree.subset.trees    Subset trees of a given model
+isotree.to.sql          Generate SQL statements from Isolation Forest
+                        model
+predict.isolation_forest
+                        Predict method for Isolation Forest
+print.isolation_forest
+                        Print summary information from Isolation Forest
+                        model
+summary.isolation_forest
+                        Print summary information from Isolation Forest
+                        model

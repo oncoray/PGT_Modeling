@@ -1,0 +1,637 @@
+import json
+import shutil
+import os
+from itertools import product
+
+from pmma.config_file_manipulator import substitute_labels, save_config, yaml_to_json_string
+
+configfile: "config.yaml"
+
+# Substitute labels and save configuration file
+config = substitute_labels('config.yaml')
+
+save_config(config, os.path.join(config['paths']['experiment_dir'], "config.yaml"))
+
+# get cohort mapping dict in json format, so it can be transferred via shell command
+cohort_mapping_dict = yaml_to_json_string(str(config["experiment"]["cohort_mapping"]))
+feature_clustering_args = yaml_to_json_string(str(config["experiment"]["conventional_machine_learning"]["args"]["feature_clustering"]))
+feature_selection_args = yaml_to_json_string(str(config["experiment"]["conventional_machine_learning"]["args"]["feature_selection"]))
+feature_filtering_args = yaml_to_json_string(str(config["experiment"]["conventional_machine_learning"]["args"]["feature_filtering"]))
+
+# Fetch cML setup from config
+FEATURE_TYPES = config['experiment']['conventional_machine_learning']['features']
+FEATURE_SELECTION_METHODS = config['experiment']['conventional_machine_learning']['feature_selection_methods']
+MODEL_LEARNERS = config['experiment']['conventional_machine_learning']['model_learners']
+
+FEATURE_TYPE_MODELLING = []
+
+if config["experiment"]["conventional_machine_learning"]["analyze_individual_features"] == "True":
+    FEATURE_TYPE_MODELLING.extend(FEATURE_TYPES)
+
+if config["experiment"]["conventional_machine_learning"]["analyze_feature_combination"] == "True":
+    FEATURE_TYPE_MODELLING.append("combined")
+
+
+if config["experiment"]["conventional_machine_learning"]["perform_feature_filtering"] == "True":
+    features_to_analyze_path = "filtered/{feature_type}_features_normalized_filtered.csv"
+else:
+    features_to_analyze_path = "normalized/{feature_type}_features_normalized.csv"
+
+# This rule defines the final target of the pipeline        
+rule all:
+    input:
+ #       expand(config["paths"]["output_files"]["figures"] + "feature_selection_summary/heatmap_{ftype}.png", ftype=FEATURE_TYPE_MODELLING),
+ #       expand(config["paths"]["output_files"]["figures"] + "feature_selection_summary/heatmap_{fsm}.png", fsm=FEATURE_SELECTION_METHODS),
+ #       expand(config["paths"]["output_files"]["figures"] + "feature_selection_summary/heatmap_{ml}.png", ml=MODEL_LEARNERS),
+        "config.yaml",
+        config["paths"]["conventional_machine_learning"]["summary_path"] + "/final_result.csv",
+        config["paths"]["conventional_machine_learning"]["summary_path"] + "/final_result.txt",
+        config["paths"]["conventional_machine_learning"]["summary_path"] + "/final_result.png" 
+
+rule create_config_report:
+    output:
+        report("config.yaml",
+               category="Configuration",
+               labels={"File": "Config-file",
+                       "Type": "yaml"})
+    shell:
+        """
+        # Your command to process the config.yaml if necessary
+        """
+
+# Rule for creating a data path table
+rule create_data_path_table:
+    output:
+        output_file = report(config['paths']['output_files']['data_path_table'], category = "Data table")
+    params:
+        script = config['paths']['scripts']['create_data_path_table'],
+        root_dir = config['paths']['data']['converted_dir'],
+        measurement_dict = json.dumps(config['dataset']['measurement_dict']),
+        spots_exclude_static = config['dataset']['spots_to_exclude_static'],
+        spots_include_scanned = config['dataset']['spots_to_include_scanned'],
+        figures_path = config['paths']['output_files']['figures'],
+        plot_figures = config['experiment']['plot_figures'],
+        energy_bin = config['dataset']['energy_bin'],
+        cohort_mapping_dict = json.dumps(cohort_mapping_dict)
+    log:
+        config['paths']['logs_dir'] + '/data_table_creation/create_data_path_table.log'  # Log file for this rule  
+    shell:
+        """
+        python {params.script} \
+        --root_dir {params.root_dir} \
+        --output_file {output} \
+        --measurement_dict '{params.measurement_dict}' \
+        --spots_to_exclude_static {params.spots_exclude_static} \
+        --spots_to_include_scanned {params.spots_include_scanned} \
+        --figures_path {params.figures_path} \
+        --plot_figures {params.plot_figures} \
+        --energy_bin {params.energy_bin} \
+        --cohort_mapping_dict {params.cohort_mapping_dict} > {log} 2>&1 
+        """
+
+def get_spectrum_type(feature_type):
+    if feature_type == "time":
+        return "1D"
+    elif feature_type == "energy-time":
+        return "1D_energy-time"
+    elif feature_type == "radiomics" or feature_type == "energy":
+        return "2D"
+
+# Rule for calculating features
+rule cML_calculate_features:
+    input:
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        output_file_path = report(config['paths']['output_files']['features'] + "original/{feature_type}_features.csv",
+                                    category = "Features",
+                                    subcategory = "Original",
+                                    labels = {"Feature type": "{feature_type}"})
+    threads: 1
+    params:
+        script = config['paths']['scripts']['calculate_features'],
+        data_dir = config['paths']['data']['preprocessed_dir'],
+        rois = config['experiment']['conventional_machine_learning'].get('rois'),
+        mirp_path = config['paths'].get('mirp_path'),
+        energy_bin = config['dataset']['energy_bin'],
+        figures_path = config['paths']['output_files']['figures'],
+        plot_figures = config['experiment']['plot_figures']
+    log:
+        config['paths']['logs_dir'] + '/feature_calculation/calculate_{feature_type}_features.log'  # Log file for this rule
+    shell:
+        """
+        python {params.script} \
+        --data_dir {params.data_dir} \
+        --rois {params.rois} \
+        --mirp_path {params.mirp_path} \
+        --energy_bin {params.energy_bin} \
+        --output_file_path {output.output_file_path} \
+        --feature_type {wildcards.feature_type} \
+        --figures_path {params.figures_path} \
+        --data_table_path {input.data_table_path} \
+        --plot_figures {params.plot_figures} > {log} 2>&1
+        """
+        
+rule cML_feature_combination:
+    input:
+        feature_file_paths = expand(config['paths']['output_files']['features'] + "original/{feature_type}_features.csv", feature_type=FEATURE_TYPES)
+    output:
+        output_file_path = report(config['paths']['output_files']['features'] + "original/combined_features.csv",
+                                    category = "Features",
+                                    subcategory = "Original",
+                                    labels = {"Feature type": "combined"})
+    params:
+        script = config['paths']['scripts']['feature_combination']
+    log:
+        config['paths']['logs_dir'] + '/cML_feature_combination/feature_combination.log'  # Log file for this rule
+    shell:
+        """
+        python {params.script} \
+        --feature_file_paths {input.feature_file_paths} \
+        --combined_feature_file_path {output.output_file_path} > {log} 2>&1
+        """
+
+rule cML_feature_normalization:
+    input:
+        feature_file_path = config['paths']['output_files']['features'] + "original/{feature_type}_features.csv",
+        data_table_path = config['paths']['output_files']['data_path_table']
+
+    output:
+        output_file_path = report(config['paths']['output_files']['features'] + "normalized/{feature_type}_features_normalized.csv",
+                                    category = "Features",
+                                    subcategory = "Normalized",
+                                    labels = {"Feature type": "{feature_type}"})
+    params:
+        script = config['paths']['scripts']['feature_normalization']
+    log:
+        config['paths']['logs_dir'] + '/cML_feature_normalization/{feature_type}_feature_normalization.log'
+    shell:
+        """
+        python {params.script} \
+        --data_table_path {input.data_table_path} \
+        --feature_file_path {input.feature_file_path} \
+        --normalized_feature_file_path {output.output_file_path} > {log} 2>&1
+        """
+
+rule feature_filtering:
+    input:
+        feature_file_path = config['paths']['output_files']['features'] + "normalized/{feature_type}_features_normalized.csv",
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        output_file_path = report(config['paths']['output_files']['features'] + "filtered/{feature_type}_features_normalized_filtered.csv",
+                                    category = "Features",
+                                    subcategory = "Normalized+filtered",
+                                    labels = {"Feature type": "{feature_type}"}),
+        summary_file = report(
+                        config['paths']['conventional_machine_learning']['feature_filtering_path'] + "/feature_filtering_summary_{feature_type}.json", 
+                        category = "Feature filtering", 
+                        subcategory = "Summary",
+                        labels={
+                        "Feature type": "{feature_type}",
+                        "File type": "json"
+                        }),
+        filter_info = report(
+                        config['paths']['conventional_machine_learning']['feature_filtering_path'] + "/filter_pvalues_{feature_type}_features.csv",
+                        category = "Feature clustering",
+                        subcategory = "Filter info",
+                        labels = {"Feature_type": "{feature_type}",
+                        "File type": "csv"
+                        })
+    params:
+        script = config['paths']['scripts']['feature_filtering'],
+        filtering_args = json.dumps(feature_filtering_args)
+    log:
+        config['paths']['logs_dir'] + '/cML_feature_filtering/{feature_type}_feature_filtering.log'
+    shell:
+        """
+        python {params.script} \
+        --data_table_path {input.data_table_path} \
+        --feature_file_path {input.feature_file_path} \
+        --filter_info_file_path {output.filter_info} \
+        --filtered_feature_file_path {output.output_file_path} \
+        --filtering_args {params.filtering_args} \
+        --metadata_file_path {output.summary_file} > {log} 2>&1
+        """
+                    
+        
+rule cML_feature_clustering:
+    input:
+        feature_file_paths = [config['paths']['output_files']['features'] + features_to_analyze_path],
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        cluster_info = report(
+                        config['paths']['conventional_machine_learning']['feature_clustering_path'] + "/cluster_info_{feature_type}_features.csv",
+                        category = "Feature clustering",
+                        subcategory = "Cluster info",
+                        labels = {"Feature_type": "{feature_type}",
+                        "File type": "csv"
+                        }),
+        summary_file = report(
+                        config['paths']['conventional_machine_learning']['feature_clustering_path'] + "/feature_clustering_summary_{feature_type}.json", 
+                        category = "Feature clustering", 
+                        subcategory = "Summary",
+                        labels={
+                        "Feature type": "{feature_type}",
+                        "File type": "json"
+                        }) 
+    params:
+        script = config['paths']['scripts']['feature_clustering'],
+        clustering_args = json.dumps(feature_clustering_args)
+    log:
+        config['paths']['logs_dir'] + '/cML_feature_clustering/{feature_type}.log'  # Log file for this rule 
+    shell:
+        """
+        python {params.script} \
+        --data_table_path {input.data_table_path} \
+        --feature_file_paths {input.feature_file_paths} \
+        --cluster_info_file_path {output.cluster_info} \
+        --clustering_args {params.clustering_args} \
+        --metadata_file_path {output.summary_file} > {log} 2>&1
+        """
+        
+rule cML_feature_ranking:
+    input:
+        clustering_metadata_file = config['paths']['conventional_machine_learning']['feature_clustering_path'] + "/feature_clustering_summary_{feature_type}.json",
+        feature_file_path = config['paths']['output_files']['features'] + features_to_analyze_path,
+        data_table_path = config['paths']['output_files']['data_path_table']
+                
+    output:
+        feature_ranking_file_path = report(
+                        config['paths']['conventional_machine_learning']['feature_ranking_path'] + "/ranking_files/feature_ranking_{feature_selection_method}_{feature_type}.csv",
+                        category = "Feature ranking",
+                        subcategory = "Ranking files",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "File type": "csv"
+                        }), 
+        feature_importance_plot_path = report(
+                        config["paths"]["output_files"]["figures"] + "feature_ranking/{feature_type}/ranking_plot_{feature_selection_method}_{feature_type}.png",
+                        category = "Feature ranking",
+                        subcategory = "Ranking plots",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "File type": "png"
+                        }) 
+    params:
+        script = config['paths']['scripts']['feature_ranking'],
+        feature_selection_method = "{feature_selection_method}",
+        feature_type = "{feature_type}",
+        feature_ranking_path = config['paths']['conventional_machine_learning']['feature_ranking_path']
+    threads: 1
+    log:
+        config['paths']['logs_dir'] + '/cML_feature_ranking/{feature_selection_method}_{feature_type}.log'  # Log file for this rule 
+    shell:
+        """   
+        python {params.script} \
+        --data_table_path {input.data_table_path} \
+        --feature_clustering_metadata_file_path {input.clustering_metadata_file} \
+        --feature_ranking_file_path {output.feature_ranking_file_path} \
+        --feature_file_path {input.feature_file_path} \
+        --feature_selection_method {wildcards.feature_selection_method} \
+        --feature_ranking_path {params.feature_ranking_path} \
+        --feature_importance_plot_path {output.feature_importance_plot_path} \
+        --feature_type {params.feature_type} > {log} 2>&1
+        """
+
+
+rule cML_feature_selection:
+    input:
+        feature_ranking_file_path = config['paths']['conventional_machine_learning']['feature_ranking_path'] + "/ranking_files/feature_ranking_{feature_selection_method}_{feature_type}.csv",
+        feature_file_path = config['paths']['output_files']['features'] + features_to_analyze_path,
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        feature_selection_file_path = report(
+                        config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/result/{feature_type}/{feature_selection_method}/summary_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.json",
+                        category = "Feature selection",
+                        subcategory = "Results",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "Model learner": "{model_learner}",
+                        "File type": "json"
+                        }),
+        feature_selection_plot_path = report(
+                        config["paths"]["output_files"]["figures"] + "feature_selection/{feature_type}/{feature_selection_method}/selection_plot_{feature_selection_method}_{feature_type}_{model_learner}.png",
+                        category = "Feature selection",
+                        subcategory = "Forward selection plots",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "Model learner": "{model_learner}",
+                        "File type": "png"
+                        }), 
+        signature_plot_path = report(
+                        config["paths"]["output_files"]["figures"] + "feature_selection/{feature_type}/{feature_selection_method}/signature_plot_{feature_selection_method}_{feature_type}_{model_learner}.png",
+                        category = "Feature selection",
+                        subcategory = "Signature boxplots",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "Model learner": "{model_learner}",
+                        "File type": "png"
+                        }),
+        vif_bar_plot_path = report(
+                        config["paths"]["output_files"]["figures"] + "feature_selection/{feature_type}/{feature_selection_method}/vif_bar_plot_{feature_selection_method}_{feature_type}_{model_learner}.png",
+                        category = "Feature selection",
+                        subcategory = "VIF barplots",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "Model learner": "{model_learner}",
+                        "File type": "png"
+                        }),
+        predictions_file_path = config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv", 
+        signature_file_path = config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/signatures/signature_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv"      
+    params:
+        script = config['paths']['scripts']['feature_selection'],  
+        model_learner = "{model_learner}",
+        feature_type = "{feature_type}",
+        selection_args = json.dumps(feature_selection_args),
+        feature_selection_path = config['paths']['conventional_machine_learning']['feature_selection_path']
+    threads: 1
+    log:
+        config['paths']['logs_dir'] + '/cML_feature_selection/{feature_selection_method}_{feature_type}_{model_learner}.log'  # Log file for this rule
+    shell:
+        """
+        python {params.script} \
+        --data_table_path {input.data_table_path} \
+        --feature_ranking_file_path {input.feature_ranking_file_path} \
+        --feature_file_path {input.feature_file_path} \
+        --feature_selection_method {wildcards.feature_selection_method} \
+        --feature_selection_path {params.feature_selection_path} \
+        --model_learner {params.model_learner} \
+        --feature_type {params.feature_type} \
+        --feature_selection_file_path {output.feature_selection_file_path} \
+        --signature_plot_path {output.signature_plot_path} \
+        --vif_bar_plot_path {output.vif_bar_plot_path} \
+        --selection_args {params.selection_args} \
+        --predictions_file_path {output.predictions_file_path} \
+        --signature_file_path {output.signature_file_path} \
+        --feature_selection_plot_path {output.feature_selection_plot_path} > {log} 2>&1 
+        """
+
+        
+def get_feature_selection_summary_inputs(holding_instance, main_dir, feature_types, feature_selection_methods, model_learners):
+    input_paths = []
+    if holding_instance in feature_types:
+        for fsm in feature_selection_methods:
+            for ml in model_learners:
+                path = os.path.join(main_dir, "result", holding_instance, fsm , f"summary_ft_{holding_instance}_fsm_{fsm}_ml_{ml}.json")
+                input_paths.append(path)
+    elif holding_instance in feature_selection_methods:
+        for ft in feature_types:
+            for ml in model_learners:
+                path = os.path.join(main_dir, "result", ft, holding_instance, f"summary_ft_{ft}_fsm_{holding_instance}_ml_{ml}.json")
+                input_paths.append(path)
+    elif holding_instance in model_learners:
+        for ft in feature_types:
+            for fsm in feature_selection_methods:
+                path = os.path.join(main_dir, "result",  ft, fsm, f"summary_ft_{ft}_fsm_{fsm}_ml_{holding_instance}.json")
+                input_paths.append(path)
+    else:
+        raise ValueError("Invalid holding instance provided.")
+    
+    return input_paths
+
+rule cML_feature_selection_summary:
+    input:
+        feature_selection_file_paths = lambda wildcards: get_feature_selection_summary_inputs(wildcards.holding_instance, config["paths"]["conventional_machine_learning"]["feature_selection_path"], FEATURE_TYPE_MODELLING, FEATURE_SELECTION_METHODS, MODEL_LEARNERS)
+    output:
+        heatmap_plot_path = report(
+                            config["paths"]["output_files"]["figures"] + "feature_selection_summary/heatmap_{holding_instance}.png",
+                            category = "Feature selection",
+                            subcategory = "Heatmap plots",
+                            labels={
+                            "Holding instance": "{holding_instance}",
+                            "File type": "png"
+                            }) 
+    params:
+        script = config["paths"]["scripts"]["feature_selection_summary"],
+        holding_instance = "{holding_instance}"     
+    threads: 1
+    log:
+        config['paths']['logs_dir'] + '/cML_feature_selection_summary/{holding_instance}.log'
+    shell:
+        """
+        python {params.script} \
+        --holding_instance {params.holding_instance} \
+        --heatmap_plot_path {output.heatmap_plot_path} \
+        --feature_selection_file_paths {input.feature_selection_file_paths}  > {log} 2>&1
+        """
+    
+rule cML_cross_val_summary:
+    input:
+        individual_prediction_files = expand(config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
+            feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),
+        signature_file_paths = expand(config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/signatures/signature_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",    
+            feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        summary_performance_file_path = report(
+                            config["paths"]["conventional_machine_learning"]["summary_path"] + "/performance/cross_val_performance_summary.csv",
+                            category="cML Summary",
+                            subcategory="Performance",
+                            labels = {
+                            "Step": "Cross validation",
+                            "File type": "csv"}
+                            ),
+        summary_predictions_file_path = report(
+                            config["paths"]["conventional_machine_learning"]["summary_path"] + "/predictions/cross_val_predictions_summary.csv",
+                            category="cML Summary",
+                            subcategory="Predictions",
+                            labels = {
+                            "Step": "Cross validation",
+                            "File type": "csv"}
+                            ),
+        heatmap_plot_dir_path = report(
+                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/cross_val_performance_heatmaps"),
+                                patterns = ["heatmap_{spot_type}_{proton_energy}.png"],
+                                category = "cML Summary",
+                                subcategory = "Heatmap plots",
+                                labels={
+                                "Step": "Cross validation",
+                                "Spot type": "{spot_type}",
+                                "Proton energy": "{proton_energy}",
+                                "File type": "png"
+                                }) 
+    log:
+        config['paths']['logs_dir'] + '/cML_summary/cML_cross_val_summary.log'
+    params:
+        script = config['paths']['scripts']['cML_summary']       
+    shell:
+        """
+        python {params.script} \
+        --individual_prediction_files {input.individual_prediction_files} \
+        --data_table_path {input.data_table_path} \
+        --signature_file_paths {input.signature_file_paths} \
+        --heatmap_plot_dir_path {output.heatmap_plot_dir_path} \
+        --summary_predictions_file_path {output.summary_predictions_file_path} \
+        --summary_performance_file_path {output.summary_performance_file_path} > {log} 2>&1
+        """
+
+         
+rule cML_external_validation:
+    input:
+        feature_selection_file_path = config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/result/{feature_type}/{feature_selection_method}/summary_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.json",
+        feature_file_path = config['paths']['output_files']['features'] + features_to_analyze_path,
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        predictions_file_path = report(
+                            config["paths"]["conventional_machine_learning"]["external_validation_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
+                            category="External validation",
+                            subcategory="Predictions",
+                            labels = {
+                            "Feature selection method": "{feature_selection_method}", 
+                            "Feature type": "{feature_type}",
+                            "Model learner": "{model_learner}",
+                            "File type": "csv"}
+                            ),
+        performance_file_path = report(
+                        config["paths"]["conventional_machine_learning"]["external_validation_path"] + "/performance/{feature_type}/{feature_selection_method}/performance_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.json",
+                        category = "External validation",
+                        subcategory = "Performance",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "Model learner": "{model_learner}",
+                        "File type": "json"
+                        }),
+        prediction_plot_path = report(
+                        config["paths"]["output_files"]["figures"] + "external_validation/prediction_plots/{feature_type}/{feature_selection_method}/prediction_plot_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.png",
+                        category = "External validation",
+                        subcategory = "Prediction Plots",
+                        labels={
+                        "Feature selection method": "{feature_selection_method}", 
+                        "Feature type": "{feature_type}",
+                        "Model learner": "{model_learner}",
+                        "File type": "png"
+                        })
+    log:
+        config['paths']['logs_dir'] + '/cML_external_validation/{feature_selection_method}_{model_learner}_{feature_type}.log'
+    params:
+        script = config['paths']['scripts']['external_validation'],
+        external_validation_path = config["paths"]["conventional_machine_learning"]["external_validation_path"]
+        
+    shell:
+        """
+        python {params.script} \
+        --feature_selection_file_path {input.feature_selection_file_path} \
+        --feature_file_path {input.feature_file_path} \
+        --data_table_path {input.data_table_path} \
+        --predictions_file_path {output.predictions_file_path} \
+        --external_validation_path {params.external_validation_path} \
+        --prediction_plot_path {output.prediction_plot_path} \
+        --performance_file_path {output.performance_file_path} > {log} 2>&1
+        """
+        
+rule cML_ex_val_summary:
+    input:
+        individual_prediction_files = expand(config["paths"]["conventional_machine_learning"]["external_validation_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
+            feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),
+        signature_file_paths = expand(config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/signatures/signature_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",    
+            feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),         
+        data_table_path = config['paths']['output_files']['data_path_table']
+    output:
+        summary_performance_file_path = report(
+                            config["paths"]["conventional_machine_learning"]["summary_path"] + "/performance/ex_val_performance_summary.csv",
+                            category="cML Summary",
+                            subcategory="Performance",
+                            labels = {
+                            "Step": "External validation",
+                            "File type": "csv"}
+                            ),
+        summary_predictions_file_path = report(
+                            config["paths"]["conventional_machine_learning"]["summary_path"] + "/predictions/ex_val_predictions_summary.csv",
+                            category="cML Summary",
+                            subcategory="Predictions",
+                            labels = {
+                            "Step": "External validation",
+                            "File type": "csv"}
+                            ),
+        heatmap_plot_dir_path = report(
+                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/ex_val_performance_heatmaps"),
+                                patterns = ["heatmap_{spot_type}_{proton_energy}.png"],
+                                category = "cML Summary",
+                                subcategory = "Heatmap plots",
+                                labels={
+                                "Step": "External validation",
+                                "Spot type": "{spot_type}",
+                                "Proton energy": "{proton_energy}",
+                                "File type": "png"
+                                }) 
+    log:
+        config['paths']['logs_dir'] + '/cML_summary/cML_ex_val_summary.log'
+    params:
+        script = config['paths']['scripts']['cML_summary']       
+    shell:
+        """
+        python {params.script} \
+        --individual_prediction_files {input.individual_prediction_files} \
+        --data_table_path {input.data_table_path} \
+        --signature_file_paths {input.signature_file_paths} \
+        --heatmap_plot_dir_path {output.heatmap_plot_dir_path} \
+        --summary_predictions_file_path {output.summary_predictions_file_path} \
+        --summary_performance_file_path {output.summary_performance_file_path} > {log} 2>&1
+        """
+              
+  
+rule cML_final_result:
+    input:
+        ex_val_performance_file_path = config["paths"]["conventional_machine_learning"]["summary_path"] + "/performance/ex_val_performance_summary.csv",
+        cross_val_performance_file_path = config["paths"]["conventional_machine_learning"]["summary_path"] + "/performance/cross_val_performance_summary.csv"
+    output:
+        final_result_csv = report(
+                            config["paths"]["conventional_machine_learning"]["summary_path"] + "/final_result.csv",
+                            category = "cML Summary",
+                            subcategory = "Final result",
+                            labels={
+                            "File type": "csv"
+                            }),
+        final_result_txt = report(
+                            config["paths"]["conventional_machine_learning"]["summary_path"] + "/final_result.txt",
+                            category = "cML Summary",
+                            subcategory = "Final result",
+                            labels={
+                            "File type": "txt"
+                            }),
+        final_result_png = report(
+                            config["paths"]["conventional_machine_learning"]["summary_path"] + "/final_result.png", 
+                            category = "cML Summary",
+                            subcategory = "Final result",
+                            labels={
+                            "File type": "png"
+                            })
+    log:
+        config['paths']['logs_dir'] + '/cML_summary/cML_final_result.log'
+    params:
+        script = config['paths']['scripts']['cML_final_result']
+    shell:
+        """
+        python {params.script} \
+        --ex_val_performance_file_path {input.ex_val_performance_file_path} \
+        --cross_val_performance_file_path {input.cross_val_performance_file_path} \
+        --final_result_csv {output.final_result_csv} \
+        --final_result_txt {output.final_result_txt} \
+        --final_result_png {output.final_result_png} > {log} 2>&1
+        """
+              
+rule execute_conventional_machine_learning:
+    input:
+        feature_selection_file_path = config["paths"]["conventional_machine_learning"]["feature_selection_path"] + "/result/{feature_type}/{feature_selection_method}/summary_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.json"
+    output:
+        dummy_file=config['paths']['output_files']['completion_files_dir'] + "/cML_fsm_{feature_selection_method}_ml_{model_learner}_ft_{feature_type}_completed.txt" # assuming 'path' is the correct argument name for specifying the file to include in the report
+    params:
+        feature_selection_method="{feature_selection_method}",
+        model_learner="{model_learner}",
+        feature_type_modelling = "{feature_type}"
+    log:
+        config['paths']['logs_dir'] + '/cML_{feature_selection_method}_{model_learner}_{feature_type}.log'  # Log file for this rule
+    shell:
+        """
+        # Your machine learning script or command that uses the feature selection method and model learner
+        # For example, you might have a Python script that is called here
+        # After the machine learning is executed, create a dummy file to indicate completion
+        touch {output.dummy_file} > {log} 2>&1
+        """
+

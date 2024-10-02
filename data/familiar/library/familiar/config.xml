@@ -1,0 +1,235 @@
+<config_list>
+  <config>
+    <paths>
+      <!-- Path to project directory -->
+      <project_dir></project_dir>
+      <!-- Path to experiment subdirectory -->
+      <experiment_dir></experiment_dir>
+      <!-- Path to files with data-->
+      <data_file></data_file>
+    </paths>
+    <data>
+      <!-- String for experimental design, e.g. cv(bt(fs+mb,10),3,2) for internal validation using 2x 3-fold cross-validation with 10x bootstrapped
+      feature selection and model building (required). Alternatively, a path relative to experiment_dir to a file containing iterations, or an absolute path
+      to a file containing iterations.-->
+      <experimental_design>required</experimental_design>
+      <!-- String for the method used to correct class imbalances for categorical (binomial, multinomial) outcomes (optional, default: full_undersampling; otherwise random_undersampling)-->
+      <imbalance_correction_method></imbalance_correction_method>
+      <!-- Number of partitions with random sampling (optional, default:10; only used when random_sample is selected as class imbalance correction method)-->
+      <imbalance_n_partitions></imbalance_n_partitions>
+       <!-- Name of data column with cohort identifiers (required for external validation experiments, otherwise optional) -->
+      <batch_id_column></batch_id_column>
+      <!-- Name of data column with sample identifiers (required for separate data and outcome files, otherwise optional) -->
+      <sample_id_column>required</sample_id_column>
+      <!-- Name of data column with series identifiers that identify separate measurements for a sample (optional) -->
+      <series_id_column></series_id_column>
+      <!-- Development cohort (required for external validation, otherwise optional) - note
+      that also for internal validation only the development cohort will be used. -->
+      <development_batch_id></development_batch_id>
+      <!-- Validation cohort (required for external validation, otherwise optional) - note that these cohorts are not used for internal validation. -->
+      <validation_batch_id></validation_batch_id>
+      <!-- Name of the outcome being modelled (optional)-->
+      <outcome_name></outcome_name>
+      <!-- Name of data column with outcome values (required, 2 for survival outcomes, 1 otherwise) -->
+      <outcome_column>required</outcome_column>
+      <!-- Outcome type (required, one of binomial, multinomial, continuous and survival) -->
+      <outcome_type>required</outcome_type>
+      <!-- Levels of categorical outcomes (optional) -->
+      <class_levels></class_levels>
+      <!-- Indicator for events in survival and competing risk analyses (recommended) -->
+      <event_indicator></event_indicator>
+      <!-- Indicator for right-censoring (e.g. loss of patient follow-up) in survival and competing risk analyses (recommended) -->
+      <censoring_indicator></censoring_indicator>
+      <!-- Indicator for competing risks in competing risk analysis (recommended) -->
+      <competing_risk_indicator></competing_risk_indicator>
+      <!-- Signature, column names for features that should always be included in a model (optional) -->
+      <signature></signature>
+      <!-- Novelty feature, column names for features that should be included for novelty detection (optional) -->
+      <novelty_features></novelty_features>
+      <!-- Names of features/columns which are to be removed (optional) -->
+      <exclude_features></exclude_features>
+      <!-- Names of features/columns that should be exclusively selected (optional) -->
+      <include_features></include_features>
+      <!-- Method used to set the reference level for categorical features (optional) -->
+      <reference_method></reference_method>
+    </data>
+    <run>
+      <!--Parallisation master switch (optional, default: TRUE). If set to FALSE, suppresses all parallelisation.-->
+      <parallel></parallel>
+      <!-- Number of cores available for parallelisation (optional, default: 2) -->
+      <parallel_nr_cores></parallel_nr_cores>
+      <!-- Flag indicating that parallel computation clusters started locally should be restarted prior to parallel computations (optional, default: FALSE) -->
+      <restart_cluster></restart_cluster>
+      <!-- Type of parallel cluster (optional, default:psock) -->
+      <cluster_type></cluster_type>
+      <!-- Selection of the back-end for serving data (optional, default:none) -->
+      <backend_type></backend_type>
+      <!-- Port for RServe process that is used to store input data (optional, default: 6311)-->
+      <server_port></server_port>
+    </run>
+    <preprocessing>
+      <!-- Maximum fraction of features containing missing data for each feature (optional, default: 0.30) -->
+      <feature_max_fraction_missing></feature_max_fraction_missing>
+      <!-- Maximum fraction of features containing missing data for each sample (optional, default: 0.30) -->
+      <sample_max_fraction_missing></sample_max_fraction_missing>
+      <!-- Methods for filtering unimportant features (optional, default: none; otherwise low_variance, robustness and/or univariate_test). Robustness is only available for repeated measurements -->
+      <filter_method></filter_method>
+      <!-- Minimum threshold-value for univariate test (optional, default: 0.20) -->
+      <univariate_test_threshold></univariate_test_threshold>
+      <!-- Metric to use as threshold value (optional, default: p_value; otherwise q_value)-->
+      <univariate_test_threshold_metric></univariate_test_threshold_metric>
+      <!-- Maximum feature set after univariate testing (optional, default: up to minimum p-value) -->
+      <univariate_test_max_feature_set_size></univariate_test_max_feature_set_size>
+      <!-- Minimum variance for inclusion in the final feature set (required, if low_variance is selected) -->
+      <low_var_minimum_variance_threshold></low_var_minimum_variance_threshold>
+      <!-- Maximum feature set size after checking variance (optional, default: all above minimum variance) -->
+      <low_var_max_feature_set_size></low_var_max_feature_set_size>
+      <!-- Type of intraclass correlation coefficient. Either 1,2 or 3 (optional, default: 1) -->
+      <robustness_icc_type></robustness_icc_type>
+      <!-- Which intraclass correlation coefficient parameter should be used for thresholding. One of icc, icc_low, icc_panel or icc_panel_low (optional, default: icc_low) -->
+      <robustness_threshold_metric></robustness_threshold_metric>
+      <!-- Intraclass correlation coefficient threshold value (optional, default: 0.70)-->
+      <robustness_threshold_value></robustness_threshold_value>
+      <!-- Feature transformation method (optional, default: yeo_johnson_robust; otherwise one of none, box_cox, box_cox_trim, box_cox_winsor, box_cox_robust, yeo_johnson, yeo_johnson_trim, yeo_johnson_winsor) -->
+      <transformation_method></transformation_method>
+      <!-- Feature normalisation method (optional, default: standardisation_robust; check documentation for other options) -->
+      <normalisation_method></normalisation_method>
+      <!-- Batch normalisation method (optional, default: none; check documentation for other options) -->
+      <batch_normalisation_method></batch_normalisation_method>
+      <!-- Imputation method (optional, lasso (default: features < 100) or simple) -->
+      <imputation_method></imputation_method>
+      <!-- Cluster method (optional, default: hclust; otherwise one of none, pam, agnes, diana) -->
+      <cluster_method></cluster_method>
+      <!-- Cluster linkage method (optional, default: average; otherwise: single, complete, weighted; only for hclust and agnes cluster methods) -->
+      <cluster_linkage_method></cluster_linkage_method>
+      <!-- Cluster cut method (optional, default: silhouette; otherwise one of silhouette (pam) or dynamic_cut (hclust), or silhouette and fixed_cut (agnes, diana, hclust))-->
+      <cluster_cut_method></cluster_cut_method>
+      <!-- Cluster similarity metric (optional, default mcfadden_r2; otherwise one of cox_snell_r2, nagelkerke_r2, spearman, kendall, pearson) -->
+      <cluster_similarity_metric></cluster_similarity_metric>
+      <!-- Cluster similarity threshold above which clusters are formed (optional, default: depends of cluster_cut_method and cluster_similarity_metric). -->
+      <cluster_similarity_threshold></cluster_similarity_threshold>
+      <!-- Method for determining how a cluster of features should be represented (optional, default: best_predictor; otherwise: mean, medioid). Note pam uses medioid by definition. -->
+      <cluster_representation_method></cluster_representation_method>
+      <!-- Parallel processing for feature selection (optional, default:true) -->
+      <parallel_preprocessing></parallel_preprocessing>
+    </preprocessing>
+    <feature_selection>
+      <!-- Feature selection methods (required, multiple possible)-->
+      <fs_method>required</fs_method>
+      <!-- List of parameters for feature selection, grouped by feature selection method (optional) -->
+      <fs_method_parameter></fs_method_parameter>
+      <!-- Method for variable importance aggregation (optional, default: mean) -->
+      <vimp_aggregation_method></vimp_aggregation_method>
+      <!-- Rank threshold for determining the best features. Several aggregation methods count features when rank is better (below) the threshold (optional) -->
+      <vimp_aggregation_rank_threshold></vimp_aggregation_rank_threshold>
+      <!-- Parallel processing for feature selection (optional, default: true) -->
+      <parallel_feature_selection></parallel_feature_selection>
+    </feature_selection>
+    <model_development>
+      <!-- Learners (required, multiple possible) -->
+      <learner>required</learner>
+      <!-- Hyperparameter list for user-provided hyperparameters (optional; not recommended as user-provided hyperparameters are usually sub-optimal or biased) -->
+      <hyperparameter></hyperparameter>
+      <!-- Algorithm used for novelty, or out-of-distribution, detection (optional; isolation_forest by default, can be none as well) -->
+      <novelty_detector></novelty_detector>
+      <!-- Detector parameters for novelty detector algorithms (optional) -->
+      <detector_parameters></detector_parameters>
+      <!-- Parallel processing for model building (optional, default: true) -->
+      <parallel_model_development></parallel_model_development>
+    </model_development>
+    <hyperparameter_optimisation>
+      <!-- Metric for assessing model performance (optional, default: depends on outcome type) -->
+      <optimisation_metric></optimisation_metric>
+      <!-- Function for a computing optimisation score based on model performance metrics (optional, default: validation) -->
+      <optimisation_function></optimisation_function>
+      <!-- The acquisition function that is used to compute utility of hyperparameter sets and guide exploration of the hyperparameter space (optional, default: expected_improvement) -->
+      <acquisition_function></acquisition_function>
+      <!-- The exploration method defines how alternative hyperparameter sets are pruned during search (optional, default: single_shot) -->
+      <exploration_method></exploration_method>
+      <!-- The model used to infer utility of hyperparameter sets and select them for exploration (optional, default: gaussian_process) -->
+      <hyperparameter_learner></hyperparameter_learner>
+      <!-- Maximum number of bootstraps to evaluate hyperparameters on (optional, default: 20) -->
+      <optimisation_bootstraps></optimisation_bootstraps>
+      <!-- Whether variable importance should be computed seperately for each bootstrap (true) when optimising learner hyperparameters or the feature selection results should be used (false). (optional, default: true) -->
+      <optimisation_determine_vimp></optimisation_determine_vimp>
+      <!-- Randomisation of the initial hyperparameter grid. (optional, default: fixed_subsample) -->
+      <smbo_random_initialisation></smbo_random_initialisation>
+      <!-- Number of random or subsampled hyperparameter sets to be drawn during initialisation (optional: default:100) -->
+      <smbo_n_random_sets></smbo_n_random_sets>
+      <!-- Maximum number of iterations of sequential model based optimisation (optional, default: 20) -->
+      <max_smbo_iterations></max_smbo_iterations>
+      <!-- Number of bootstraps evaluated initially (optional, default: 1) -->
+      <smbo_initial_bootstraps></smbo_initial_bootstraps>
+      <!-- Number of bootstraps evaluated during each SMBO initial and intensify iteration (optional, default: 3) -->
+      <smbo_step_bootstraps></smbo_step_bootstraps>
+      <!-- Maximum number of intensify steps within each SMBO iteration (optional, default: 5) -->
+      <smbo_intensify_steps></smbo_intensify_steps>
+      <!-- p-value for early stopping of intensify iterations (optional, default: 0.05) -->
+      <smbo_stochastic_reject_p_value></smbo_stochastic_reject_p_value>
+      <!-- Number of additional SMBO iterations to perform after convergence has been reached (optional, default: 3) -->
+      <smbo_stop_convergent_iterations></smbo_stop_convergent_iterations>
+      <!-- Tolerance level for convergence (optional, default: depends on square root of the number of samples) -->
+      <smbo_stop_tolerance></smbo_stop_tolerance>
+      <!-- Time limit (in seconds) for the optimisation process (optional, default: NULL) -->
+      <smbo_time_limit></smbo_time_limit>
+      <!-- Parallel processing for hyperparameter optimisation (optional; default: true) -->
+      <parallel_hyperparameter_optimisation></parallel_hyperparameter_optimisation>
+    </hyperparameter_optimisation>
+    <evaluation>
+      <!-- Evaluate only the most important experiment level (true), or additionally evaluate underlying levels (false) (optional, default: true)-->
+      <evaluate_top_level_only></evaluate_top_level_only>
+      <!-- Evaluation steps that should be skipped (optional, default: none) -->
+      <skip_evaluation_elements></skip_evaluation_elements>
+      <!-- Method for clustering features (optional, default: same as cluster_method) -->
+      <feature_cluster_method></feature_cluster_method>
+      <!-- Linkage method for clustering features (optional, default: same as cluster_linkage_method) -->
+      <feature_linkage_method></feature_linkage_method>
+      <!-- Cluster cut method for feature clusters (optional, default: same as cluster_cut_method)-->
+      <feature_cluster_cut_method></feature_cluster_cut_method>
+      <!-- Metric for similarity between feature pairs (optional, default: same as cluster_similarity_metric) -->
+      <feature_similarity_metric></feature_similarity_metric>
+      <!-- Cluster similarity threshold above which separate feature clusters are formed (optional, default: same as cluster_similarity_threshold). -->
+      <feature_similarity_threshold></feature_similarity_threshold>
+      <!-- Method for clustering features (optional, default: same as cluster_method) -->
+      <sample_cluster_method></sample_cluster_method>
+      <!-- Linkage method for clustering samples (optional, default: same as cluster_linkage_method) -->
+      <sample_linkage_method></sample_linkage_method>
+      <!-- Metric for similarity between sample pairs (optional, default: "gower") -->
+      <sample_similarity_metric></sample_similarity_metric>
+      <!-- Method for generating ensemble prediction values (optional, default: "mean") -->
+      <ensemble_method></ensemble_method>
+      <!-- Metric(s) for assessing model performance (optional, default: same as metric for hyperparameter_optimisation, multiple possible) -->
+      <evaluation_metric></evaluation_metric>
+      <!-- Set maximum number of samples used for evaluation (optional, default: all samples) -->
+      <sample_limit></sample_limit>
+      <!-- Level at which evaluation steps are computed (optional, default: hybrid) -->
+      <detail_level></detail_level>
+      <!-- Type of estimate being computed (optional, default: bootstrap_confidence_interval) -->
+      <estimation_type></estimation_type>
+      <!-- Whether results should be aggregated at run-time (optional: default) --> 
+      <aggregate_results></aggregate_results>
+      <!-- Confidence level for confidence intervals (optional, default: 0.95) -->
+      <confidence_level></confidence_level>
+      <!-- Method for bootstrap confidence interval (optional, default: percentile) -->
+      <bootstrap_ci_method></bootstrap_ci_method>
+      <!-- Method for aggregating variable importances (optional, default: same as method in feature_selection) -->
+      <eval_aggregation_method></eval_aggregation_method>
+      <!-- Rank threshold for determining the best features (optional, default: same as rank threshold in feature_selection) -->
+      <eval_aggregation_rank_threshold></eval_aggregation_rank_threshold>
+      <!-- Type of intraclass correlation coefficient used during evaluation of univariate importance. Either 1,2 or 3 (optional, default: 1) -->
+      <eval_icc_type></eval_icc_type>
+      <!-- Stratification method for kaplan-meier analysis (optional, default: "median", otherwise: "fixed", "optimised", multiple possible) -->
+      <stratification_method></stratification_method>
+      <!-- Stratification quantile thresholds (optional, only for "fixed", default:0.333,0.667; needs to be in range (0.0, 1.0)). Thresholds define samples with ascending (increasing) risk -->
+      <stratification_threshold></stratification_threshold>
+      <!-- Study end time. This affects Kaplan-Meier plots and some survival metrics (optional, default: based on 98th percentile in data) -->
+      <time_max></time_max>
+      <!-- Time points at which calibration for survival models is assessed (optional, default: same as end_time; multiple values possible) -->
+      <evaluation_times></evaluation_times>
+      <!-- Flags dynamic loading of models during evaluation (optional, default: False) -->
+      <dynamic_model_loading></dynamic_model_loading>
+      <!-- Parallel processing for evaluation (optional; default: true) -->
+      <parallel_evaluation></parallel_evaluation>
+    </evaluation>
+  </config>
+</config_list>
