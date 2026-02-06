@@ -3,14 +3,14 @@
 cml_final_result.py
 
 Create a final “model card” style summary for a single chosen cML setup by combining:
-  - cross-validation performance summaries
-  - external validation performance summaries
+  - Validation performance summaries
+  - Test performance summaries
 
 The script:
   1) Selects the final model setup as the configuration with minimal RMSE on the
-     validation set (combined factors) in cross-validation.
+     validation set (combined factors) in Validation.
   2) Extracts per-(nose_orientation, mu, proton_energy, range_shift_type, repetition) results
-     from both cross-validation and external validation for that setup.
+     from both Validation and Test for that setup.
   3) Writes a final CSV and exports a human-readable summary as TXT and PNG.
 
 """
@@ -48,26 +48,26 @@ def _ensure_single_value(series: pd.Series, *, label: str) -> None:
 # Core logic
 # =============================================================================
 def get_final_results_table(
-    df_cross_val: pd.DataFrame,
-    df_ex_val: pd.DataFrame,
+    df_val: pd.DataFrame,
+    df_test: pd.DataFrame,
     final_model_setup: Dict[str, str],
 ) -> pd.DataFrame:
     """
-    Generate a combined table of CV + external validation results for one model setup.
+    Generate a combined table of CV + Test results for one model setup.
 
     Parameters
     ----------
-    df_cross_val : pd.DataFrame
-        Cross-validation summary table (already aggregated with CIs).
-    df_ex_val : pd.DataFrame
-        External validation summary table (already aggregated with CIs).
+    df_val : pd.DataFrame
+        Validation summary table (already aggregated with CIs).
+    df_test : pd.DataFrame
+        Test summary table (already aggregated with CIs).
     final_model_setup : dict
         Keys: ['feature_type','feature_selection_method','model_learner'].
 
     Returns
     -------
     pd.DataFrame
-        Rows covering CV and external validation for the selected setup.
+        Rows covering CV and Test for the selected setup.
         Includes: setup columns, signature, sign_size, step, cohort, factors, metrics.
     """
     setup_keys = ["feature_type", "feature_selection_method", "model_learner"]
@@ -94,34 +94,34 @@ def get_final_results_table(
         "R2 CI Low",
         "R2 CI High",
     ]
-    _require_columns(df_cross_val, common_required + ["cv_data_set"], df_name="df_cross_val")
-    _require_columns(df_ex_val, common_required + ["cohort"], df_name="df_ex_val")
+    _require_columns(df_val, common_required + ["cv_data_set"], df_name="df_val")
+    _require_columns(df_test, common_required + ["cohort"], df_name="df_test")
 
     # Filter to the model setup
-    df_cv = df_cross_val[
-        (df_cross_val["feature_type"] == final_model_setup["feature_type"])
-        & (df_cross_val["feature_selection_method"] == final_model_setup["feature_selection_method"])
-        & (df_cross_val["model_learner"] == final_model_setup["model_learner"])
+    df_val = df_val[
+        (df_val["feature_type"] == final_model_setup["feature_type"])
+        & (df_val["feature_selection_method"] == final_model_setup["feature_selection_method"])
+        & (df_val["model_learner"] == final_model_setup["model_learner"])
     ].copy()
 
-    df_ev = df_ex_val[
-        (df_ex_val["feature_type"] == final_model_setup["feature_type"])
-        & (df_ex_val["feature_selection_method"] == final_model_setup["feature_selection_method"])
-        & (df_ex_val["model_learner"] == final_model_setup["model_learner"])
+    df_test = df_test[
+        (df_test["feature_type"] == final_model_setup["feature_type"])
+        & (df_test["feature_selection_method"] == final_model_setup["feature_selection_method"])
+        & (df_test["model_learner"] == final_model_setup["model_learner"])
     ].copy()
 
-    if df_cv.empty:
-        raise ValueError("No rows found in cross-validation table for final_model_setup.")
-    if df_ev.empty:
-        raise ValueError("No rows found in external validation table for final_model_setup.")
+    if df_val.empty:
+        raise ValueError("No rows found in Validation table for final_model_setup.")
+    if df_test.empty:
+        raise ValueError("No rows found in Test table for final_model_setup.")
 
     # Enforce that within each grouping tuple, metrics are unique (i.e., the table is already aggregated)
-    if df_cv.groupby(
+    if df_val.groupby(
         ["cv_data_set", "nose_orientation", "mu", "proton_energy", "range_shift_type", "repetition"]
     )["RMSE"].nunique().max() != 1:
         raise ValueError("Multiple RMSE values found for a CV group; input appears not fully aggregated.")
 
-    if df_ev.groupby(
+    if df_test.groupby(
         ["cohort", "nose_orientation", "mu", "proton_energy", "range_shift_type", "repetition"]
     )["RMSE"].nunique().max() != 1:
         raise ValueError("Multiple RMSE values found for an EV group; input appears not fully aggregated.")
@@ -158,13 +158,13 @@ def get_final_results_table(
             summary_rows.append(row)
 
     _append_rows(
-        df_cv,
+        df_val,
         ["cv_data_set", "nose_orientation", "mu", "proton_energy", "range_shift_type", "repetition"],
-        step="cross_validation",
+        step="validation",
         split_col="cv_data_set",
     )
     _append_rows(
-        df_ev,
+        df_test,
         ["cohort", "nose_orientation", "mu", "proton_energy", "range_shift_type", "repetition"],
         step="external_validation",
         split_col="cohort",
@@ -317,9 +317,9 @@ def save_string_to_image_and_text(
     image.save(image_path, format="PNG")
 
 
-def find_experiment_setup_from_cross_val(df: pd.DataFrame) -> Dict[str, str]:
+def find_experiment_setup_from_val(df: pd.DataFrame) -> Dict[str, str]:
     """
-    Select the final model setup from cross-validation by minimising RMSE on the validation set,
+    Select the final model setup from Validation by minimising RMSE on the validation set,
     restricted to the combined setting across experimental factors.
 
     Returns
@@ -374,15 +374,15 @@ if __name__ == "__main__":
     parser = cML_final_result_parser("cML final result")
     args = parser.parse_args()
 
-    cv_results = pd.read_csv(args.cross_val_performance_file_path, sep=";")
-    ex_val_results = pd.read_csv(args.ex_val_performance_file_path, sep=";")
+    cv_results = pd.read_csv(args.val_performance_file_path, sep=";")
+    test_results = pd.read_csv(args.test_performance_file_path, sep=";")
 
     print("Finding final model setup...")
-    final_model_setup = find_experiment_setup_from_cross_val(cv_results)
+    final_model_setup = find_experiment_setup_from_val(cv_results)
     print("Final model setup is:\n", final_model_setup)
 
     print("Calculating final results table...")
-    df_final = get_final_results_table(cv_results, ex_val_results, final_model_setup)
+    df_final = get_final_results_table(cv_results, test_results, final_model_setup)
 
     os.makedirs(os.path.dirname(args.final_result_csv), exist_ok=True)
     df_final.to_csv(args.final_result_csv, sep=";", index=False)

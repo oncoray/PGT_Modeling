@@ -544,8 +544,8 @@ def add_feature_selection_args(parser):
 
     return parser
 
-def add_external_validation_args(parser):
-    group = parser.add_argument_group('external_validation')
+def add_testing_args(parser):
+    group = parser.add_argument_group('testing')
 
     group.add_argument(
         '--data_table_path',
@@ -581,7 +581,7 @@ def add_external_validation_args(parser):
         required=True)
 
     group.add_argument(
-        '--external_validation_path',
+        '--testing_path',
         type=str,
         help = 'Path to the main external validation dir',
         required = True
@@ -845,9 +845,9 @@ def feature_combination_parser(title):
     parser = add_feature_combination_args(parser)
     return parser
 
-def external_validation_parser(title):
+def testing_parser(title):
     parser = ArgumentParser(title)
-    parser = add_external_validation_args(parser)
+    parser = add_testing_args(parser)
     return parser
 
 def cML_summary_parser(title):

@@ -379,7 +379,7 @@ rule cML_feature_selection:
         --feature_selection_plot_path {output.feature_selection_plot_path} > {log} 2>&1
         """
 
-rule cML_cross_val_summary:
+rule cML_val_summary:
     input:
         individual_prediction_files = expand(config["paths"]["model_development"]["feature_selection_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
             feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),
@@ -388,7 +388,7 @@ rule cML_cross_val_summary:
         data_table_path = config['paths']['output_files']['data_path_table_main']
     output:
         summary_performance_file_path = report(
-                            config["paths"]["model_development"]["summary_path"] + "/performance/cross_val_performance_summary.csv",
+                            config["paths"]["model_development"]["summary_path"] + "/performance/val_performance_summary.csv",
                             category="cML Summary",
                             subcategory="Performance",
                             labels = {
@@ -396,7 +396,7 @@ rule cML_cross_val_summary:
                             "File type": "csv"}
                             ),
         summary_predictions_file_path = report(
-                            config["paths"]["model_development"]["summary_path"] + "/predictions/cross_val_predictions_summary.csv",
+                            config["paths"]["model_development"]["summary_path"] + "/predictions/val_predictions_summary.csv",
                             category="cML Summary",
                             subcategory="Predictions",
                             labels = {
@@ -404,7 +404,7 @@ rule cML_cross_val_summary:
                             "File type": "csv"}
                             ),
         heatmap_plot_dir_path = report(
-                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/cross_val_performance_heatmaps"),
+                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/val_performance_heatmaps"),
                                 patterns = ["heatmap_{spot_type}_{proton_energy}.png"],
                                 category = "cML Summary",
                                 subcategory = "Heatmap plots",
@@ -419,7 +419,7 @@ rule cML_cross_val_summary:
         time="6:00:00",
         mem_per_cpu="3G",
     log:
-        config['paths']['logs_dir'] + '/cML_summary/cML_cross_val_summary.log'
+        config['paths']['logs_dir'] + '/cML_summary/cML_val_summary.log'
     params:
         script = config['paths']['scripts']['cML_summary']
     shell:
@@ -502,7 +502,7 @@ rule cML_external_validation:
         --performance_file_path {output.performance_file_path} > {log} 2>&1
         """
 
-rule cML_ex_val_summary:
+rule cML_test_summary:
     input:
         individual_prediction_files = expand(config["paths"]["model_development"]["external_validation_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
             feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),
@@ -511,7 +511,7 @@ rule cML_ex_val_summary:
         data_table_path = config['paths']['output_files']['data_path_table_main']
     output:
         summary_performance_file_path = report(
-                            config["paths"]["model_development"]["summary_path"] + "/performance/ex_val_performance_summary.csv",
+                            config["paths"]["model_development"]["summary_path"] + "/performance/test_performance_summary.csv",
                             category="cML Summary",
                             subcategory="Performance",
                             labels = {
@@ -519,7 +519,7 @@ rule cML_ex_val_summary:
                             "File type": "csv"}
                             ),
         summary_predictions_file_path = report(
-                            config["paths"]["model_development"]["summary_path"] + "/predictions/ex_val_predictions_summary.csv",
+                            config["paths"]["model_development"]["summary_path"] + "/predictions/test_predictions_summary.csv",
                             category="cML Summary",
                             subcategory="Predictions",
                             labels = {
@@ -527,7 +527,7 @@ rule cML_ex_val_summary:
                             "File type": "csv"}
                             ),
         heatmap_plot_dir_path = report(
-                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/ex_val_performance_heatmaps"),
+                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/test_performance_heatmaps"),
                                 patterns = ["heatmap_{spot_type}_{proton_energy}.png"],
                                 category = "cML Summary",
                                 subcategory = "Heatmap plots",
@@ -542,7 +542,7 @@ rule cML_ex_val_summary:
         time="6:00:00",
         mem_per_cpu="3G",
     log:
-        config['paths']['logs_dir'] + '/cML_summary/cML_ex_val_summary.log'
+        config['paths']['logs_dir'] + '/cML_summary/cML_test_summary.log'
     params:
         script = config['paths']['scripts']['cML_summary']
     shell:
@@ -558,8 +558,8 @@ rule cML_ex_val_summary:
 
 rule cML_final_result:
     input:
-        ex_val_performance_file_path = config["paths"]["model_development"]["summary_path"] + "/performance/ex_val_performance_summary.csv",
-        cross_val_performance_file_path = config["paths"]["model_development"]["summary_path"] + "/performance/cross_val_performance_summary.csv"
+        test_performance_file_path = config["paths"]["model_development"]["summary_path"] + "/performance/test_performance_summary.csv",
+        val_performance_file_path = config["paths"]["model_development"]["summary_path"] + "/performance/val_performance_summary.csv"
     output:
         final_result_csv = report(
                             config["paths"]["model_development"]["summary_path"] + "/final_result.csv",
@@ -593,8 +593,8 @@ rule cML_final_result:
     shell:
         """
         python {params.script} \
-        --ex_val_performance_file_path {input.ex_val_performance_file_path} \
-        --cross_val_performance_file_path {input.cross_val_performance_file_path} \
+        --test_performance_file_path {input.test_performance_file_path} \
+        --val_performance_file_path {input.val_performance_file_path} \
         --final_result_csv {output.final_result_csv} \
         --final_result_txt {output.final_result_txt} \
         --final_result_png {output.final_result_png} > {log} 2>&1

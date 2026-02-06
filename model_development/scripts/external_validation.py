@@ -6,7 +6,7 @@ Created on Fri Feb  2 13:49:21 2024
 @author: kiesli21
 """
 
-from pmma.cmd_args import external_validation_parser
+from pmma.cmd_args import testing_parser
 import pandas as pd
 from pmma.familiar_preparation import evaluate_familiar_experiment, create_feature_table_for_familiar, perform_familiar_experiment, extract_hyperparameters, merge_data_with_predictions
 from pmma.visulisation_methods import plot_predicted_vs_actual_range_shift
@@ -51,14 +51,14 @@ def make_json_serializable(obj):
 
     return obj
 
-def perform_external_validation(external_validation_path, familiar_feature_table_path, familiar_r_file_path,
+def perform_testing(testing_path, familiar_feature_table_path, familiar_r_file_path,
                                 feature_type, feature_selection_method, model_learner, signature, perform_yeo_johnson=True,
                         execute_two_step_fitting=True, fit_intercept=True):
     """
-    Conducts external validation.
+    Conducts model testing.
 
     Parameters:
-    - external_validation_path (str): Path where external validation results and artifacts will be stored.
+    - testing_path (str): Path where model testing results and artifacts will be stored.
     - familiar_feature_table_path (str): Path to the feature table used by the FAMILIAR framework.
     - familiar_r_file_path (str): Path to the R script for running the FAMILIAR model.
     - feature_type (str): Type of features used (e.g., genomic, clinical).
@@ -67,11 +67,11 @@ def perform_external_validation(external_validation_path, familiar_feature_table
     - signature (list): List of features constituting the model's signature.
 
     Returns:
-    Tuple[dict, DataFrame]: A tuple containing the external validation results and the predictions DataFrame.
+    Tuple[dict, DataFrame]: A tuple containing the model testing results and the predictions DataFrame.
     """
 
     # Initialize the results dictionary
-    external_validation_results = {
+    testing_results = {
         'feature_type': feature_type,
         'feature_selection_method': feature_selection_method,
         'model_learner': model_learner,
@@ -82,7 +82,7 @@ def perform_external_validation(external_validation_path, familiar_feature_table
     }
 
     # If using the new iterative_linear approach, perform training on the complete training cohort
-    # and validation on the validation cohort.
+    # and testing on the testing cohort.
     if model_learner == "iterative_linear":
 
         external_feature_table = pd.read_csv(familiar_feature_table_path, sep=";")
@@ -105,17 +105,17 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         if external_feature_table.empty:
             raise ValueError("All rows were dropped because of NaNs; no data left for modelling.")
 
-        # Split the data into training and validation cohorts.
+        # Split the data into training and testing cohorts.
         training_data = external_feature_table[external_feature_table["cohort"] == "training"].copy()
-        validation_data = external_feature_table[
-            (external_feature_table["cohort"] == "validation") | (external_feature_table["cohort"] == "testing")
+        testing_data = external_feature_table[
+            (external_feature_table["cohort"] == "testing") | (external_feature_table["cohort"] == "validation")
         ].copy()
 
         # -------------------------------------------------------------------------
         # Feature processing toggle
         # -------------------------------------------------------------------------
         X_train = training_data[signature]
-        X_val = validation_data[signature]
+        X_val = testing_data[signature]
 
         if perform_yeo_johnson:
             # --- Transformation: Yeo-Johnson and Standardisation ---
@@ -166,7 +166,7 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         train_r2 = r2_score(y_train, y_train_pred_final)
 
         # -------------------------------------------------------------------------
-        # Apply on the Validation Cohort
+        # Apply on the testing Cohort
         # -------------------------------------------------------------------------
         y_val_pred_1 = lr1.predict(X_val_trans)
 
@@ -175,7 +175,7 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         else:
             y_val_pred_final = y_val_pred_1
 
-        y_val = validation_data["range_shift"].to_numpy()
+        y_val = testing_data["range_shift"].to_numpy()
         val_rmse = np.sqrt(mean_squared_error(y_val, y_val_pred_final))
         val_r2 = r2_score(y_val, y_val_pred_final)
 
@@ -188,11 +188,11 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         train_preds_df["predicted_range_shift"] = y_train_pred_final
         train_preds_df["data_set"] = "development"
 
-        val_preds_df = validation_data[["id_global"]].copy()
-        val_preds_df["cohort"] = validation_data["cohort"]
+        val_preds_df = testing_data[["id_global"]].copy()
+        val_preds_df["cohort"] = testing_data["cohort"]
         val_preds_df["range_shift"] = y_val
         val_preds_df["predicted_range_shift"] = y_val_pred_final
-        val_preds_df["data_set"] = "validation"
+        val_preds_df["data_set"] = "testing"
 
         predictions = pd.concat([train_preds_df, val_preds_df], axis=0, ignore_index=True)
 
@@ -203,15 +203,15 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         predictions = predictions[["sample_id", "predicted_outcome", "data_set"]]
 
         # Update the results dictionary with computed metrics.
-        external_validation_results["development"].update({"rmse": train_rmse, "r2_score": train_r2})
-        external_validation_results["validation"].update({"rmse": val_rmse, "r2_score": val_r2})
+        testing_results["development"].update({"rmse": train_rmse, "r2_score": train_r2})
+        testing_results["testing"].update({"rmse": val_rmse, "r2_score": val_r2})
 
         # Hyperparameters for the iterative_linear approach can be defined as needed.
-        external_validation_results["hyperparameters"] = {
+        testing_results["hyperparameters"] = {
             "perform_yeo_johnson": bool(perform_yeo_johnson),
             "execute_two_step_fitting": bool(execute_two_step_fitting),
         }
-        results = external_validation_results
+        results = testing_results
 
         # -------------------------------------------------------------------------
         # Bootstrap confidence intervals (training cohort)
@@ -406,14 +406,14 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         )
 
         # Store confidence intervals in results dict (so they are logged/serialized with the run)
-        external_validation_results["hyperparameters"].update(
+        testing_results["hyperparameters"].update(
             {
                 "bootstrap_n": bootstrap_ci["bootstrap"]["n_boot"],
                 "bootstrap_ci_level": bootstrap_ci["bootstrap"]["ci_level"],
                 "bootstrap_random_state": bootstrap_ci["bootstrap"]["random_state"],
             }
         )
-        external_validation_results["model_parameter_cis"] = bootstrap_ci
+        testing_results["model_parameter_cis"] = bootstrap_ci
 
         # -------------------- Iterative Linear Model Summary (print-only) --------------------
         print("\n" + "=" * 100)
@@ -447,7 +447,7 @@ def perform_external_validation(external_validation_path, familiar_feature_table
             f"[{train_resid_q[0]:.8f}, {train_resid_q[1]:.8f}, {train_resid_q[2]:.8f}, {train_resid_q[3]:.8f}, {train_resid_q[4]:.8f}]"
         )
 
-        # --- Standard diagnostics (validation) ---
+        # --- Standard diagnostics (testing) ---
         val_residuals = y_val - y_val_pred_final
         val_mae = mean_absolute_error(y_val, y_val_pred_final)
         val_med_ae = median_absolute_error(y_val, y_val_pred_final)
@@ -455,7 +455,7 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         val_resid_std = float(np.std(val_residuals, ddof=1))
         val_resid_q = np.percentile(val_residuals, [2.5, 25, 50, 75, 97.5])
 
-        print("\n[Validation diagnostics]")
+        print("\n[testing diagnostics]")
         print(f"  RMSE             : {val_rmse:.8f}")
         print(f"  R2               : {val_r2:.8f}")
         print(f"  MAE              : {val_mae:.8f}")
@@ -610,7 +610,7 @@ def perform_external_validation(external_validation_path, familiar_feature_table
     else:
         # ORIGINAL MODELLING APPROACH USING FAMILIAR:
         # Directory for storing experiment results
-        experiment_dir = os.path.join(external_validation_path, "familiar", "experiments",
+        experiment_dir = os.path.join(testing_path, "familiar", "experiments",
                                       feature_type, feature_selection_method, model_learner)
 
         # Run the experiment using the familiar framework.
@@ -653,17 +653,17 @@ def perform_external_validation(external_validation_path, familiar_feature_table
         # Retrieve results and predictions from the experiment.
         results, predictions = evaluate_familiar_experiment(experiment_dir)
         hyperparameters = extract_hyperparameters(experiment_dir)
-        external_validation_results['hyperparameters'] = hyperparameters
+        testing_results['hyperparameters'] = hyperparameters
 
         # Process and print model performance metrics.
-        for cohort in ['development', 'validation']:
+        for cohort in ['development', 'testing']:
             cohort_metrics = results[cohort]
             print(f"{cohort.capitalize()} fold performance: RMSE = {cohort_metrics['rmse'][0]:.2f} "
                   f"[{cohort_metrics['rmse_ci_low'][0]:.2f}, {cohort_metrics['rmse_ci_high'][0]:.2f}], "
                   f"R2 Score = {cohort_metrics['r2_score'][0]:.2f} "
                   f"[{cohort_metrics['r2_score_ci_low'][0]:.2f}, {cohort_metrics['r2_score_ci_high'][0]:.2f}]")
 
-            external_validation_results[cohort].update({
+            testing_results[cohort].update({
                 'rmse': cohort_metrics['rmse'][0],
                 'rmse_ci_low': cohort_metrics['rmse_ci_low'][0],
                 'rmse_ci_high': cohort_metrics['rmse_ci_high'][0],
@@ -672,16 +672,16 @@ def perform_external_validation(external_validation_path, familiar_feature_table
                 'r2_score_ci_high': cohort_metrics['r2_score_ci_high'][0]
             })
 
-        results = external_validation_results
+        results = testing_results
 
     return results, predictions
 
 if __name__ == "__main__":
-    # Parsing command line arguments for external validation.
-    parser = external_validation_parser("External validation")
+    # Parsing command line arguments for model testing.
+    parser = testing_parser("Testing")
     args = parser.parse_args()
 
-    print("Start external validation....")
+    print("Start model testing....")
     n_cpus = multiprocessing.cpu_count()
     print(f"Number of cpus: {n_cpus}")
 
@@ -690,7 +690,7 @@ if __name__ == "__main__":
     feature_table = pd.read_csv(args.feature_file_path, sep=";")
 
     # Define and create a temporary directory for data processing.
-    temp_data_dir = os.path.join(args.external_validation_path, "temp_data")
+    temp_data_dir = os.path.join(args.testing_path, "temp_data")
     os.makedirs(temp_data_dir, exist_ok=True)
 
     with open(args.feature_selection_file_path, 'r') as file:
@@ -703,13 +703,13 @@ if __name__ == "__main__":
 
     # Constructing file paths for the familiar feature table and R script.
     familiar_feature_table_path = os.path.join(temp_data_dir, f"features_{feature_type}_{feature_selection_method}_{model_learner}.csv")
-    familiar_r_file_path = os.path.join(args.external_validation_path, f"familiar/r_files/R_file_{feature_type}_{feature_selection_method}_{model_learner}.R")
+    familiar_r_file_path = os.path.join(args.testing_path, f"familiar/r_files/R_file_{feature_type}_{feature_selection_method}_{model_learner}.R")
 
     # Creating a feature table for the FAMILIAR tool.
     familiar_feature_table = create_feature_table_for_familiar(data_table, feature_table, final_signature, familiar_feature_table_path, evaluation_phase = True)
 
-    # Execute external validation.
-    result_dict, predictions = perform_external_validation(args.external_validation_path, familiar_feature_table_path,
+    # Execute model testing.
+    result_dict, predictions = perform_testing(args.testing_path, familiar_feature_table_path,
                                                              familiar_r_file_path, feature_type, feature_selection_method,
                                                              model_learner, final_signature)
 
@@ -722,14 +722,14 @@ if __name__ == "__main__":
     # Save the final results dictionary to a file.
     with open(args.performance_file_path, 'w') as file:
         json.dump(make_json_serializable(result_dict), file, indent=4)
-        print(f"External validation results successfully saved to {args.performance_file_path}")
+        print(f"model testing results successfully saved to {args.performance_file_path}")
 
     # Plot the predictions.
     plot_predicted_vs_actual_range_shift(final_predictions_table, save_path=args.prediction_plot_path_training, cohort='training')
-    plot_predicted_vs_actual_range_shift(final_predictions_table, save_path=args.prediction_plot_path_validation, cohort='validation')
+    plot_predicted_vs_actual_range_shift(final_predictions_table, save_path=args.prediction_plot_path_testing, cohort='testing')
 
     # Construct test path by changing only the parent directory
-    val_path = Path(args.prediction_plot_path_validation)
+    val_path = Path(args.prediction_plot_path_testing)
     test_dir = val_path.parent.parent / "testing"
     test_path = test_dir / val_path.name
 

@@ -11,8 +11,8 @@ High-level behaviour (preserved)
 - Iteratively builds signatures by adding the next best-ranked feature that does not violate
   multicollinearity constraints (Pearson or VIF-based).
 - Two evaluation regimes:
-    1) If a 'testing' cohort exists:
-         - Train on all 'training', evaluate on 'testing' (no CV).
+    1) If a 'validation' cohort exists:
+         - Train on all 'training', evaluate on 'validation' (no CV).
     2) Otherwise:
          - Cross-validation within 'training' (training/validation folds).
 - Two model families:
@@ -357,9 +357,9 @@ def get_set_of_features(
     all_predictions:
         DataFrame with predictions for all iterations (includes 'iteration' column).
     """
-    # Detect whether a 'testing' cohort exists
+    # Detect whether a 'validation' cohort exists
     cohorts = feature_table["cohort"].unique()
-    has_test = "testing" in cohorts
+    has_validation = "validation" in cohorts
 
     # Bookkeeping across iterations
     selected_features: List[str] = []
@@ -414,10 +414,10 @@ def get_set_of_features(
         }
     )
 
-    # If testing exists, split once for the custom branch
-    if has_test:
+    # If validation exists, split once for the custom branch
+    if has_validation:
         training_data_full = feature_table[feature_table["cohort"] == "training"].copy()
-        testing_data = feature_table[feature_table["cohort"] == "testing"].copy()
+        validation_data = feature_table[feature_table["cohort"] == "validation"].copy()
 
     # Determine iteration list
     if max_features == 0:
@@ -460,16 +460,16 @@ def get_set_of_features(
         print(f"Iteration {i}: testing signature {selected_features}")
 
         # ---------------------------------------------------------------------
-        # Regime A: explicit testing cohort exists
+        # Regime A: explicit validation cohort exists
         # ---------------------------------------------------------------------
-        if has_test:
+        if has_validation:
             if model_learner == "iterative_linear":
                 from sklearn.linear_model import LinearRegression
 
                 X_tr = training_data_full[selected_features]
-                X_te = testing_data[selected_features]
+                X_te = validation_data[selected_features]
                 y_tr = training_data_full["range_shift"]
-                y_te = testing_data["range_shift"]
+                y_te = validation_data["range_shift"]
 
                 # Optional Yeo–Johnson transform
                 if perform_yeo_johnson:
@@ -509,12 +509,12 @@ def get_set_of_features(
                     y_te_final = y_te1
 
                 mrse_train = compute_mrse(pd.DataFrame({"range_shift": y_tr, "predicted_outcome": y_tr_final}))
-                mrse_test = compute_mrse(pd.DataFrame({"range_shift": y_te, "predicted_outcome": y_te_final}))
+                mrse_validation = compute_mrse(pd.DataFrame({"range_shift": y_te, "predicted_outcome": y_te_final}))
 
                 dev_rmse, dev_rlo, dev_rhi, dev_r2, _, _ = _bootstrap_predictions(
                     pd.DataFrame({"range_shift": y_tr, "predicted_outcome": y_tr_final, "data_set": "development"})
                 )
-                test_rmse, test_rlo, test_rhi, test_r2, _, _ = _bootstrap_predictions(
+                validation_rmse, validation_rlo, validation_rhi, validation_r2, _, _ = _bootstrap_predictions(
                     pd.DataFrame({"range_shift": y_te, "predicted_outcome": y_te_final, "data_set": "validation"})
                 )
 
@@ -532,7 +532,7 @@ def get_set_of_features(
                 if execute_two_step_fitting:
                     print(f"  Stage-2 fit_intercept   : {fit_intercept_stage2}")
                 print(f"  Training: RMSE = {dev_rmse:.3f}, R² = {dev_r2:.3f}, MRSE = {mrse_train:.3f}")
-                print(f"  Testing:  RMSE = {test_rmse:.3f}, R² = {test_r2:.3f}, MRSE = {mrse_test:.3f}")
+                print(f"  Validation:  RMSE = {validation_rmse:.3f}, R² = {validation_r2:.3f}, MRSE = {mrse_validation:.3f}")
 
                 pred_tr = pd.DataFrame(
                     {
@@ -543,7 +543,7 @@ def get_set_of_features(
                 )
                 pred_te = pd.DataFrame(
                     {
-                        "sample_id": testing_data["id_global"].values,
+                        "sample_id": validation_data["id_global"].values,
                         "predicted_outcome": y_te_final,
                         "data_set": "validation",
                     }
@@ -566,16 +566,16 @@ def get_set_of_features(
                 feature_selection_metrics["development"]["r2_score_ci_high"].append(dev_rhi)
                 feature_selection_metrics["development"]["aic"].append(aic_full)
 
-                feature_selection_metrics["validation"]["rmse"].append(test_rmse)
-                feature_selection_metrics["validation"]["rmse_ci_low"].append(test_rlo)
-                feature_selection_metrics["validation"]["rmse_ci_high"].append(test_rhi)
-                feature_selection_metrics["validation"]["r2_score"].append(test_r2)
-                feature_selection_metrics["validation"]["r2_score_ci_low"].append(test_rlo)
-                feature_selection_metrics["validation"]["r2_score_ci_high"].append(test_rhi)
+                feature_selection_metrics["validation"]["rmse"].append(validation_rmse)
+                feature_selection_metrics["validation"]["rmse_ci_low"].append(validation_rlo)
+                feature_selection_metrics["validation"]["rmse_ci_high"].append(validation_rhi)
+                feature_selection_metrics["validation"]["r2_score"].append(validation_r2)
+                feature_selection_metrics["validation"]["r2_score_ci_low"].append(validation_rlo)
+                feature_selection_metrics["validation"]["r2_score_ci_high"].append(validation_rhi)
                 feature_selection_metrics["validation"]["aic"].append(aic_full)
 
                 is_best = (
-                    (selection_criterion == "rmse" and test_rmse == min(feature_selection_metrics["validation"]["rmse"]))
+                    (selection_criterion == "rmse" and validation_rmse == min(feature_selection_metrics["validation"]["rmse"]))
                     or (selection_criterion == "aic" and aic_full == min(feature_selection_metrics["development"]["aic"]))
                 )
 
@@ -594,21 +594,21 @@ def get_set_of_features(
                         "aic": aic_full,
                     }
                     feature_selection_metrics["final_signature"]["validation"] = {
-                        "rmse": test_rmse,
-                        "rmse_ci_low": test_rlo,
-                        "rmse_ci_high": test_rhi,
-                        "r2_score": test_r2,
-                        "r2_score_ci_low": test_rlo,
-                        "r2_score_ci_high": test_rhi,
+                        "rmse": validation_rmse,
+                        "rmse_ci_low": validation_rlo,
+                        "rmse_ci_high": validation_rhi,
+                        "r2_score": validation_r2,
+                        "r2_score_ci_low": validation_rlo,
+                        "r2_score_ci_high": validation_rhi,
                         "aic": aic_full,
                     }
-                    print("→ New best model on test set!")
+                    print("→ New best model on validation set!")
 
                 if i == max_features:
                     print("Reached maximum feature count.")
                 continue
 
-            # FAMILIAR branch with test set
+            # FAMILIAR branch with validation set
             experiment_dir = os.path.join(
                 feature_selection_path,
                 "familiar",
@@ -627,7 +627,7 @@ def get_set_of_features(
                 batch_id_column="cohort",
                 sample_id_column="id_global",
                 development_batch_id="training",
-                validation_batch_id="testing",
+                validation_batch_id="validation",
                 outcome_name="range_shift",
                 outcome_column="range_shift",
                 outcome_type="continuous",
@@ -666,16 +666,16 @@ def get_set_of_features(
             r2_lo_dev = results["development"]["r2_score_ci_low"][0]
             r2_hi_dev = results["development"]["r2_score_ci_high"][0]
 
-            rmse_test = results["validation"]["rmse"][0]
-            rmse_lo_test = results["validation"]["rmse_ci_low"][0]
-            rmse_hi_test = results["validation"]["rmse_ci_high"][0]
-            r2_test = results["validation"]["r2_score"][0]
-            r2_lo_test = results["validation"]["r2_score_ci_low"][0]
-            r2_hi_test = results["validation"]["r2_score_ci_high"][0]
+            rmse_validation = results["validation"]["rmse"][0]
+            rmse_lo_validation = results["validation"]["rmse_ci_low"][0]
+            rmse_hi_validation = results["validation"]["rmse_ci_high"][0]
+            r2_validation = results["validation"]["r2_score"][0]
+            r2_lo_validation = results["validation"]["r2_score_ci_low"][0]
+            r2_hi_validation = results["validation"]["r2_score_ci_high"][0]
 
             print(f"Iteration {i} Performance (FAMILIAR):")
             print(f"  Training: RMSE = {rmse_dev:.3f}, R² = {r2_dev:.3f}")
-            print(f"  Testing:  RMSE = {rmse_test:.3f}, R² = {r2_test:.3f}")
+            print(f"  Validation:  RMSE = {rmse_validation:.3f}, R² = {r2_validation:.3f}")
 
             try:
                 train_preds = predictions[predictions["cohort"] == "training"]
@@ -694,16 +694,16 @@ def get_set_of_features(
             feature_selection_metrics["development"]["r2_score_ci_high"].append(r2_hi_dev)
             feature_selection_metrics["development"]["aic"].append(aic_full)
 
-            feature_selection_metrics["validation"]["rmse"].append(rmse_test)
-            feature_selection_metrics["validation"]["rmse_ci_low"].append(rmse_lo_test)
-            feature_selection_metrics["validation"]["rmse_ci_high"].append(rmse_hi_test)
-            feature_selection_metrics["validation"]["r2_score"].append(r2_test)
-            feature_selection_metrics["validation"]["r2_score_ci_low"].append(r2_lo_test)
-            feature_selection_metrics["validation"]["r2_score_ci_high"].append(r2_hi_test)
+            feature_selection_metrics["validation"]["rmse"].append(rmse_validation)
+            feature_selection_metrics["validation"]["rmse_ci_low"].append(rmse_lo_validation)
+            feature_selection_metrics["validation"]["rmse_ci_high"].append(rmse_hi_validation)
+            feature_selection_metrics["validation"]["r2_score"].append(r2_validation)
+            feature_selection_metrics["validation"]["r2_score_ci_low"].append(r2_lo_validation)
+            feature_selection_metrics["validation"]["r2_score_ci_high"].append(r2_hi_validation)
             feature_selection_metrics["validation"]["aic"].append(aic_full)
 
             if selection_criterion == "rmse":
-                best = rmse_test == np.min(feature_selection_metrics["validation"]["rmse"])
+                best = rmse_validation == np.min(feature_selection_metrics["validation"]["rmse"])
             else:
                 best = aic_full == np.nanmin(feature_selection_metrics["development"]["aic"])
 
@@ -722,23 +722,23 @@ def get_set_of_features(
                     "aic": aic_full,
                 }
                 feature_selection_metrics["final_signature"]["validation"] = {
-                    "rmse": rmse_test,
-                    "rmse_ci_low": rmse_lo_test,
-                    "rmse_ci_high": rmse_hi_test,
-                    "r2_score": r2_test,
-                    "r2_score_ci_low": r2_lo_test,
-                    "r2_score_ci_high": r2_hi_test,
+                    "rmse": rmse_validation,
+                    "rmse_ci_low": rmse_lo_validation,
+                    "rmse_ci_high": rmse_hi_validation,
+                    "r2_score": r2_validation,
+                    "r2_score_ci_low": r2_lo_validation,
+                    "r2_score_ci_high": r2_hi_validation,
                     "aic": aic_full,
                 }
                 feature_selection_metrics["final_signature"]["hyperparameters"] = extract_hyperparameters(experiment_dir)
-                print("→ New best FAMILIAR model on test set!")
+                print("→ New best FAMILIAR model on validation set!")
 
             if i == max_features:
                 print("Reached maximum feature count.")
             continue
 
         # ---------------------------------------------------------------------
-        # Regime B: no explicit testing cohort (CV on training)
+        # Regime B: no explicit validation cohort (CV on training)
         # ---------------------------------------------------------------------
         if model_learner == "iterative_linear":
             from sklearn.linear_model import LinearRegression
