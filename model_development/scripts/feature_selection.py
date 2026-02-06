@@ -17,7 +17,7 @@ High-level behaviour (preserved)
          - Cross-validation within 'training' (training/validation folds).
 - Two model families:
     - model_learner == "iterative_linear": custom two-stage linear regression (optional)
-    - otherwise: FAMILIAR pipeline via pmma.familiar_preparation
+    - otherwise: FAMILIAR pipeline via pmma.file_preparation
 
 Outputs (preserved)
 -------------------
@@ -43,7 +43,7 @@ from sklearn.preprocessing import PowerTransformer
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from pmma.cmd_args import feature_selection_parser
-from pmma.familiar_preparation import (
+from pmma.file_preparation import (
     create_feature_table_for_evaluation,
     evaluate_familiar_experiment,
     extract_hyperparameters,

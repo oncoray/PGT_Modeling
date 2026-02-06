@@ -8,7 +8,7 @@ Created on Fri Feb  2 13:49:21 2024
 
 from pmma.cmd_args import testing_parser
 import pandas as pd
-from pmma.familiar_preparation import evaluate_familiar_experiment, create_feature_table_for_familiar, perform_familiar_experiment, extract_hyperparameters, merge_data_with_predictions
+from pmma.file_preparation import evaluate_familiar_experiment, create_feature_table_for_familiar, perform_familiar_experiment, extract_hyperparameters, merge_data_with_predictions
 from pmma.visulisation_methods import plot_predicted_vs_actual_range_shift
 import os
 import json

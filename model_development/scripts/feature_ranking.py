@@ -11,7 +11,7 @@ Run FAMiLIA-R-based feature ranking on clustered/selected features and export:
 The script:
 1) Loads clustering metadata to obtain 'cluster_representatives'.
 2) Builds a FAMiLIA-R compatible feature table for the selected representatives.
-3) Runs the FAMiLIA-R experiment (via pmma.familiar_preparation helpers).
+3) Runs the FAMiLIA-R experiment (via pmma.file_preparation helpers).
 4) Reads the resulting variable importance file, writes a cleaned CSV, and plots it.
 
 """
@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from pmma.cmd_args import feature_ranking_parser
-from pmma.familiar_preparation import (
+from pmma.file_preparation import (
     create_feature_table_for_familiar,
     perform_familiar_experiment,
 )
