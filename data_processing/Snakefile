@@ -22,6 +22,55 @@ SPOT_MUS = config["experiment"]["extraction_info"]["SpotMUs"]
 PROTON_ENERGIES = config["experiment"]["extraction_info"]["proton_energies"]
 DETECTORS = config["experiment"]["extraction_info"]["detectors"]
 
+# -----------------------------------------------------------------------------
+# Base configuration
+# -----------------------------------------------------------------------------
+BASE_DIR = os.path.abspath(config["paths"]["base_dir"])
+EXPERIMENT_NAME = config["experiment"]["experiment_name"]
+
+# Fix: EXPERIMENT_DIR is used to build itself; build it from base_dir instead
+EXPERIMENT_DIR = os.path.join(EXPERIMENT_DIR, EXPERIMENT_NAME)
+LOGS_DIR = os.path.join(EXPERIMENT_DIR, "logs")
+
+RAW_DATA_DIR = os.path.abspath(config["paths"]["root_data_dir"])
+PREPROCESSED_DIR = os.path.abspath(config["paths"]["processed_npy_data_dir"])
+
+# Outputs 
+COMPLETION_DIR = os.path.join(EXPERIMENT_DIR, "data", "completion_files")
+DATA_PATH_TABLE = os.path.join(EXPERIMENT_DIR, "data", "data_path_table.csv")
+FIGURES_DIR = os.path.join(EXPERIMENT_DIR, "figures") 
+
+# Scripts:
+SCRIPTS_ROOT = os.path.join(BASE_DIR, "data_processing")
+
+SCRIPTS = {
+    "create_data_path_table": os.path.join(BASE_DIR, "data_preparation/create_data_path_table_proc.py"),
+    "preprocess_data": os.path.join(SCRIPTS_ROOT, "preprocess_data.py"),
+    "aggregate_detectors": os.path.join(SCRIPTS_ROOT, "aggregate_detectors.py"),
+}
+
+
+# Canonicalize nested dicts
+config.setdefault("paths", {})
+config["paths"].setdefault("data", {})
+config["paths"].setdefault("output_files", {})
+config["paths"].setdefault("scripts", {})
+
+config["paths"]["scripts"] = SCRIPTS
+
+# Provide commonly-used absolute paths
+config["paths"]["experiment_dir"] = EXPERIMENT_DIR
+config["paths"]["logs_dir"] = LOGS_DIR
+
+# Data locations used by rules
+config["paths"]["data"]["main_data_dir"] = RAW_DATA_DIR
+config["paths"]["data"]["preprocessed_dir"] = PREPROCESSED_DIR
+
+# Output locations used by rule all / create_data_path_table / preprocess_data
+config["paths"]["output_files"].setdefault("completion_files_dir", COMPLETION_DIR)
+config["paths"]["output_files"].setdefault("data_path_table", DATA_PATH_TABLE)
+config["paths"]["output_files"].setdefault("figures", FIGURES_DIR)
+
 
 # Define the final target of the pipeline
 rule all:

@@ -1,20 +1,11 @@
-# parameters to define paths. In general no need for adjustments
+
 paths:
-    base_dir: path/to/base_dir
-    experiment_dir: "path/to/main_experiment_dir/{experiment_name}"
-    logs_dir: "path/to/main_experiment_dir/{experiment_name}/logs"
-    metadata_dir: "path/to/main_experiment_dir/{experiment_name}/data/metadata"
-    data:
-        main_data_dir: path/to/main_data_dir
-        preprocessed_dir: path/to/data_output_dir
-    scripts:
-        create_data_path_table: "{base_dir}/scripts/data_preparation/create_data_path_table_proc.py"
-        preprocess_data: "{base_dir}/scripts/data_processing/preprocess_data.py"
-        aggregate_detectors: "{base_dir}/scripts/data_processing/aggregate_detectors.py"
-    output_files:
-        completion_files_dir: "path/to/main_experiment_dir/{experiment_name}/data/completion_files"
-        data_path_table: "path/to/main_experiment_dir/{experiment_name}/data/data_path_table.csv"
-        figures: "path/to/main_experiment_dir/{experiment_name}/figures"
+  # Path to the git repository root
+  base_dir: /path/to/git_repo
+
+  # Path to the experiment directory (can include {experiment_name})
+  experiment_dir: /path/to/experiments/{experiment_name}
+
 
 # parameters to setup the experiment
 experiment:
