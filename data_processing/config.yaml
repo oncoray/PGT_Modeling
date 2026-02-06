@@ -3,8 +3,12 @@ paths:
   # Path to the git repository root
   base_dir: /path/to/git_repo
 
-  # Path to the experiment directory (can include {experiment_name})
-  experiment_dir: /path/to/experiments/{experiment_name}
+  # Path to the experiment directory
+  experiment_dir: /path/to/experiments
+
+  root_data_dir: path/to/main_data_dir
+  
+  processed_npy_data_dir: path/to/data_output_dir
 
 
 # parameters to setup the experiment
