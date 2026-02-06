@@ -2,19 +2,20 @@
 # - base_dir must point to the root of the git repository (where this Snakefile lives)
 # - data.preprocessed_dir and data.data_path_table_processed point to your preprocessed inputs
 paths:
-  base_dir: /path/to/git/repo
-  experiments_dir: /path/to/experiments/dir
+  base_dir: /bigdata/invivo/machine_learning/pgt-range-reconstruction/head_study/github/PGT_Modeling_repo
+  experiments_dir: /bigdata/invivo/machine_learning/pgt-range-reconstruction/head_study/experiments/Git_repo_test_NEW
   data:
-    preprocessed_dir: /path/to/preprocessed/data
-    data_path_table_processed: /path/to/data_path_table.csv
-
+    preprocessed_dir: /bigdata/invivo/machine_learning/pgt-range-reconstruction/head_study/data/with_RC/with_beamtime_05_2025/with_energy_model/energy_gated_0_7_7_4_no_energy_window/01_Preprocessed_Data_06_2025_no_energy_fit_no_fine_beamtime/Processed
+    data_path_table_processed: /bigdata/invivo/machine_learning/pgt-range-reconstruction/head_study/experiments/Preprocessing/with_RC/with_beamtime_05_2025/with_energy_model/energy_gated_0_7_7_4_no_energy_window/01_Preprocessed_Data_06_2025_no_energy_fit_no_fine_beamtime/data/data_path_table.csv
+  
 # parameters to setup the experiment
 experiment:
   global_time_window_width: 1152
-  experiment_name: "Experiment_name"
+  experiment_name: "Git_repo_test"
   plot_figures: "True"
   selected_features:
-    - "all"
+    #- "all"
+    - "Percentile_10th_smoothed"
   cohort_assignment:
     training:
       - nose_orientation:
@@ -92,11 +93,13 @@ experiment:
           - 1728 # ca. 7.9 ns
       feature_clustering:
         cluster_representatives:
-          - "all"
+          #- "all"
+          - Percentile_10th_smoothed_rel
         cluster_distance_threshold: 0.2
         cluster_representative_method: "best_predictor"
       feature_selection:
         max_features: 10
+        n_protons_filter_limit: "5e7" # needs to be in str(xey) style
       feature_normalization:
         n_refs: 8
 

@@ -618,7 +618,7 @@ def evaluate_familiar_experiment(experiment_dir):
 
     return results, model_prediction
 
-def create_feature_table_for_familiar(data_table, feature_table, features, familiar_feature_table_path, evaluation_phase = True):
+def create_feature_table_for_evaluation(data_table, feature_table, features, familiar_feature_table_path, evaluation_phase = True, n_protons_filter_limit = 5e7):
     """
     Merges specified features from a feature table with data from a data table and saves the resulting table.
 
@@ -640,7 +640,7 @@ def create_feature_table_for_familiar(data_table, feature_table, features, famil
 
     if evaluation_phase == False: # So its training phase
         data_table = data_table[data_table["range_shift_type"] == "grs"]
-        data_table = data_table[data_table["n_protons_agg"] >= 5e7]
+        data_table = data_table[data_table["n_protons_agg"] >= n_protons_filter_limit]
         # Conditional additional filtering
         if "reference_range_shift" in data_table.columns:
             mask_special = data_table["cohort"].isin(["testing", "validation"])

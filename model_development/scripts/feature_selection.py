@@ -44,7 +44,7 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from pmma.cmd_args import feature_selection_parser
 from pmma.familiar_preparation import (
-    create_feature_table_for_familiar,
+    create_feature_table_for_evaluation,
     evaluate_familiar_experiment,
     extract_hyperparameters,
     merge_data_with_predictions,
@@ -335,7 +335,6 @@ def get_set_of_features(
     feature_type: str,
     vif_bar_plot_path: str,
     n_cpus: int = 1,
-    max_features: int = 10,
     multicollinearity_method: str = "pearson",
     multicollinearity_threshold: float = 0.6,
     max_no_improve_iterations: int = 3,
@@ -396,6 +395,7 @@ def get_set_of_features(
     }
 
     selection_criterion = selection_args.get("selection_criterion", "rmse")
+    max_features = int(selection_args.get("max_features", 10))
 
     # -------------------------------------------------------------------------
     # Prepare normalised features for multicollinearity checks (training only)
@@ -1170,6 +1170,8 @@ if __name__ == "__main__":
     feature_ranking_table = pd.read_csv(args.feature_ranking_file_path, sep=";")
     features_sorted_by_rank = feature_ranking_table.sort_values(by="score", ascending=False)["feature"].tolist()
 
+    n_protons_filter_limit = int(selection_args.get("n_protons_filter_limit", "5e7"))
+
     temp_data_dir = os.path.join(args.feature_selection_path, "temp_data")
     os.makedirs(temp_data_dir, exist_ok=True)
 
@@ -1182,12 +1184,13 @@ if __name__ == "__main__":
         f"familiar/r_files/R_file_{args.feature_type}_{args.feature_selection_method}_{args.model_learner}.R",
     )
 
-    ranked_feature_table = create_feature_table_for_familiar(
+    ranked_feature_table = create_feature_table_for_evaluation(
         data_table,
         feature_table,
         features_sorted_by_rank,
         familiar_feature_table_path,
         evaluation_phase=False,
+        n_protons_filter_limit=n_protons_filter_limit
     )
 
     feature_selection_metrics, predictions, predictions_all = get_set_of_features(
