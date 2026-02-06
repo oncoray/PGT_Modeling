@@ -31,9 +31,9 @@ SCRIPTS = {
     "feature_ranking": os.path.join(SCRIPTS_ROOT, "feature_ranking.py"),
     "feature_selection": os.path.join(SCRIPTS_ROOT, "feature_selection.py"),
     "feature_normalization": os.path.join(SCRIPTS_ROOT, "feature_normalization.py"),
-    "external_validation": os.path.join(SCRIPTS_ROOT, "external_validation.py"),
-    "cML_summary": os.path.join(SCRIPTS_ROOT, "cML_summary.py"),
-    "cML_final_result": os.path.join(SCRIPTS_ROOT, "cML_final_result.py"),
+    "model_testing": os.path.join(SCRIPTS_ROOT, "model_testing.py"),
+    "summarise_step": os.path.join(SCRIPTS_ROOT, "summarise_step.py"),
+    "generate_final_result": os.path.join(SCRIPTS_ROOT, "generate_final_result.py"),
 }
 
 # Output files / directories (inside experiments/<experiment_name>/...)
@@ -51,7 +51,7 @@ CML = {
     "feature_filtering_path": os.path.join(EXPERIMENT_DIR, "model_development", "feature_filtering"),
     "feature_ranking_path": os.path.join(EXPERIMENT_DIR, "model_development", "feature_ranking"),
     "feature_selection_path": os.path.join(EXPERIMENT_DIR, "model_development", "feature_selection"),
-    "external_validation_path": os.path.join(EXPERIMENT_DIR, "model_development", "external_validation"),
+    "model_testing_path": os.path.join(EXPERIMENT_DIR, "model_development", "model_testing"),
     "summary_path": os.path.join(EXPERIMENT_DIR, "model_development", "summary"),
 }
 
@@ -404,7 +404,7 @@ rule cML_val_summary:
                             "File type": "csv"}
                             ),
         heatmap_plot_dir_path = report(
-                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/val_performance_heatmaps"),
+                                directory(config["paths"]["output_files"]["figures"] + "summarise_step/val_performance_heatmaps"),
                                 patterns = ["heatmap_{spot_type}_{proton_energy}.png"],
                                 category = "cML Summary",
                                 subcategory = "Heatmap plots",
@@ -419,9 +419,9 @@ rule cML_val_summary:
         time="6:00:00",
         mem_per_cpu="3G",
     log:
-        config['paths']['logs_dir'] + '/cML_summary/cML_val_summary.log'
+        config['paths']['logs_dir'] + '/summarise_step/cML_val_summary.log'
     params:
-        script = config['paths']['scripts']['cML_summary']
+        script = config['paths']['scripts']['summarise_step']
     shell:
         """
         python {params.script} \
@@ -433,14 +433,14 @@ rule cML_val_summary:
         --summary_performance_file_path {output.summary_performance_file_path} > {log} 2>&1
         """
 
-rule cML_external_validation:
+rule cML_model_testing:
     input:
         feature_selection_file_path = config["paths"]["model_development"]["feature_selection_path"] + "/result/{feature_type}/{feature_selection_method}/summary_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.json",
         feature_file_path = config['paths']['output_files']['features'] + features_to_analyze_path,
         data_table_path = config['paths']['output_files']['data_path_table_main']
     output:
         predictions_file_path = report(
-                            config["paths"]["model_development"]["external_validation_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
+                            config["paths"]["model_development"]["model_testing_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
                             category="External validation",
                             subcategory="Predictions",
                             labels = {
@@ -450,7 +450,7 @@ rule cML_external_validation:
                             "File type": "csv"}
                             ),
         performance_file_path = report(
-                        config["paths"]["model_development"]["external_validation_path"] + "/performance/{feature_type}/{feature_selection_method}/performance_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.json",
+                        config["paths"]["model_development"]["model_testing_path"] + "/performance/{feature_type}/{feature_selection_method}/performance_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.json",
                         category = "External validation",
                         subcategory = "Performance",
                         labels={
@@ -460,7 +460,7 @@ rule cML_external_validation:
                         "File type": "json"
                         }),
         prediction_plot_path_training = report(
-                        config["paths"]["output_files"]["figures"] + "external_validation/prediction_plots/{feature_type}/{feature_selection_method}/training/prediction_plot_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.png",
+                        config["paths"]["output_files"]["figures"] + "model_testing/prediction_plots/{feature_type}/{feature_selection_method}/training/prediction_plot_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.png",
                         category = "External validation",
                         subcategory = "Prediction Plots",
                         labels={
@@ -470,7 +470,7 @@ rule cML_external_validation:
                         "File type": "png"
                         }),
         prediction_plot_path_validation = report(
-                        config["paths"]["output_files"]["figures"] + "external_validation/prediction_plots/{feature_type}/{feature_selection_method}/validation/prediction_plot_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.png",
+                        config["paths"]["output_files"]["figures"] + "model_testing/prediction_plots/{feature_type}/{feature_selection_method}/validation/prediction_plot_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.png",
                         category = "External validation",
                         subcategory = "Prediction Plots",
                         labels={
@@ -484,10 +484,10 @@ rule cML_external_validation:
         time="24:00:00",
         mem_per_cpu="3G",
     log:
-        config['paths']['logs_dir'] + '/cML_external_validation/{feature_selection_method}_{model_learner}_{feature_type}.log'
+        config['paths']['logs_dir'] + '/cML_model_testing/{feature_selection_method}_{model_learner}_{feature_type}.log'
     params:
-        script = config['paths']['scripts']['external_validation'],
-        external_validation_path = config["paths"]["model_development"]["external_validation_path"]
+        script = config['paths']['scripts']['model_testing'],
+        model_testing_path = config["paths"]["model_development"]["model_testing_path"]
 
     shell:
         """
@@ -496,7 +496,7 @@ rule cML_external_validation:
         --feature_file_path {input.feature_file_path} \
         --data_table_path {input.data_table_path} \
         --predictions_file_path {output.predictions_file_path} \
-        --external_validation_path {params.external_validation_path} \
+        --model_testing_path {params.model_testing_path} \
         --prediction_plot_path_training {output.prediction_plot_path_training} \
         --prediction_plot_path_validation {output.prediction_plot_path_validation} \
         --performance_file_path {output.performance_file_path} > {log} 2>&1
@@ -504,7 +504,7 @@ rule cML_external_validation:
 
 rule cML_test_summary:
     input:
-        individual_prediction_files = expand(config["paths"]["model_development"]["external_validation_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
+        individual_prediction_files = expand(config["paths"]["model_development"]["model_testing_path"] + "/predictions/{feature_type}/{feature_selection_method}/predictions_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
             feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),
         signature_file_paths = expand(config["paths"]["model_development"]["feature_selection_path"] + "/signatures/signature_ft_{feature_type}_fsm_{feature_selection_method}_ml_{model_learner}.csv",
             feature_type = FEATURE_TYPE_MODELLING, feature_selection_method = FEATURE_SELECTION_METHODS, model_learner = MODEL_LEARNERS),
@@ -527,7 +527,7 @@ rule cML_test_summary:
                             "File type": "csv"}
                             ),
         heatmap_plot_dir_path = report(
-                                directory(config["paths"]["output_files"]["figures"] + "cML_summary/test_performance_heatmaps"),
+                                directory(config["paths"]["output_files"]["figures"] + "summarise_step/test_performance_heatmaps"),
                                 patterns = ["heatmap_{spot_type}_{proton_energy}.png"],
                                 category = "cML Summary",
                                 subcategory = "Heatmap plots",
@@ -542,9 +542,9 @@ rule cML_test_summary:
         time="6:00:00",
         mem_per_cpu="3G",
     log:
-        config['paths']['logs_dir'] + '/cML_summary/cML_test_summary.log'
+        config['paths']['logs_dir'] + '/summarise_step/cML_test_summary.log'
     params:
-        script = config['paths']['scripts']['cML_summary']
+        script = config['paths']['scripts']['summarise_step']
     shell:
         """
         python {params.script} \
@@ -583,9 +583,9 @@ rule cML_final_result:
                             "File type": "png"
                             })
     log:
-        config['paths']['logs_dir'] + '/cML_summary/cML_final_result.log'
+        config['paths']['logs_dir'] + '/summarise_step/generate_final_result.log'
     params:
-        script = config['paths']['scripts']['cML_final_result']
+        script = config['paths']['scripts']['generate_final_result']
     threads: 1
     resources:
         time="6:00:00",
