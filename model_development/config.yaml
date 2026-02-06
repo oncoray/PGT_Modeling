@@ -1,132 +1,104 @@
-# parameters to define paths. In general no need for adjustments
+# Minimal path configuration:
+# - base_dir must point to the root of the git repository (where this Snakefile lives)
+# - data.preprocessed_dir and data.data_path_table_processed point to your preprocessed inputs
 paths:
-    base_dir: /path/to/base
-    scripts_dir: main_scripts_dir # directory name of the repo
-    experiment_dir: "{base_dir}/experiments/{experiment_name}"
-    logs_dir: "{base_dir}/experiments/{experiment_name}/logs"
-    data:
-        preprocessed_dir: /path/to/processed/data
-        data_path_table_processed: path/to/data_path_table.csv
-    scripts:
-        create_data_path_table: "{base_dir}/{scripts_dir}/scripts/data_preparation/create_data_path_table_main.py"
-        calculate_features: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/calculate_parameters.py"
-        feature_clustering: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/feature_clustering.py"
-        feature_ranking: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/feature_ranking.py"
-        feature_selection: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/feature_selection.py"
-        feature_normalization: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/feature_normalization.py"
-        external_validation: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/external_validation.py"
-        cML_summary: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/cML_summary.py"
-        cML_final_result: "{base_dir}/{scripts_dir}/scripts/conv_machine_learning/cML_final_result.py"
-    output_files:
-        completion_files_dir: "{base_dir}/experiments/{experiment_name}/data/completion_files"
-        data_path_table_main: "{base_dir}/experiments/{experiment_name}/data/data_path_table_main.csv"
-        features: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/features/"
-        figures: "{base_dir}/experiments/{experiment_name}/figures/"
-    conventional_machine_learning:
-        model_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/models"
-        feature_clustering_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_clustering"
-        feature_filtering_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_filtering"
-        feature_ranking_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_ranking"
-        feature_selection_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/feature_selection"
-        external_validation_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/external_validation"
-        summary_path: "{base_dir}/experiments/{experiment_name}/conventional_machine_learning/summary"
+  base_dir: /path/to/git/repo
+  experiments_dir: /path/to/experiments/dir
+  data:
+    preprocessed_dir: /path/to/preprocessed/data
+    data_path_table_processed: /path/to/data_path_table.csv
 
 # parameters to setup the experiment
 experiment:
-    global_time_window_width: 1152
-    experiment_name: "Experiment_name"
-    plot_figures: "True"
-    selected_features:
-      - "all"
-    cohort_assignment:
-      training:
-        - nose_orientation:
-            - "nose0_withRC"
-          proton_energy:
-            - 187
-            - 139
-            - 162
-          mu:
-            - 0.9
-            - 0.2
-            - 0.8
-          range_shift_type:
-            - "grs"
-          detector:
-            - 99
-          repetition:
-            - 1
-            - 2
-      validation:
-        - nose_orientation:
-            - "G270_withRC"
-          proton_energy:
-            - 159
-          mu:
-            - 0.1
-          range_shift_type:
-            - "grs"
-            - "lrs"
-          detector:
-            - 99
-          repetition:
-            - 1
-            - 2
-            - 3
-            - 4
-            - 5
-            - 6
-            - 7
-            - 8
-      testing:
-        - nose_orientation:
-            - "G210_withRC"
-          proton_energy:
-            - 158
-          mu:
-            - 0.2
-          range_shift_type:
-            - "grs"
-            - "lrs"
-          detector:
-            - 99
-          repetition:
-            - 1
-            - 2
-            - 3
-            - 4
-            - 5
-            - 6
-            - 7
-            - 8
-
-    conventional_machine_learning:
-        reference: -1
-        feature_selection_methods:
-            - "lasso_gaussian"
-            - "pearson"
-            - "mrmr"
-            - "multivariate_regression"
-        model_learners:
-            - "iterative_linear"
-        args:
-            feature_calculation:
-                global_time_window:
-                  - 750 # ca. 3.5ns
-                  - 1728 # ca. 7.9 ns
-            feature_clustering:
-                cluster_representatives:
-                  - "all"
-                cluster_distance_threshold: 0.2
-                cluster_representative_method: "best_predictor"
-            feature_selection:
-                max_features: 10
-                multicollinearity_method: "pearson"
-                multicollinearity_threshold: 1
-                max_no_improve_iterations: 10
-            feature_normalization:
-                n_refs: 8
-
+  global_time_window_width: 1152
+  experiment_name: "Experiment_name"
+  plot_figures: "True"
+  selected_features:
+    - "all"
+  cohort_assignment:
+    training:
+      - nose_orientation:
+          - "nose0_withRC"
+        proton_energy:
+          - 187
+          - 139
+          - 162
+        mu:
+          - 0.9
+          - 0.2
+          - 0.8
+        range_shift_type:
+          - "grs"
+        detector:
+          - 99
+        repetition:
+          - 1
+          - 2
+    validation:
+      - nose_orientation:
+          - "G270_withRC"
+        proton_energy:
+          - 159
+        mu:
+          - 0.1
+        range_shift_type:
+          - "grs"
+          - "lrs"
+        detector:
+          - 99
+        repetition:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+    testing:
+      - nose_orientation:
+          - "G210_withRC"
+        proton_energy:
+          - 158
+        mu:
+          - 0.2
+        range_shift_type:
+          - "grs"
+          - "lrs"
+        detector:
+          - 99
+        repetition:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+  model_development:
+    reference: -1
+    feature_selection_methods:
+      - "lasso_gaussian"
+      - "pearson"
+      - "mrmr"
+      - "multivariate_regression"
+    model_learners:
+      - "iterative_linear"
+    args:
+      feature_calculation:
+        global_time_window:
+          - 750 # ca. 3.5ns
+          - 1728 # ca. 7.9 ns
+      feature_clustering:
+        cluster_representatives:
+          - "all"
+        cluster_distance_threshold: 0.2
+        cluster_representative_method: "best_predictor"
+      feature_selection:
+        max_features: 10
+      feature_normalization:
+        n_refs: 8
 
 
 
