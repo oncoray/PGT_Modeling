@@ -1,0 +1,16 @@
+numpy
+pandas
+scipy
+tqdm
+simpleitk
+pydicom
+openblas
+pkg-config
+bioconda::snakemake=8.20.5
+pulp=2.7.0
+uproot
+statsmodels
+seaborn
+scikit-learn
+scikit-image
+matplotlib

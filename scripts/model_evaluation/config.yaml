@@ -1,0 +1,84 @@
+# =========================
+# Model-evaluation pipeline
+# =========================
+
+paths:
+  # Where to write all outputs of this evaluation run
+  scripts_dir: path/to/scripts_dir
+  out_dir: path/to/main/output/dir
+  logs_dir: "{out_dir}/logs"
+
+  # CSV created from the data processing pipeline. It is needed to get the coordinates of each spot
+  spot_coord_csv: path/to/data_processed/data_path_table.csv
+
+  measured_spectra_dir: /path/to/processed/data/measurement
+  reference_spectra_dir: /path/to/processed/data/reference
+  # Scripts (place these files exactly as referenced here, or change paths)
+  scripts:
+    create_eval_table: "{scripts_dir}/scripts/model_evaluation/scripts/create_eval_table.py"
+    evaluate_model: "{scripts_dir}/scripts/model_evaluation/scripts/evaluate_model.py"
+    model_module: "{scripts_dir}/scripts/model_evaluation/scripts/models.py"
+
+data_discovery:
+  # Recursive glob patterns relative to the two input dirs
+  measured_glob: "**/*.npy"
+  reference_glob: "**/*.npy"
+
+  filename_regex: '(?P<nose_orientation>[\w\d]+_withRC|[\w\d]+)_(?P<energy>\d+)MeV_(?P<mu>\d+-\d+)MU_(?P<range_shift_type>\w+)_(?P<range_shift>ref|\d+)_det(?P<detector>\d+)_layer(?P<layer>\d+)_spot(?P<spot_id>\d+)_rep(?P<repetition>\d+)\.npy'
+
+  # Use all identifiers that define a "spot context", but NOT the actual shift value
+  key_fields_for_reference_matching:
+    - nose_orientation
+    - proton_energy
+    - mu
+    - detector
+    - layer
+    - spot_id
+
+  # Optionally restrict which reference files are used (e.g., only rs=0 references)
+  reference_filters:
+    range_shift_mm: 0.0
+
+feature_extraction:
+  # Gaussian smoothing in histogram bins (sigma = 40 bins is used in the existing feature code and in the study)
+  smoothing_sigma_bins: 40
+
+  # To mimic the existing feature implementation for smoothed quantiles,
+  # the smoothed histogram is converted to pseudo-counts via round(y_smooth * scale).
+  smoothed_repeat_scale: 10
+
+  # Optional cropping window in bins (inclusive bounds), set to null to disable
+  time_window_bins: [750,1728]
+
+model:
+  # Select a model name defined in scripts/models.py
+  # Default implements Eq. (1)–(2) with the paper’s reported parameters.
+  name: "paper_final_model" 
+
+evaluation:
+  # If ground truth is available (either from filename_regex range_shift_mm or labels_csv), compute metrics
+  compute_metrics: true
+
+  # If your filenames do NOT encode ground truth, provide a labels CSV here.
+  # The CSV must contain a column 'sample_id' that matches the eval table sample_id,
+  # and a column 'range_shift_mm' with the ground truth.
+  labels_csv: null
+  labels_sep: ","
+
+  min_n_protons_agg_for_metrics: 5e7
+  n_protons_agg_col: n_protons_agg
+
+  pred_to_geo_scale_for_metrics: 1.11345 #(SPR_PMMA / SPR_Brain = 1.158 / 1.04)
+
+  bootstrap:
+    enabled: true
+    n_resamples: 1000
+    ci_percentiles: [2.5, 97.5]
+    random_state: 42
+
+
+resources:
+  create_eval_table:
+    threads: 1
+  evaluate_model:
+    threads: 1

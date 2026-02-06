@@ -10,6 +10,7 @@ import os
 import pandas as pd
 import subprocess
 import shutil
+import textwrap
 
 def format_value_for_r(value):
     """
@@ -32,6 +33,276 @@ def format_value_for_r(value):
     else:
         return repr(value)
 
+import os
+import textwrap
+from typing import List, Optional
+
+def format_value_for_r(value):
+    """
+    Formats a Python value into a string representation that is compatible with R's syntax.
+
+    Parameters:
+    value: The value to format.
+
+    Returns:
+    str: The R-compatible string representation of the value.
+    """
+    if isinstance(value, bool):
+        return 'TRUE' if value else 'FALSE'
+    elif isinstance(value, dict):
+        return f"list({', '.join(f'{k}={format_value_for_r(v)}' for k, v in value.items())})"
+    elif isinstance(value, list):
+        return f"c({', '.join(format_value_for_r(v) for v in value)})"
+    elif isinstance(value, str):
+        return f'"{value}"'
+    else:
+        return repr(value)
+
+def create_familiar_r_file_autoinstall(
+    familiar_r_file_path: str,
+    r_lib_rel_path: str = "../../data/R_library",
+    cran_repo: str = "https://packagemanager.posit.co/cran/__linux__/centos7/2023-10-31",
+    required_packages: Optional[List[str]] = None,
+    github_repo: str = "alexzwanenburg/familiar",
+    github_ref: Optional[str] = None,
+    github_dependencies: str = "TRUE",
+    upgrade: str = "never",
+    force_github: bool = True,
+    **kwargs
+):
+    if required_packages is None:
+        required_packages = ["familiar"]
+
+    python_script_dir = os.path.dirname(os.path.abspath(__file__))
+    r_lib_path = os.path.normpath(os.path.join(python_script_dir, r_lib_rel_path))
+
+    # Build summon_familiar(...)
+    parameters = []
+    for key, value in kwargs.items():
+        if value is not None:
+            parameters.append(f"{key}={format_value_for_r(value)}")
+    parameters_str = ",\n".join(parameters)
+    summon_familiar_str = f"familiar::summon_familiar(\n{parameters_str}\n)"
+
+    github_target = github_repo if github_ref is None else f"{github_repo}@{github_ref}"
+    force_str = "TRUE" if force_github else "FALSE"
+
+    required_pkgs_r = ", ".join(f'"{p}"' for p in required_packages)
+
+    # IMPORTANT:
+    # - This is a normal triple-quoted string (NOT an f-string).
+    # - We inject placeholders using .format(...)
+    # - Any literal R braces { } must be doubled as {{ }}
+    template = r"""
+print("Starting familiar calculations in R....")
+
+# ------------------------------
+# 0) Library isolation
+# ------------------------------
+user_lib <- "{r_lib_path}"
+dir.create(user_lib, recursive = TRUE, showWarnings = FALSE)
+
+Sys.unsetenv("R_LIBS_USER")
+Sys.unsetenv("R_LIBS")
+Sys.unsetenv("R_LIBS_SITE")
+
+.libPaths(c(user_lib, .Library))
+cat("Using .libPaths():\n")
+print(.libPaths())
+
+r_lib_dir <- file.path(R.home(), "lib")
+Sys.setenv(LD_LIBRARY_PATH = paste(r_lib_dir, Sys.getenv("LD_LIBRARY_PATH"), sep=":"))
+
+# ------------------------------
+# 1) Repo snapshot (mandatory for most packages)
+# ------------------------------
+options(repos = c(CRAN = "{cran_repo}"))
+cat("R version:", R.version.string, "\n")
+cat("Repo:", getOption("repos")[["CRAN"]], "\n")
+
+# ------------------------------
+# 2) Install core CRAN deps from snapshot
+# ------------------------------
+cran_pkgs <- c("Matrix", "MASS", "survival", "praznik", "rstream", "ranger")
+
+cran_missing <- cran_pkgs[!vapply(cran_pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(cran_missing) > 0) {{
+  cat("Installing CRAN packages into user_lib:\n")
+  print(cran_missing)
+  install.packages(cran_missing, lib = user_lib, Ncpus = 1)
+}}
+
+# ------------------------------
+# 3) Ensure cmake exists (for nloptr from source)
+# ------------------------------
+is_valid_cmake <- function(p) {{
+  is.character(p) && length(p) == 1 && nzchar(p) && file.exists(p)
+}}
+
+cmake_path <- Sys.which("cmake")
+if (!is_valid_cmake(cmake_path)) {{
+  cat("cmake not found in PATH. Searching common locations...\n")
+  candidates <- unique(c(
+    "/usr/bin/cmake",
+    "/bin/cmake",
+    "/usr/local/bin/cmake",
+    Sys.glob("/data/rosi/shared/eb/easybuild/**/software/**/CMake/**/bin/cmake"),
+    Sys.glob("/data/rosi/shared/eb/easybuild/**/software/**/cmake/**/bin/cmake"),
+    Sys.glob("/data/rosi/shared/eb/easybuild/genoa/software/**/CMake/**/bin/cmake"),
+    Sys.glob("/data/rosi/shared/eb/easybuild/genoa/software/**/cmake/**/bin/cmake")
+  ))
+  candidates <- candidates[file.exists(candidates)]
+  if (length(candidates) > 0) {{
+    cmake_path <- candidates[1]
+    Sys.setenv(PATH = paste(dirname(cmake_path), Sys.getenv("PATH"), sep=":"))
+    cat("Using cmake at:", cmake_path, "\n")
+  }} else {{
+    stop("CMake is required to build 'nloptr' from source but was not found.")
+  }}
+}} else {{
+  cat("cmake found at:", cmake_path, "\n")
+}}
+
+# ------------------------------
+# 4) Install nloptr (from snapshot)
+# ------------------------------
+if (!requireNamespace("nloptr", quietly = TRUE)) {{
+  cat("Installing 'nloptr' into user_lib...\n")
+  install.packages("nloptr", lib = user_lib, Ncpus = 1)
+}}
+if (!requireNamespace("nloptr", quietly = TRUE)) {{
+  stop("Package 'nloptr' is still not available after installation attempt.")
+}} else {{
+  cat("nloptr installed at:", find.package("nloptr"), "\n")
+}}
+
+# ------------------------------
+# 5) Installer tooling
+# ------------------------------
+if (!requireNamespace("remotes", quietly = TRUE)) {{
+  cat("Installing 'remotes' into user_lib...\n")
+  install.packages("remotes", lib = user_lib, Ncpus = 1)
+}}
+
+# ------------------------------
+# 6) Flexible install for power.transform
+#    Requirement:
+#    - Use standard CRAN (cloud.r-project.org) for this package ONLY
+#    - Keep snapshot repo for everything else
+#    - If CRAN fails -> GitHub fallback
+# ------------------------------
+install_power_transform <- function() {{
+  if (requireNamespace("power.transform", quietly = TRUE)) {{
+    return(invisible(TRUE))
+  }}
+
+  cat("Attempting to install 'power.transform' from standard CRAN (cloud.r-project.org)...\n")
+  old_repos <- getOption("repos")
+  options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+  ok_cran <- TRUE
+  tryCatch({{
+    install.packages("power.transform", lib = user_lib, dependencies = TRUE, Ncpus = 1)
+  }}, error = function(e) {{
+    ok_cran <<- FALSE
+    cat("CRAN install error:", conditionMessage(e), "\n")
+  }})
+
+  options(repos = old_repos)
+
+  if (requireNamespace("power.transform", quietly = TRUE)) {{
+    cat("'power.transform' installed from standard CRAN.\n")
+    return(invisible(TRUE))
+  }}
+
+  cat("CRAN install did not succeed; trying GitHub fallback...\n")
+  ok_gh <- TRUE
+  tryCatch({{
+    remotes::install_github(
+      "alexzwanenburg/power.transform",
+      lib = user_lib,
+      dependencies = TRUE,
+      upgrade = "never",
+      force = TRUE
+    )
+  }}, error = function(e) {{
+    ok_gh <<- FALSE
+    cat("GitHub owner/repo form failed:", conditionMessage(e), "\n")
+  }})
+
+  if (!requireNamespace("power.transform", quietly = TRUE)) {{
+    tryCatch({{
+      remotes::install_github(
+        "https://github.com/alexzwanenburg/power.transform",
+        lib = user_lib,
+        dependencies = TRUE,
+        upgrade = "never",
+        force = TRUE
+      )
+    }}, error = function(e) {{
+      cat("GitHub URL form failed:", conditionMessage(e), "\n")
+    }})
+  }}
+
+  if (!requireNamespace("power.transform", quietly = TRUE)) {{
+    stop("Package 'power.transform' could not be installed from CRAN or GitHub.")
+  }}
+
+  cat("'power.transform' available.\n")
+  invisible(TRUE)
+}}
+
+install_power_transform()
+
+# ------------------------------
+# 7) Install/refresh familiar from GitHub
+# ------------------------------
+cat("Installing familiar from GitHub: {github_target} (force={force_str})\n")
+remotes::install_github(
+  "{github_target}",
+  lib = user_lib,
+  dependencies = {github_dependencies},
+  upgrade = "{upgrade}",
+  force = {force_str}
+)
+
+suppressPackageStartupMessages({{
+  library(familiar)
+}})
+
+if (!requireNamespace("familiar", quietly = TRUE)) {{
+  stop("Package 'familiar' is still not available after attempted installation.")
+}}
+
+# ------------------------------
+# 8) Run familiar
+# ------------------------------
+{summon_familiar_str}
+
+print("Familiar calculations in R done!")
+"""
+
+    r_script_content = textwrap.dedent(template).lstrip().format(
+        r_lib_path=r_lib_path,
+        cran_repo=cran_repo,
+        github_target=github_target,
+        github_dependencies=github_dependencies,
+        upgrade=upgrade,
+        force_str=force_str,
+        summon_familiar_str=summon_familiar_str,
+        required_pkgs_r=required_pkgs_r,
+    )
+
+    out_dir = os.path.dirname(familiar_r_file_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
+    with open(familiar_r_file_path, "w", encoding="utf-8") as f:
+        f.write(r_script_content)
+
+    return familiar_r_file_path
+
+
 def create_familiar_r_file(familiar_r_file_path, **kwargs):
     """
     Creates and executes an R script file for the familiar package with the specified configuration,
@@ -45,47 +316,47 @@ def create_familiar_r_file(familiar_r_file_path, **kwargs):
     None
     """
     print("Create familiar R file...")
-    
+
     # Determine the directory of the current Python script
     python_script_dir = os.path.dirname(os.path.abspath(__file__))
-    
+
     # Construct the relative path to the R library from the Python script's directory
     r_lib_path = os.path.join(python_script_dir, "../../data/familiar/library")
-    
+
     parameters = []
     for key, value in kwargs.items():
         if value is not None:
             formatted_value = format_value_for_r(value)
             parameters.append(f"{key}={formatted_value}")
-    
+
     parameters_str = ",\n".join(parameters)
     summon_familiar_str = f"familiar::summon_familiar(\n{parameters_str}\n)"
-    
+
     # R script content with the actual config file path and library location
     r_script_content = f"""
     print("Starting familiar calculations in R....")
-    
+
     .libPaths(c("{r_lib_path}", .libPaths()))
-    
+
     library(familiar, lib.loc = "{r_lib_path}")
     library(xml2, lib.loc = "{r_lib_path}")
     library(microbenchmark, lib.loc = "{r_lib_path}")
-    
+
     {summon_familiar_str}
-    
+
     print("Familiar calculations in R done!")
     """
 
     # Writing the R script to the specified file path
     with open(familiar_r_file_path, 'w') as file:
         file.write(r_script_content)
-        
-    print(f"Familiar R file saved to {familiar_r_file_path}") 
+
+    print(f"Familiar R file saved to {familiar_r_file_path}")
 
     return
 
 
-def save_modified_xml(output_path, raw_file_path = r"../../data/familiar/config_raw.xml", 
+def save_modified_xml(output_path, raw_file_path = r"../../data/familiar/config_raw.xml",
                       # Paths
                       project_dir=None, experiment_dir=None, data_file=None,
                       # Data
@@ -145,30 +416,30 @@ def save_modified_xml(output_path, raw_file_path = r"../../data/familiar/config_
     tree = ET.parse(raw_file_path)
     root = tree.getroot()
 
-                
+
     def update_element_text(root, element_name, new_text):
         if new_text is not None:
             # Find the element with the specified name across the entire XML tree
             for element in root.iter(element_name):
                 element.text = new_text
                 return  # Element found and updated, no need to continue
-            
+
     def update_hyperparameter_element(root, learner, sign_size):
         """
         Update the hyperparameter element with the learner and sign size.
-    
+
         Args:
         - root (ET.Element): The root of the XML tree.
         - learner (str): The name of the learner.
         - sign_size (str): The sign size value.
         """
-        
+
         for hyperparameter_element in root.iter('hyperparameter'):
-        
+
             # Find or create the learner sub-element
 
             learner_element = ET.SubElement(hyperparameter_element, learner)
-    
+
             # Create or update the sign_size sub-element
 
             sign_size_element = ET.SubElement(learner_element, 'sign_size')
@@ -291,7 +562,7 @@ def evaluate_familiar_experiment(experiment_dir):
     """
     Retrieves the feature ranking from the familiar feature ranking process.
 
-    This function accesses the generated feature ranking file, reads it, and then exports 
+    This function accesses the generated feature ranking file, reads it, and then exports
     the relevant data (both RMSE and R² values along with their confidence intervals) to a specified path.
 
     Parameters:
@@ -328,7 +599,10 @@ def evaluate_familiar_experiment(experiment_dir):
     # Extract RMSE and R² for development and validation
     for metric in ['rmse', 'r2_score']:
         for data_set in ['development', 'validation']:
-            value, ci_low, ci_high = extract_metric(metric, data_set)
+            try:
+                value, ci_low, ci_high = extract_metric(metric, data_set)
+            except:
+                value, ci_low, ci_high = None, None, None
             results[data_set][metric].append(value)
             results[data_set][f'{metric}_ci_low'].append(ci_low)
             results[data_set][f'{metric}_ci_high'].append(ci_high)
@@ -344,11 +618,11 @@ def evaluate_familiar_experiment(experiment_dir):
 
     return results, model_prediction
 
-def create_feature_table_for_familiar(data_table, feature_table, features, familiar_feature_table_path):
+def create_feature_table_for_familiar(data_table, feature_table, features, familiar_feature_table_path, evaluation_phase = True):
     """
     Merges specified features from a feature table with data from a data table and saves the resulting table.
 
-    This function is designed to prepare a feature table for use with the FAMILIAR tool. It extracts specified columns 
+    This function is designed to prepare a feature table for use with the FAMILIAR tool. It extracts specified columns
     from the data table and feature table, merges them on a common identifier, and saves the resulting table to a file.
 
     Parameters:
@@ -362,8 +636,22 @@ def create_feature_table_for_familiar(data_table, feature_table, features, famil
     """
 
     # Informing the user about the operation
-    print("Save feature table for familiar...") 
-    
+    print("Save feature table for familiar...")
+
+    if evaluation_phase == False: # So its training phase
+        data_table = data_table[data_table["range_shift_type"] == "grs"]
+        data_table = data_table[data_table["n_protons_agg"] >= 5e7]
+        # Conditional additional filtering
+        if "reference_range_shift" in data_table.columns:
+            mask_special = data_table["cohort"].isin(["testing", "validation"])
+            mask_condition = (data_table["reference_range_shift"] == 0) & (data_table["range_shift"] != 0)
+
+            # Apply the condition only to testing/validation,
+            # keep all other cohorts unchanged
+            data_table = data_table[
+                (~mask_special) | (mask_condition)
+            ]
+
     # Extracting the necessary columns from the data table
     # Includes 'cohort', 'id_global', and 'range_shift'
     data_columns = data_table[['cohort', 'id_global', 'range_shift']]
@@ -381,7 +669,7 @@ def create_feature_table_for_familiar(data_table, feature_table, features, famil
     adjusted_feature_table.to_csv(familiar_feature_table_path, sep=';', index=False)
 
     # Confirming the successful saving of the file
-    print(f"Familiar feature table saved to {familiar_feature_table_path}")    
+    print(f"Familiar feature table saved to {familiar_feature_table_path}")
 
     return adjusted_feature_table
 
@@ -396,15 +684,15 @@ def perform_familiar_experiment(feature_file_path, model_learner, experiment_dir
                                 novelty_detector="none", optimisation_determine_vimp=True,
                                 evaluation_metric=["rmse", "r2_score"], imputation_method="simple", smbo_stop_convergent_iterations=None,
                                 include_features=None, hyperparameter=None, skip_evaluation_elements=None):
-        
+
     # Determine the directory of the R file
     r_file_dir = os.path.dirname(familiar_r_file_path)
 
     # Create the directory if it does not exist
     os.makedirs(r_file_dir, exist_ok=True)
-        
+
     # Create the configuration for the FAMILIAR experiment
-    create_familiar_r_file(familiar_r_file_path,
+    create_familiar_r_file_autoinstall(familiar_r_file_path,
                            experiment_dir=experiment_dir, data_file=feature_file_path,
                            experimental_design=experimental_design, batch_id_column=batch_id_column,
                            sample_id_column=sample_id_column, development_batch_id=development_batch_id,
@@ -456,13 +744,13 @@ def extract_hyperparameters(experiment_dir):
     """
 
     hyperparameter_dir = os.path.join(experiment_dir, "results", "pooled_data", "hyperparameter")
-    
+
     # Ensure there is exactly one hyperparameter file in the directory
     assert len(os.listdir(hyperparameter_dir)) == 1, f"Not just one hyperparameter file in {hyperparameter_dir}!"
-    
+
     # Construct the full path to the hyperparameter file
     file_path = os.path.join(hyperparameter_dir, os.listdir(hyperparameter_dir)[0])
-    
+
     # Dictionary to store the extracted hyperparameters
     hyperparameters = {}
 
@@ -479,20 +767,66 @@ def extract_hyperparameters(experiment_dir):
 
     return hyperparameters
 
+
+
 def merge_data_with_predictions(data_table, predictions):
     """
     Merges the data table with prediction outcomes.
-    
+
     Parameters:
     - data_table (DataFrame): The original data table with features and actual outcomes.
-    - predictions (DataFrame): The predictions table containing predicted outcomes.
-    
+    - predictions (DataFrame): The predictions table containing predicted outcomes
+                               (must have 'sample_id' and 'predicted_outcome').
+
     Returns:
-    - DataFrame: A merged table with both actual outcomes and predicted outcomes.
+    - DataFrame: A merged table with both actual and predicted outcomes.
     """
-    merged_df = pd.merge(left=data_table, right=predictions, how='left', left_on='id_global', right_on='sample_id')
-    final_table = merged_df[['id_global', 'cohort','data_set', 'spot_type', 'proton_energy', 'layer', 'spot_number', 'range_shift', 'predicted_outcome']]
-    final_table.rename(columns={'predicted_outcome': 'predicted_range_shift', 'data_set': 'cv_data_set'}, inplace=True)
+    print(data_table.columns, predictions.columns)
+
+    # 0) If your table has 'dataset' or 'data set', rename it to 'data_set'
+    for col in data_table.columns:
+        if col.lower() in ("dataset", "data set"):
+            data_table = data_table.rename(columns={col: "data_set"})
+            break
+
+    # 1) Inner merge on id_global ↔ sample_id
+    merged_df = pd.merge(
+        left=data_table,
+        right=predictions,
+        how="inner",
+        left_on="id_global",
+        right_on="sample_id"
+    )
+
+    cols = [
+        "id_global",
+        "cohort",
+        "data_set",
+        "nose_orientation",
+        "proton_energy",
+        "mu",
+        "layer",
+        "spot_id",
+        "detector",
+        "repetition",
+        "range_shift_type",
+        "range_shift",
+        "predicted_outcome",
+    ]
+
+    if "iteration" in merged_df.columns:
+        cols.append("iteration")
+
+    final_table = merged_df[cols]
+
+    # 3) Rename for clarity
+    final_table = final_table.rename(
+        columns={
+            "predicted_outcome": "predicted_range_shift",
+            "data_set": "cv_data_set",
+        }
+    )
+
     return final_table
 
-   
+

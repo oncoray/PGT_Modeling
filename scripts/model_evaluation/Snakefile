@@ -1,0 +1,118 @@
+import os
+import json
+
+configfile: "config.yaml"
+
+OUT_DIR = config["paths"]["out_dir"]
+LOGS_DIR = config["paths"]["logs_dir"]
+
+EVAL_TABLE = os.path.join(OUT_DIR, "eval_table.csv")
+PREDICTIONS = os.path.join(OUT_DIR, "predictions", "predictions.csv")
+METRICS = os.path.join(OUT_DIR, "metrics", "metrics.json")
+FEATURES = os.path.join(OUT_DIR, "features", "features.csv")
+
+
+def _json_dumps_safe(x):
+    return json.dumps(x, ensure_ascii=False)
+
+
+def _as_cli_str(x):
+    return "" if x is None else str(x)
+
+
+rule all:
+    input:
+        EVAL_TABLE,
+        PREDICTIONS,
+        METRICS,
+        FEATURES
+
+
+rule create_eval_table:
+    output:
+        EVAL_TABLE
+    params:
+        script=_as_cli_str(config["paths"]["scripts"]["create_eval_table"]),
+        measured_dir=_as_cli_str(config["paths"]["measured_spectra_dir"]),
+        reference_dir=_as_cli_str(config["paths"]["reference_spectra_dir"]),
+        measured_glob=_as_cli_str(config["data_discovery"]["measured_glob"]),
+        reference_glob=_as_cli_str(config["data_discovery"]["reference_glob"]),
+        filename_regex=_as_cli_str(config["data_discovery"].get("filename_regex")),
+        key_fields=",".join(config["data_discovery"]["key_fields_for_reference_matching"]),
+        reference_filters_json=_json_dumps_safe(config["data_discovery"].get("reference_filters", {})),
+        coord_csv=_as_cli_str(config["paths"].get("spot_coord_csv")),
+        coord_sep=_as_cli_str(config["paths"].get("spot_coord_sep", ";")),
+    log:
+        os.path.join(LOGS_DIR, "create_eval_table.log")
+    threads: config["resources"]["create_eval_table"]["threads"]
+    resources:
+        time="02:00:00",
+        mem_per_cpu="2GB"
+    shell:
+        r"""
+        mkdir -p "{OUT_DIR}" "{LOGS_DIR}"
+        python "{params.script}" \
+          --measured_dir "{params.measured_dir}" \
+          --reference_dir "{params.reference_dir}" \
+          --measured_glob "{params.measured_glob}" \
+          --reference_glob "{params.reference_glob}" \
+          --filename_regex "{params.filename_regex}" \
+          --key_fields "{params.key_fields}" \
+          --coord_csv "{params.coord_csv}" \
+          --coord_sep "{params.coord_sep}" \
+          --reference_filters '{params.reference_filters_json}' \
+          --out_csv "{output}" \
+          > "{log}" 2>&1
+        """
+
+
+rule evaluate_model:
+    input:
+        EVAL_TABLE
+    output:
+        PREDICTIONS,
+        METRICS,
+        FEATURES
+    params:
+        script=_as_cli_str(config["paths"]["scripts"]["evaluate_model"]),
+        model_module=_as_cli_str(config["paths"]["scripts"]["model_module"]),
+        model_name=_as_cli_str(config["model"]["name"]),
+        smoothing_sigma=_as_cli_str(config["feature_extraction"]["smoothing_sigma_bins"]),
+        smoothed_repeat_scale=_as_cli_str(config["feature_extraction"]["smoothed_repeat_scale"]),
+        time_window_bins_json=_json_dumps_safe(config["feature_extraction"].get("time_window_bins", None)),
+        compute_metrics=_as_cli_str(config["evaluation"]["compute_metrics"]),
+        labels_csv=_as_cli_str(config["evaluation"].get("labels_csv")),
+        labels_sep=_as_cli_str(config["evaluation"].get("labels_sep", ",")),
+        bootstrap_cfg_json=_json_dumps_safe(config["evaluation"].get("bootstrap", {})),
+        min_n_protons_agg_for_metrics = config["evaluation"].get("min_n_protons_agg_for_metrics"),
+        pred_to_geo_scale_for_metrics = config["evaluation"].get("pred_to_geo_scale_for_metrics", 1.0),
+        n_protons_agg_col = config["evaluation"].get("n_protons_agg_col", "n_protons_agg"),
+
+    log:
+        os.path.join(LOGS_DIR, "evaluate_model.log")
+    threads: config["resources"]["evaluate_model"]["threads"]
+    resources:
+        time="02:00:00",
+        mem_per_cpu="2GB"
+    shell:
+        r"""
+        mkdir -p "{OUT_DIR}/predictions" "{OUT_DIR}/metrics" "{OUT_DIR}/features" "{LOGS_DIR}"
+        python "{params.script}" \
+          --eval_table "{input}" \
+          --predictions_csv "{output[0]}" \
+          --metrics_json "{output[1]}" \
+          --features_csv "{output[2]}" \
+          --model_module "{params.model_module}" \
+          --model_name "{params.model_name}" \
+          --smoothing_sigma_bins "{params.smoothing_sigma}" \
+          --smoothed_repeat_scale "{params.smoothed_repeat_scale}" \
+          --time_window_bins '{params.time_window_bins_json}' \
+          --min_n_protons_agg_for_metrics "{params.min_n_protons_agg_for_metrics}" \
+          --n_protons_agg_col "{params.n_protons_agg_col}" \
+          --compute_metrics "{params.compute_metrics}" \
+          --pred_to_geo_scale_for_metrics "{params.pred_to_geo_scale_for_metrics}" \
+          --labels_csv "{params.labels_csv}" \
+          --labels_sep "{params.labels_sep}" \
+          --bootstrap_cfg '{params.bootstrap_cfg_json}' \
+          > "{log}" 2>&1
+        """

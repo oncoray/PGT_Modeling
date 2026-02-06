@@ -1,3 +1,0 @@
-importFrom("stats", "pgamma")
-import("FMStable")
-exportPattern("^[[:alpha:]]+")

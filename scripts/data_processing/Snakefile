@@ -1,124 +1,177 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb 15 09:41:07 2024
-
-@author: kiesli21
-"""
-import json
-import shutil
 import os
+import json
 from itertools import product
 
 from pmma.config_file_manipulator import substitute_labels, save_config, yaml_to_json_string
 
+# Load and process the configuration file
 configfile: "config.yaml"
 
-# Substitute labels and save configuration file
+# Substitute labels in the config and save the updated config
 config = substitute_labels('config.yaml')
-
 save_config(config, os.path.join(config['paths']['experiment_dir'], "config.yaml"))
 
-# get cohort mapping dict in json format, so it can be transferred via shell command
+# Convert configurations to JSON strings for use in shell commands
 data_preprocessing_args = yaml_to_json_string(str(config["experiment"]["args"]["data_preprocessing"]))
+extraction_info = yaml_to_json_string(str(config["experiment"]["extraction_info"]))
 
-SPECTRUM_TYPES=config["experiment"]["spectrum_types"]
+# Extract variables from the config for use in rules
+SPECTRUM_TYPES = config["experiment"]["extraction_info"]["spectrum_types"]
+NOSE_ORIENTATIONS = config["experiment"]["extraction_info"]["nose_orientations"]
+SPOT_MUS = config["experiment"]["extraction_info"]["SpotMUs"]
+PROTON_ENERGIES = config["experiment"]["extraction_info"]["proton_energies"]
+DETECTORS = config["experiment"]["extraction_info"]["detectors"]
 
 
-# This rule defines the final target of the pipeline        
+# Define the final target of the pipeline
 rule all:
     input:
+        # Ensure the updated config is included
         "config.yaml",
-        expand(config['paths']['output_files']['completion_files_dir'] + "/preprocess_data_complete_{spectrum_type}.txt", spectrum_type = SPECTRUM_TYPES)
+        # Completion files for all combinations of parameters
+        expand(
+            os.path.join(
+                config['paths']['output_files']['completion_files_dir'],
+                "preprocess_data_complete_{spectrum_type}_det{detector}.txt"
+            ),
+            spectrum_type=SPECTRUM_TYPES,
+            detector=DETECTORS
+        ),
+        os.path.join(
+            config['paths']['output_files']['completion_files_dir'],
+            "aggregate_detectors_complete.txt"
+        ),
+        # Data path table
+        config['paths']['output_files']['data_path_table']
 
+# Rule to create a configuration report (if needed)
 rule create_config_report:
     output:
-        report("config.yaml",
-               category="Configuration",
-               labels={"File": "Config-file",
-                       "Type": "yaml"})
+        report(
+            "config.yaml",
+            category="Configuration",
+            labels={
+                "File": "Config-file",
+                "Type": "yaml"
+            }
+        )
+    threads: 1
+    resources:
+        time="1:00:00",
+        mem_per_cpu="1G",
     shell:
         """
-        # Your command to process the config.yaml if necessary
+        # Add commands to process the config.yaml if necessary
         """
 
-# Rule for creating a data path table
+
+# Rule to create the data path table
 rule create_data_path_table:
     output:
-        output_file = report(config['paths']['output_files']['data_path_table'], category = "Data table")
+        output_file=report(
+            config['paths']['output_files']['data_path_table'],
+            category="Data table"
+        )
     params:
-        script = config['paths']['scripts']['create_data_path_table'],
-        root_dir = config['paths']['data']['converted_dir'],
-        measurement_dict = json.dumps(config['dataset']['measurement_dict']),
-        spots_exclude_static = config['dataset']['spots_to_exclude_static'],
-        spots_include_scanned = config['dataset']['spots_to_include_scanned']
+        script=config['paths']['scripts']['create_data_path_table'],
+        root_dir=config['paths']['data']['main_data_dir'],
+        extraction_info=json.dumps(extraction_info)
     log:
-        config['paths']['logs_dir'] + '/data_table_creation/create_data_path_table.log'  # Log file for this rule  
+        os.path.join(
+            config['paths']['logs_dir'],
+            'data_table_creation',
+            'create_data_path_table.log'
+        )
+    threads: 64
+    resources:
+        time="24:00:00",
+        mem_per_cpu="1G",
     shell:
         """
         python {params.script} \
-        --root_dir {params.root_dir} \
-        --output_file {output} \
-        --spots_to_include_scanned {params.spots_include_scanned} \
-        --spots_to_exclude_static {params.spots_exclude_static} \
-        --measurement_dict '{params.measurement_dict}' > {log} 2>&1 
+            --root_dir {params.root_dir} \
+            --output_file {output.output_file} \
+            --threads {threads} \
+            --extraction_info {params.extraction_info} > {log} 2>&1
         """
 
 # Rule for preprocessing data
 rule preprocess_data:
     input:
-        data_table_path = config['paths']['output_files']['data_path_table']
+        data_table_path=config['paths']['output_files']['data_path_table']
     output:
-        completion_file_path = config['paths']['output_files']['completion_files_dir'] + "/preprocess_data_complete_{spectrum_type}.txt",
-        metadata_file = report(config['paths']['metadata_dir'] + "/preprocess_data_metadata_{spectrum_type}.csv", 
-                        category = "Metadata",
-                        subcategory = "Data processing",
-                        labels={"Spectrum type": "{spectrum_type}",
-                        "Type": "csv"}),
-        
-        metadata_bg_file = report(config['paths']['metadata_dir'] + "/bg_metadata_{spectrum_type}.csv", 
-                        category = "Metadata",
-                        subcategory = "Background",
-                        labels={"Spectrum type": "{spectrum_type}",
-                        "Type": "csv"}),
-        
-        report_preprocessing = report(
-            directory(config['paths']['output_files']['figures'] + "/{spectrum_type}/processing_plots"), 
-            patterns=["{roi}/{spot_type}_{energy2}MeV/{step2}/summed_time_{roi3}_{type}_{energy}MeV_{step}.png"],
-            category="{type}_{energy}MeV",
-            subcategory="{spectrum_type}_{roi}",
-            labels={"Step": "{step}"}
-        ),
-
-        activation_plot = report(
-            directory(config['paths']['output_files']['figures'] + "/{spectrum_type}/activation_plots"), 
-            patterns=["{roi}/{spot_type}_{energy}MeV/bg_estimation_energy_row_{energy_row}.png"],
-            category="{spot_type}_{energy}MeV",
-            subcategory="{spectrum_type}_{roi}",
-            labels={"Energy row": "{energy_row}"}
-        )
-        
+        completion_file_path=os.path.join(
+            config['paths']['output_files']['completion_files_dir'],
+            "preprocess_data_complete_{spectrum_type}_det{detector}.txt")
     params:
-        script = config['paths']['scripts']['preprocess_data'],
-        spectrum_type = "{spectrum_type}",
-        preprocessed_dir = config['paths']['data']['preprocessed_dir'],
-        figures_path = config['paths']['output_files']['figures'] + "/{spectrum_type}",
-        data_preprocessing_args = json.dumps(data_preprocessing_args),
-        time_bin = config['dataset']['time_bin'],
-        rois = config['experiment'].get('rois'),
+        script=config['paths']['scripts']['preprocess_data'],
+        spectrum_type="{spectrum_type}",
+        detector="{detector}",
+        preprocessed_dir=config['paths']['data']['preprocessed_dir'],
+        figures_path=os.path.join(
+            config['paths']['output_files']['figures'],
+            "{spectrum_type}_det{detector}"
+        ),
+        data_preprocessing_args=json.dumps(data_preprocessing_args)
+    threads: 128
+    resources:
+        time="24:00:00",
+        mem_per_cpu="3G",
     log:
-        config['paths']['logs_dir'] + '/data_processing/process_data_{spectrum_type}.log'  # Log file for this rule
+        os.path.join(
+            config['paths']['logs_dir'],
+            'data_processing',
+            'process_data_{spectrum_type}_det{detector}.log'
+        )
     shell:
         """
         python {params.script} \
-        --data_table_path {input.data_table_path} \
-        --preprocessed_dir {params.preprocessed_dir} \
-        --completion_file_path {output.completion_file_path} \
-        --figures_path {params.figures_path} \
-        --spectrum_type {params.spectrum_type} \
-        --rois {params.rois} \
-        --time_bin {params.time_bin} \
-        --data_preprocessing_args {params.data_preprocessing_args} \
-        --metadata_file_path {output.metadata_file} \
-        --metadata_bg_file_path {output.metadata_bg_file} > {log} 2>&1
+            --data_table_path {input.data_table_path} \
+            --output_dir {params.preprocessed_dir} \
+            --completion_file_path {output.completion_file_path} \
+            --figures_path {params.figures_path} \
+            --spectrum_type {params.spectrum_type} \
+            --detector {params.detector} \
+            --data_preprocessing_args {params.data_preprocessing_args} \
+            --threads {threads} > {log} 2>&1
+        """
+
+
+# Rule for aggregating detectors
+rule aggregate_detectors:
+    input:
+        # Completion files from preprocess_data for all detectors and parameter combinations
+        expand(
+            os.path.join(
+                config['paths']['output_files']['completion_files_dir'],
+                "preprocess_data_complete_{spectrum_type}_det{detector}.txt"
+            ),
+        spectrum_type=SPECTRUM_TYPES,
+        detector=DETECTORS
+        )
+    output:
+        completion_file=os.path.join(
+            config['paths']['output_files']['completion_files_dir'],
+            "aggregate_detectors_complete.txt")
+    params:
+        script=config['paths']['scripts']['aggregate_detectors'],
+        preprocessed_dir=config['paths']['data']['preprocessed_dir'],
+        data_preprocessing_args=json.dumps(data_preprocessing_args)
+    log:
+        os.path.join(
+            config['paths']['logs_dir'],
+            'detector_aggregation',
+            'aggregate_detectors.log'
+        )
+    threads: 128
+    resources:
+        time="24:00:00",
+        mem_per_cpu="3G"
+    shell:
+        """
+        python {params.script} \
+            --threads {threads} \
+            --data_preprocessing_args {params.data_preprocessing_args} \
+            --output_dir {params.preprocessed_dir} > {log} 2>&1
+        touch {output.completion_file}
         """

@@ -1,0 +1,3 @@
+yq
+snakemake-executor-plugin-cluster-generic
+PyYAML

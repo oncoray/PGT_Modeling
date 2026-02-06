@@ -1,238 +1,361 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Feb  5 16:34:00 2024
+cml_summary.py
 
-@author: Phase
+Summarise (classical) ML model predictions and signatures across multiple runs/files.
+
+This script:
+  1) Reads signature files and prediction files (with a naming convention containing tokens: ft, fsm, ml).
+  2) Joins signatures with predictions on (feature_type, feature_selection_method, model_learner).
+  3) Computes grouped performance metrics (RMSE and R²) with bootstrap confidence intervals.
+  4) Writes summary CSV files and produces heatmaps.
+
 """
-import pandas as pd
+
 import os
+import numpy as np
+import pandas as pd
+
 from pmma.cmd_args import cML_summary_parser
 from pmma.visulisation_methods import plot_performance_heatmaps
-import numpy as np
+
 from sklearn.metrics import mean_squared_error, r2_score
 
+
+# --------------------------------------------------------------------------------------
+# Metrics
+# --------------------------------------------------------------------------------------
 def calculate_rmse(y_true, y_pred):
     """Calculate Root Mean Squared Error."""
     return np.sqrt(mean_squared_error(y_true, y_pred))
+
 
 def calculate_r2(y_true, y_pred):
     """Calculate R-squared score."""
     return r2_score(y_true, y_pred)
 
-def bootstrap_confidence_interval(y_true, y_pred, stat_function, n_bootstraps=1000):
+
+def bootstrap_confidence_interval(y_true, y_pred, stat_function, n_bootstraps=1000, random_state=1):
     """
-    Calculate the bootstrap confidence interval for a given statistic between y_true and y_pred.
+    Bootstrap CI for a statistic between y_true and y_pred.
 
-    Parameters:
-    - y_true: array-like, true values.
-    - y_pred: array-like, predicted values.
-    - stat_function: function, the statistic function to apply to y_true and y_pred.
-                     It should take two arrays as input and return a single number (the statistic).
-    - n_bootstraps: int, number of bootstrap samples to use for computing the confidence interval.
-
-    Returns:
-    - ci_low: float, the lower bound of the confidence interval.
-    - ci_high: float, the upper bound of the confidence interval.
+    Returns
+    -------
+    (ci_low, ci_high) : tuple[float,float]
     """
-    
-    # Convert inputs to numpy arrays for efficient computation
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
-    
-    # Initialize a list to store the bootstrap statistics
-    bootstrap_stats = []
-    
-    # Perform bootstrap resampling
-    for _ in range(n_bootstraps):
-        # Randomly sample indices with replacement
-        indices = np.random.choice(range(len(y_true)), size=len(y_true), replace=True)
-        # Resample y_true and y_pred according to the sampled indices
-        y_true_resampled, y_pred_resampled = y_true[indices], y_pred[indices]
-        # Calculate the statistic for the resampled data
-        statistic = stat_function(y_true_resampled, y_pred_resampled)
-        # Append the calculated statistic to the list
-        bootstrap_stats.append(statistic)
-    
-    # Convert the list of bootstrap statistics to a numpy array for efficient percentile calculation
-    bootstrap_stats = np.array(bootstrap_stats)
-    
-    # Calculate the 2.5th and 97.5th percentiles of the bootstrap statistics to determine the confidence interval
-    ci_low, ci_high = np.percentile(bootstrap_stats, [2.5, 97.5])
-    
-    return ci_low, ci_high
+    y_true = np.asarray(y_true, dtype=float)
+    y_pred = np.asarray(y_pred, dtype=float)
+
+    if len(y_true) != len(y_pred):
+        raise ValueError("y_true and y_pred must have the same length.")
+    if len(y_true) < 2:
+        return (np.nan, np.nan)
+
+    rng = np.random.default_rng(random_state)
+    n = len(y_true)
+
+    stats = np.empty(n_bootstraps, dtype=float)
+    for i in range(n_bootstraps):
+        idx = rng.integers(0, n, size=n)
+        stats[i] = stat_function(y_true[idx], y_pred[idx])
+
+    ci_low, ci_high = np.percentile(stats, [2.5, 97.5])
+    return float(ci_low), float(ci_high)
 
 
-def summarize_performances_from_predictions(df):
-    """Process df to calculate RMSE, R2, and confidence intervals for each group."""
-
-    # Group by the specified columns
-    grouped = df.groupby(['feature_type', 'feature_selection_method', 'model_learner', 'cohort', 'cv_data_set', 'spot_type', 'proton_energy'])
-    
-    summary_rows = []
-    
-    for name, group in grouped:
-        y_true = group['range_shift']
-        y_pred = group['predicted_range_shift']
-        
-        # Calculate metrics
-        rmse = calculate_rmse(y_true, y_pred)
-        r2 = calculate_r2(y_true, y_pred)
-        
-        # Calculate confidence intervals through bootstrapping
-        rmse_ci = bootstrap_confidence_interval(y_true, y_pred, calculate_rmse, n_bootstraps=1000)
-        r2_ci = bootstrap_confidence_interval(y_true, y_pred, calculate_r2, n_bootstraps=1000)
-        
-        assert len(np.unique(group['signature'].values)) == 1, f"Signature is not consistent within group {name}!"
-        
-        signature = group['signature'].iloc[0]  # Assuming signature is consistent within the group
-        
-        summary_rows.append({
-            'feature_type': name[0],
-            'feature_selection_method': name[1],
-            'model_learner': name[2],
-            'signature': signature,
-            'sign_size': len(signature),
-            'cohort': name[3],
-            'cv_data_set': name[4],
-            'spot_type': name[5],
-            'proton_energy': name[6],
-            'RMSE': rmse,
-            'RMSE CI Low': rmse_ci[0],
-            'RMSE CI High': rmse_ci[1],
-            'R2': r2,
-            'R2 CI Low': r2_ci[0],
-            'R2 CI High': r2_ci[1]
-        })
-        
-    # Group by the specified columns
-    grouped = df.groupby(['feature_type', 'feature_selection_method', 'model_learner', 'cohort', 'cv_data_set'])
-    
-    for name, group in grouped:
-        y_true = group['range_shift']
-        y_pred = group['predicted_range_shift']
-        
-        # Calculate metrics
-        rmse = calculate_rmse(y_true, y_pred)
-        r2 = calculate_r2(y_true, y_pred)
-        
-        # Calculate confidence intervals through bootstrapping
-        rmse_ci = bootstrap_confidence_interval(y_true, y_pred, calculate_rmse, n_bootstraps=1000)
-        r2_ci = bootstrap_confidence_interval(y_true, y_pred, calculate_r2, n_bootstraps=1000)
-        
-        assert len(np.unique(group['signature'].values)) == 1, f"Signature is not consistent within group {name}!"
-        signature = group['signature'].iloc[0]  # Assuming signature is consistent within the group
-        
-        summary_rows.append({
-            'feature_type': name[0],
-            'feature_selection_method': name[1],
-            'model_learner': name[2],
-            'signature': signature,
-            'sign_size': len(signature),
-            'cohort': name[3],
-            'cv_data_set': name[4],
-            'spot_type': "combined",
-            'proton_energy': "combined",
-            'RMSE': rmse,
-            'RMSE CI Low': rmse_ci[0],
-            'RMSE CI High': rmse_ci[1],
-            'R2': r2,
-            'R2 CI Low': r2_ci[0],
-            'R2 CI High': r2_ci[1]
-        })
-    
-    summary_df = pd.DataFrame(summary_rows)
-    return summary_df
-
-def parse_filename(filename):
+# --------------------------------------------------------------------------------------
+# Helpers: file parsing and concatenation
+# --------------------------------------------------------------------------------------
+def parse_filename(filename: str):
     """
     Parses the filename to extract feature_type, feature_selection_method, and model_learner.
+
+    Expected naming convention contains tokens:
+      ... _ft_<FEATURETYPE>_fsm_<FSM>_ml_<MODELLEARNER>_<something>.csv
+
+    Notes
+    -----
+    - model_learner may contain underscores -> we join all parts after 'ml' up to last token.
     """
     parts = filename.split('_')
-    # Extract metadata based on the new naming convention
-    feature_type_index = parts.index('ft') + 1
-    feature_selection_method_index = parts.index('fsm') + 1
-    model_learner_index = parts.index('ml') + 1
-    
+
+    try:
+        feature_type_index = parts.index('ft') + 1
+        fsm_index = parts.index('fsm') + 1
+        ml_index = parts.index('ml') + 1
+    except ValueError as e:
+        raise ValueError(
+            f"Filename '{filename}' does not follow expected convention containing "
+            f"'_ft_', '_fsm_', '_ml_'. Parsed parts: {parts}"
+        ) from e
+
     feature_type = parts[feature_type_index]
-    feature_selection_method = parts[feature_selection_method_index]
-    model_learner = '_'.join(parts[model_learner_index:-1]) # Since model_learner may contain underscores
-    
+    feature_selection_method = parts[fsm_index]
+    model_learner = '_'.join(parts[ml_index:-1])  # last part contains extension token-ish
+
     return feature_type, feature_selection_method, model_learner
+
 
 def concatenate_prediction_files(file_paths):
     """
-    Reads and concatenates files into a single DataFrame.
+    Reads and concatenates prediction CSV files into a single DataFrame and adds metadata columns.
     """
     all_data = []
     for path in file_paths:
         filename = os.path.basename(path)
         feature_type, feature_selection_method, model_learner = parse_filename(filename)
-        
-        df = pd.read_csv(path, sep = ";")
-        df['feature_type'] = feature_type
-        df['feature_selection_method'] = feature_selection_method
-        df['model_learner'] = model_learner
-        
+
+        df = pd.read_csv(path, sep=";")
+        df["feature_type"] = feature_type
+        df["feature_selection_method"] = feature_selection_method
+        df["model_learner"] = model_learner
+
         all_data.append(df)
-    
+
+    if len(all_data) == 0:
+        raise ValueError("No prediction files provided / readable.")
     return pd.concat(all_data, ignore_index=True)
+
 
 def concatenate_signature_files(file_paths):
     """
-    Reads and concatenates files into a single DataFrame.
+    Reads and concatenates signature files (one feature per line) into a single DataFrame.
+
+    Output columns:
+      feature_type, feature_selection_method, model_learner, signature(list[str]), signature_key(tuple[str])
     """
-    all_data = []
-    
+    all_rows = []
     for path in file_paths:
         filename = os.path.basename(path)
         feature_type, feature_selection_method, model_learner = parse_filename(filename)
-        
-        df = pd.read_csv(path, header = None)
-        df_sign = {
-            'feature_type': feature_type,
-            'feature_selection_method': feature_selection_method,
-            'model_learner': model_learner,
-            "signature": list(df.iloc[:,0].values)
-        }
-        
-        all_data.append(df_sign)
-    
-    return pd.DataFrame(all_data)
+
+        df = pd.read_csv(path, header=None)
+        sig_list = list(df.iloc[:, 0].astype(str).values)
+
+        # signature_key must be hashable -> tuple; we keep original list in 'signature'
+        all_rows.append(
+            {
+                "feature_type": feature_type,
+                "feature_selection_method": feature_selection_method,
+                "model_learner": model_learner,
+                "signature": sig_list,
+                "signature_key": tuple(sig_list),
+            }
+        )
+
+    if len(all_rows) == 0:
+        raise ValueError("No signature files provided / readable.")
+    return pd.DataFrame(all_rows)
 
 
+# --------------------------------------------------------------------------------------
+# Summarization
+# --------------------------------------------------------------------------------------
+def _validate_required_columns(df: pd.DataFrame, required: list[str], context: str):
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise KeyError(f"Missing required columns in {context}: {missing}")
+
+
+def summarize_performances_from_predictions(df: pd.DataFrame, n_bootstraps=1000, random_state=1):
+    """
+    Summarize RMSE/R2 and bootstrap CIs for each group.
+
+    Two levels are produced:
+      (A) detailed groups:
+          [feature_type, feature_selection_method, model_learner, cohort, cv_data_set,
+           nose_orientation, proton_energy, mu, range_shift_type, repetition]
+      (B) combined groups:
+          [feature_type, feature_selection_method, model_learner, cohort, cv_data_set]
+          with dataset fields set to "combined".
+    """
+    required_cols = [
+        "feature_type",
+        "feature_selection_method",
+        "model_learner",
+        "cohort",
+        "cv_data_set",
+        "nose_orientation",
+        "proton_energy",
+        "mu",
+        "range_shift_type",
+        "repetition",
+        "range_shift",
+        "predicted_range_shift",
+        "signature",
+        "signature_key",
+    ]
+    _validate_required_columns(df, required_cols, "predictions_summary")
+
+    # Ensure numeric
+    df = df.copy()
+    df["range_shift"] = pd.to_numeric(df["range_shift"], errors="coerce")
+    df["predicted_range_shift"] = pd.to_numeric(df["predicted_range_shift"], errors="coerce")
+    df = df.dropna(subset=["range_shift", "predicted_range_shift"])
+
+    summary_rows = []
+
+    # -------------------------
+    # (A) Detailed grouping
+    # -------------------------
+    detailed_group_cols = [
+        "feature_type",
+        "feature_selection_method",
+        "model_learner",
+        "cohort",
+        "cv_data_set",
+        "nose_orientation",
+        "proton_energy",
+        "mu",
+        "range_shift_type",
+        "repetition",
+    ]
+
+    grouped = df.groupby(detailed_group_cols, dropna=False)
+
+    for name, group in grouped:
+        y_true = group["range_shift"].values
+        y_pred = group["predicted_range_shift"].values
+
+        rmse = calculate_rmse(y_true, y_pred)
+        r2 = calculate_r2(y_true, y_pred)
+
+        rmse_ci_low, rmse_ci_high = bootstrap_confidence_interval(
+            y_true, y_pred, calculate_rmse, n_bootstraps=n_bootstraps, random_state=random_state
+        )
+        r2_ci_low, r2_ci_high = bootstrap_confidence_interval(
+            y_true, y_pred, calculate_r2, n_bootstraps=n_bootstraps, random_state=random_state
+        )
+
+        # ---- Signature consistency check (FIXED) ----
+        # Use signature_key (tuple, hashable) rather than raw signature (list)
+        if group["signature_key"].nunique() != 1:
+            raise ValueError(f"Signature is not consistent within group {name}!")
+
+        signature = group["signature"].iloc[0]  # list[str]
+        sign_size = len(signature)
+
+        summary_rows.append(
+            {
+                "feature_type": name[0],
+                "feature_selection_method": name[1],
+                "model_learner": name[2],
+                "signature": signature,
+                "sign_size": sign_size,
+                "cohort": name[3],
+                "cv_data_set": name[4],
+                "nose_orientation": name[5],
+                "proton_energy": name[6],
+                "mu": name[7],
+                "range_shift_type": name[8],
+                "repetition": name[9],
+                "RMSE": float(rmse),
+                "RMSE CI Low": float(rmse_ci_low),
+                "RMSE CI High": float(rmse_ci_high),
+                "R2": float(r2),
+                "R2 CI Low": float(r2_ci_low),
+                "R2 CI High": float(r2_ci_high),
+            }
+        )
+
+    # -------------------------
+    # (B) Combined grouping
+    # -------------------------
+    combined_group_cols = [
+        "feature_type",
+        "feature_selection_method",
+        "model_learner",
+        "cohort",
+        "cv_data_set",
+    ]
+
+    grouped2 = df.groupby(combined_group_cols, dropna=False)
+
+    for name, group in grouped2:
+        y_true = group["range_shift"].values
+        y_pred = group["predicted_range_shift"].values
+
+        rmse = calculate_rmse(y_true, y_pred)
+        r2 = calculate_r2(y_true, y_pred)
+
+        rmse_ci_low, rmse_ci_high = bootstrap_confidence_interval(
+            y_true, y_pred, calculate_rmse, n_bootstraps=n_bootstraps, random_state=random_state
+        )
+        r2_ci_low, r2_ci_high = bootstrap_confidence_interval(
+            y_true, y_pred, calculate_r2, n_bootstraps=n_bootstraps, random_state=random_state
+        )
+
+        if group["signature_key"].nunique() != 1:
+            raise ValueError(f"Signature is not consistent within combined group {name}!")
+
+        signature = group["signature"].iloc[0]
+        sign_size = len(signature)
+
+        summary_rows.append(
+            {
+                "feature_type": name[0],
+                "feature_selection_method": name[1],
+                "model_learner": name[2],
+                "signature": signature,
+                "sign_size": sign_size,
+                "cohort": name[3],
+                "cv_data_set": name[4],
+                "nose_orientation": "combined",
+                "proton_energy": "combined",
+                "mu": "combined",
+                "range_shift_type": "combined",
+                "repetition": "combined",
+                "RMSE": float(rmse),
+                "RMSE CI Low": float(rmse_ci_low),
+                "RMSE CI High": float(rmse_ci_high),
+                "R2": float(r2),
+                "R2 CI Low": float(r2_ci_low),
+                "R2 CI High": float(r2_ci_high),
+            }
+        )
+
+    return pd.DataFrame(summary_rows)
+
+
+# --------------------------------------------------------------------------------------
+# Main
+# --------------------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Parsing command line arguments for feature ranking
     parser = cML_summary_parser("cML summary")
     args = parser.parse_args()
-    
+
     print("Start summary of cML...")
 
+    # 1) Load signatures and predictions
     signature_summary = concatenate_signature_files(args.signature_file_paths)
-
-    print(signature_summary)
-
     predictions_summary = concatenate_prediction_files(args.individual_prediction_files)
-    
-    
-    
-    predictions_summary = pd.merge(signature_summary, predictions_summary, 
-                          on=['feature_type', 'feature_selection_method', 'model_learner'], 
-                          how='inner')
-    print(predictions_summary)
-    
+
+    # 2) Merge
+    predictions_summary = pd.merge(
+        signature_summary,
+        predictions_summary,
+        on=["feature_type", "feature_selection_method", "model_learner"],
+        how="inner",
+    )
+
+    # Safety: ensure signature_key exists (in case user-provided signature_summary lacks it)
+    if "signature_key" not in predictions_summary.columns:
+        predictions_summary["signature_key"] = predictions_summary["signature"].apply(tuple)
+
+    # 3) Save merged predictions summary
     os.makedirs(os.path.dirname(args.summary_predictions_file_path), exist_ok=True)
-    
-    predictions_summary.to_csv(args.summary_predictions_file_path, index=False, sep = ";")
-    
-    print("Summary of model predictions have been saved to: ", args.summary_predictions_file_path)
-    
-    summary_df = summarize_performances_from_predictions(predictions_summary)
+    predictions_summary.to_csv(args.summary_predictions_file_path, index=False, sep=";")
+    print("Summary of model predictions saved to:", args.summary_predictions_file_path)
 
-    summary_df.to_csv(args.summary_performance_file_path, index=False, sep = ";")
+    # 4) Summarize performances
+    summary_df = summarize_performances_from_predictions(predictions_summary, n_bootstraps=1000, random_state=1)
 
-    print("Summary of model performances have been saved to: ", args.summary_performance_file_path)
-    
+    os.makedirs(os.path.dirname(args.summary_performance_file_path), exist_ok=True)
+    summary_df.to_csv(args.summary_performance_file_path, index=False, sep=";")
+    print("Summary of model performances saved to:", args.summary_performance_file_path)
+
+    # 5) Plot heatmaps
+    os.makedirs(args.heatmap_plot_dir_path, exist_ok=True)
     plot_performance_heatmaps(summary_df, args.heatmap_plot_dir_path)
-    
-    print("Heatmaps have been saved to: ", args.heatmap_plot_dir_path)
+    print("Heatmaps saved to:", args.heatmap_plot_dir_path)
     

@@ -45,7 +45,7 @@ def create_familiar_r_file(familiar_r_file_path, config_file_path):
     with open(familiar_r_file_path, 'w') as file:
         file.write(r_script_content)
         
-    print(f"Familiar R file saved to {familiar_r_file_pathguit}") 
+    print(f"Familiar R file saved to {familiar_r_file_path}") 
 
     return
 

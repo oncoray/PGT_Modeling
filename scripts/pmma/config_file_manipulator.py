@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 22 10:42:16 2023
 
-@author: kiesli21
-"""
 import yaml
 import re
 import os
